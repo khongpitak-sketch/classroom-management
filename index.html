@@ -1022,7 +1022,7 @@ body {
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v4_full_instructors_pnu_fms";
+const DATA_VERSION = "v5_tv_and_projector_facilities_update";
 
 const DEFAULT_ROOMS = [
     {
@@ -1037,12 +1037,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart TV 65 นิ้ว",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard",
             "ระบบเครื่องเสียง & ไมค์"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS302 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS302 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 3 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
     },
     {
@@ -1057,12 +1057,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Projector 4000 ANSI",
+            "Smart TV (ทีวี 65 นิ้ว)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard",
             "ระบบเสียง"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS303 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS303 (ทีวี) ชั้น ชั้น 3 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600"
     },
     {
@@ -1077,11 +1077,11 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart TV 65 นิ้ว",
+            "Smart TV (ทีวี 65 นิ้ว)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS305 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS305 (ทีวี) ชั้น ชั้น 3 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600"
     },
     {
@@ -1096,12 +1096,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart Board 75 นิ้ว",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x3",
             "กระดานกระจก",
             "ระบบ Video Conference"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS306 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS306 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 3 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=600"
     },
     {
@@ -1116,12 +1116,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Projector 4000 ANSI",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x2",
             "กระดานกระจกขนาดใหญ่",
             "ไมค์ลอย"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS307 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS307 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 3 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600"
     },
     {
@@ -1136,12 +1136,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart TV 75 นิ้ว",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x3",
             "กระดาน Whiteboard x2",
             "ไมค์ลอยคู่"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS308 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS308 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 3 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=600"
     },
     {
@@ -1156,12 +1156,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart Board 75 นิ้ว",
+            "Smart TV (ทีวี 65 นิ้ว)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard",
             "ระบบเสียงดิจิทัล"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS401 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS401 (ทีวี) ชั้น ชั้น 4 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
     },
     {
@@ -1176,12 +1176,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart TV 65 นิ้ว",
+            "Smart TV (ทีวี 65 นิ้ว)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard",
             "ลำโพงบลูทูธ"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS402 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS402 (ทีวี) ชั้น ชั้น 4 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600"
     },
     {
@@ -1196,12 +1196,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Dual Projector",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x3",
             "กระดาน Whiteboard",
             "ระบบไมค์ 4 ตัว"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS403 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS403 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 4 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600"
     },
     {
@@ -1216,12 +1216,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart TV 65 นิ้ว",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard",
             "ไมค์ไร้สาย"
         ],
-        "description": "ห้องเรียน FMS404 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS404 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 4 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600"
     },
     {
@@ -1236,12 +1236,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Projector 5000 ANSI",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x3",
             "เวทียกพื้น",
             "ไมค์สัมมนา"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS405 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS405 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 4 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=600"
     },
     {
@@ -1256,12 +1256,12 @@ const DEFAULT_ROOMS = [
         "status": "available",
         "currentClass": null,
         "facilities": [
-            "Smart TV 65 นิ้ว",
+            "เครื่องโปรเจกเตอร์ (Projector)",
             "เครื่องปรับอากาศ x2",
             "กระดาน Whiteboard",
             "ระบบเสียงสเตอริโอ"
         ],
-        "description": "ห้องเรียนทฤษฎี FMS406 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "description": "ห้องเรียนทฤษฎี FMS406 (เครื่องโปรเจกเตอร์) ชั้น ชั้น 4 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
     },
     {
