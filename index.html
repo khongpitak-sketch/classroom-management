@@ -956,447 +956,2878 @@ body {
     <!-- Application Scripts -->
     <script>
 /**
- * Classroom Management System - Updated Seed Data (v2)
- * ห้องเรียน: 302, 303, 305, 306, 307, 308 (ชั้น 3)
- * ห้องเรียน: 401, 402, 403, 404, 405, 406 (ชั้น 4)
- * ห้องปฏิบัติการคอมพิวเตอร์: ห้องปฏิบัติการคอม 1, ห้องปฏิบัติการคอม 2, ห้องปฏิบัติการคอม 3, ห้องปฏิบัติการคอม 4
+ * Classroom Management System - Real University Timetable (v3)
+ * คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
+ * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v2_updated_rooms_list";
+const DATA_VERSION = "v3_real_pnu_fms_timetable";
 
 const DEFAULT_ROOMS = [
-    // ----------------------------------------------------
-    // ห้องเรียนชั้น 3 (Floor 3)
-    // ----------------------------------------------------
     {
-        id: "R-302",
-        name: "ห้อง 302",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 3)",
-        floor: "ชั้น 3",
-        capacity: 40,
-        status: "available",
-        currentClass: null,
-        facilities: ["Smart TV 65 นิ้ว", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ระบบเครื่องเสียง & ไมค์ลอย"],
-        description: "ห้องเรียนบรรยายชั้น 3 บรรยากาศโปร่งสบาย เหมาะสำหรับวิชาบรรยายและสัมมนากลุ่ม",
-        image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60"
+        "id": "R-302",
+        "name": "FMS302 - ห้องทฤษฎี",
+        "code": "FMS302",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 3",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart TV 65 นิ้ว",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard",
+            "ระบบเครื่องเสียง & ไมค์"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS302 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
     },
     {
-        id: "R-303",
-        name: "ห้อง 303",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 3)",
-        floor: "ชั้น 3",
-        capacity: 40,
-        status: "occupied",
-        currentClass: {
-            subject: "TH101 ภาษาไทยเพื่อการสื่อสาร",
-            instructor: "อ.ดร.พรพิมล รัตนโชติ",
-            time: "09:00 - 12:00",
-            studentCount: 35
+        "id": "R-303",
+        "name": "FMS303 - ห้องทฤษฎี",
+        "code": "FMS303",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 3",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Projector 4000 ANSI",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard",
+            "ระบบเสียง"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS303 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600"
+    },
+    {
+        "id": "R-305",
+        "name": "FMS305 - ห้องทฤษฎี",
+        "code": "FMS305",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 3",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart TV 65 นิ้ว",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS305 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600"
+    },
+    {
+        "id": "R-306",
+        "name": "FMS306 - ห้องทฤษฎี",
+        "code": "FMS306",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 3",
+        "capacity": 50,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart Board 75 นิ้ว",
+            "เครื่องปรับอากาศ x3",
+            "กระดานกระจก",
+            "ระบบ Video Conference"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS306 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=600"
+    },
+    {
+        "id": "R-307",
+        "name": "FMS307 - ห้องทฤษฎี",
+        "code": "FMS307",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 3",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Projector 4000 ANSI",
+            "เครื่องปรับอากาศ x2",
+            "กระดานกระจกขนาดใหญ่",
+            "ไมค์ลอย"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS307 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600"
+    },
+    {
+        "id": "R-308",
+        "name": "FMS308 - ห้องทฤษฎี",
+        "code": "FMS308",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 3",
+        "capacity": 50,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart TV 75 นิ้ว",
+            "เครื่องปรับอากาศ x3",
+            "กระดาน Whiteboard x2",
+            "ไมค์ลอยคู่"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS308 ชั้น 3 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=600"
+    },
+    {
+        "id": "R-401",
+        "name": "FMS401 - ห้องทฤษฎี",
+        "code": "FMS401",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 4",
+        "capacity": 50,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart Board 75 นิ้ว",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard",
+            "ระบบเสียงดิจิทัล"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS401 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
+    },
+    {
+        "id": "R-402",
+        "name": "FMS402 - ห้องทฤษฎี",
+        "code": "FMS402",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 4",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart TV 65 นิ้ว",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard",
+            "ลำโพงบลูทูธ"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS402 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600"
+    },
+    {
+        "id": "R-403",
+        "name": "FMS403 - ห้องทฤษฎี",
+        "code": "FMS403",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 4",
+        "capacity": 50,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Dual Projector",
+            "เครื่องปรับอากาศ x3",
+            "กระดาน Whiteboard",
+            "ระบบไมค์ 4 ตัว"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS403 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600"
+    },
+    {
+        "id": "R-404",
+        "name": "FMS404 - ห้องเรียน",
+        "code": "FMS404",
+        "type": "general",
+        "categoryName": "ห้องเรียน",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 4",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart TV 65 นิ้ว",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard",
+            "ไมค์ไร้สาย"
+        ],
+        "description": "ห้องเรียน FMS404 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600"
+    },
+    {
+        "id": "R-405",
+        "name": "FMS405 - ห้องทฤษฎี",
+        "code": "FMS405",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 4",
+        "capacity": 55,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Projector 5000 ANSI",
+            "เครื่องปรับอากาศ x3",
+            "เวทียกพื้น",
+            "ไมค์สัมมนา"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS405 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1562774053-701939374585?w=600"
+    },
+    {
+        "id": "R-406",
+        "name": "FMS406 - ห้องทฤษฎี",
+        "code": "FMS406",
+        "type": "general",
+        "categoryName": "ห้องเรียนทฤษฎี",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 4",
+        "capacity": 45,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart TV 65 นิ้ว",
+            "เครื่องปรับอากาศ x2",
+            "กระดาน Whiteboard",
+            "ระบบเสียงสเตอริโอ"
+        ],
+        "description": "ห้องเรียนทฤษฎี FMS406 ชั้น 4 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
+    },
+    {
+        "id": "LAB-1",
+        "name": "FMS201 - ห้องปฏิบัติการคอมพิวเตอร์ 1",
+        "code": "FMS201",
+        "type": "computer_lab",
+        "categoryName": "ห้องปฏิบัติการคอมพิวเตอร์",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 2",
+        "capacity": 50,
+        "pcCount": 50,
+        "status": "available",
+        "currentClass": null,
+        "specs": {
+            "cpu": "Intel Core i5-13400 (10 Cores, 16 Threads)",
+            "ram": "16 GB DDR4 3200MHz",
+            "storage": "512 GB NVMe SSD",
+            "gpu": "Intel UHD Graphics 730",
+            "monitor": "24\" Full HD IPS 75Hz",
+            "os": "Windows 11 Pro 64-bit",
+            "network": "LAN Gigabit 1000 Mbps"
         },
-        facilities: ["Projector 4000 ANSI", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ไมโครโฟนสาย"],
-        description: "ห้องเรียนบรรยายมาตรฐาน ติดตั้งโปรเจกเตอร์ความสว่างสูง",
-        image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop&q=60"
+        "software": [
+            "Microsoft Office 365",
+            "SPSS",
+            "โปรแกรมสำเร็จรูปเพื่องานบัญชี",
+            "Web Browser Suite"
+        ],
+        "facilities": [
+            "PC สำหรับนักศึกษา 50 เครื่อง",
+            "PC อาจารย์ 1 เครื่อง",
+            "Projector ความสว่างสูง",
+            "ระบบควบคุมจอ NetSupport",
+            "เครื่องปรับอากาศ x4"
+        ],
+        "description": "ห้องปฏิบัติการคอมพิวเตอร์ 1 (FMS201) ชั้น 2 คณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600"
     },
     {
-        id: "R-305",
-        name: "ห้อง 305",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 3)",
-        floor: "ชั้น 3",
-        capacity: 35,
-        status: "available",
-        currentClass: null,
-        facilities: ["Smart TV 65 นิ้ว", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ระบบเสียงสเตอริโอ"],
-        description: "ห้องเรียนขนาด 35 ที่นั่ง โต๊ะเรียนแบบเคลื่อนย้ายสะดวกสำหรับ Group Work",
-        image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "R-306",
-        name: "ห้อง 306",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 3)",
-        floor: "ชั้น 3",
-        capacity: 45,
-        status: "reserved",
-        currentClass: {
-            subject: "ประชุมวิชาการประจำสาขา",
-            instructor: "ผศ.ดร.สมชาย ใจดี",
-            time: "13:00 - 16:00",
-            studentCount: 40
+        "id": "LAB-2",
+        "name": "FMS508 - ห้องปฏิบัติการคอมพิวเตอร์ 2",
+        "code": "FMS508",
+        "type": "computer_lab",
+        "categoryName": "ห้องปฏิบัติการคอมพิวเตอร์",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 5",
+        "capacity": 45,
+        "pcCount": 45,
+        "status": "available",
+        "currentClass": null,
+        "specs": {
+            "cpu": "Intel Core i7-13700 (16 Cores, 24 Threads)",
+            "ram": "32 GB DDR5 5600MHz",
+            "storage": "1 TB NVMe Gen4 SSD",
+            "gpu": "NVIDIA GeForce RTX 3060 12GB",
+            "monitor": "27\" 2K QHD IPS",
+            "os": "Windows 11 Pro",
+            "network": "LAN Gigabit 1000 Mbps"
         },
-        facilities: ["Smart Board 75 นิ้ว", "เครื่องปรับอากาศ x3", "กระดานกระจก", "ระบบ Video Conference"],
-        description: "ห้องเรียนอัจฉริยะ Smart Classroom พร้อมจอสัมผัสและกล้องบันทึกการสอน",
-        image: "https://images.unsplash.com/photo-1562774053-701939374585?w=600&auto=format&fit=crop&q=60"
+        "software": [
+            "Adobe Creative Cloud",
+            "AI Multimedia Suite",
+            "โปรแกรมระบบสารสนเทศทางการบัญชี",
+            "VS Code & Python"
+        ],
+        "facilities": [
+            "PC ประสิทธิภาพสูง 45 เครื่อง",
+            "Smart Board 86 นิ้ว",
+            "ระบบเครื่องเสียงห้องแล็บ",
+            "เครื่องปรับอากาศ x4"
+        ],
+        "description": "ห้องปฏิบัติการคอมพิวเตอร์ 2 (FMS508) ชั้น 5 คณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600"
     },
     {
-        id: "R-307",
-        name: "ห้อง 307",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 3)",
-        floor: "ชั้น 3",
-        capacity: 40,
-        status: "occupied",
-        currentClass: {
-            subject: "MA102 แคลคูลัสสำหรับวิทยาศาสตร์",
-            instructor: "รศ.ดร.เกียรติศักดิ์ ศรีสุข",
-            time: "10:00 - 12:00",
-            studentCount: 38
+        "id": "LAB-3",
+        "name": "FMS504 - ห้องปฏิบัติการคอมพิวเตอร์ 3",
+        "code": "FMS504",
+        "type": "computer_lab",
+        "categoryName": "ห้องปฏิบัติการคอมพิวเตอร์",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 5",
+        "capacity": 45,
+        "pcCount": 45,
+        "status": "available",
+        "currentClass": null,
+        "specs": {
+            "cpu": "Intel Core i7-13700",
+            "ram": "32 GB DDR5",
+            "storage": "1 TB NVMe SSD",
+            "gpu": "NVIDIA GeForce RTX 4060",
+            "monitor": "27\" 2K QHD",
+            "os": "Windows 11 Pro",
+            "network": "LAN Gigabit"
         },
-        facilities: ["Projector 4000 ANSI", "เครื่องปรับอากาศ x2", "กระดานกระจกขนาดใหญ่", "ไมค์ลอย"],
-        description: "ห้องเรียนบรรยายพร้อมกระดานกว้างพิเศษสำหรับวิชาคำนวณ",
-        image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop&q=60"
+        "software": [
+            "Power BI",
+            "IoT Development Tools",
+            "ระบบธุรกิจอัจฉริยะ (BI Tools)",
+            "Multimedia Design Suite"
+        ],
+        "facilities": [
+            "PC เวิร์กสเตชัน 45 เครื่อง",
+            "Projector Laser จอใหญ่",
+            "ระบบ NetSupport School",
+            "เครื่องปรับอากาศ x4"
+        ],
+        "description": "ห้องปฏิบัติการคอมพิวเตอร์ 3 (FMS504) ชั้น 5 คณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600"
     },
     {
-        id: "R-308",
-        name: "ห้อง 308",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 3)",
-        floor: "ชั้น 3",
-        capacity: 50,
-        status: "available",
-        currentClass: null,
-        facilities: ["Smart TV 75 นิ้ว", "เครื่องปรับอากาศ x3", "กระดาน Whiteboard x2", "ไมค์ลอยคู่"],
-        description: "ห้องเรียนขนาดใหญ่ ชั้น 3 รองรับนักศึกษาได้ถึง 50 คน",
-        image: "https://images.unsplash.com/photo-1562774053-701939374585?w=600&auto=format&fit=crop&q=60"
-    },
-
-    // ----------------------------------------------------
-    // ห้องเรียนชั้น 4 (Floor 4)
-    // ----------------------------------------------------
-    {
-        id: "R-401",
-        name: "ห้อง 401",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 4)",
-        floor: "ชั้น 4",
-        capacity: 45,
-        status: "available",
-        currentClass: null,
-        facilities: ["Smart Board 75 นิ้ว", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ระบบเสียงดิจิทัล"],
-        description: "ห้องเรียนชั้น 4 บรรยากาศทันสมัย เก้าอี้แบบมีล้อเลื่อนปรับรูปแบบได้",
-        image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "R-402",
-        name: "ห้อง 402",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 4)",
-        floor: "ชั้น 4",
-        capacity: 40,
-        status: "occupied",
-        currentClass: {
-            subject: "EN201 ภาษาอังกฤษเชิงวิชาการ",
-            instructor: "Aj. Michael Anderson",
-            time: "09:00 - 12:00",
-            studentCount: 35
+        "id": "LAB-4",
+        "name": "FMS503 - ห้องปฏิบัติการคอมพิวเตอร์ 4",
+        "code": "FMS503",
+        "type": "computer_lab",
+        "categoryName": "ห้องปฏิบัติการคอมพิวเตอร์",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 5",
+        "capacity": 40,
+        "pcCount": 40,
+        "status": "available",
+        "currentClass": null,
+        "specs": {
+            "cpu": "Intel Core i5-13400",
+            "ram": "16 GB DDR4",
+            "storage": "512 GB SSD",
+            "gpu": "Intel UHD 730",
+            "monitor": "24\" Full HD",
+            "os": "Windows 11 Pro",
+            "network": "LAN Gigabit"
         },
-        facilities: ["Smart TV 65 นิ้ว", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ลำโพงบลูทูธ"],
-        description: "ห้องเรียนบรรยายพร้อมอุปกรณ์มัลติมีเดียสำหรับฝึกทักษะภาษา",
-        image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop&q=60"
+        "software": [
+            "Python 3.12",
+            "VS Code",
+            "Cloud Development Tools",
+            "Adobe Multimedia",
+            "SPSS Statistics"
+        ],
+        "facilities": [
+            "PC สำหรับเขียนโปรแกรม 40 เครื่อง",
+            "Projector 4500 ANSI",
+            "เครื่องปรับอากาศ x4"
+        ],
+        "description": "ห้องปฏิบัติการคอมพิวเตอร์ 4 (FMS503) ชั้น 5 คณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600"
     },
     {
-        id: "R-403",
-        name: "ห้อง 403",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 4)",
-        floor: "ชั้น 4",
-        capacity: 50,
-        status: "available",
-        currentClass: null,
-        facilities: ["Dual Projector", "เครื่องปรับอากาศ x3", "กระดาน Whiteboard", "ระบบไมค์ 4 ตัว"],
-        description: "ห้องเรียนขนาดใหญ่ จอภาพคู่สำหรับบรรยายวิชาทฤษฎี",
-        image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=60"
+        "id": "MIL-1",
+        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)",
+        "code": "MIL",
+        "type": "general",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 2",
+        "capacity": 40,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart Board 86 นิ้ว",
+            "ระบบ Video Conference บันทึกการสอน",
+            "เก้าอี้ Ergonomic",
+            "เครื่องปรับอากาศ x2"
+        ],
+        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) สำหรับระดับบัณฑิตศึกษาและวิชาการจัดการขั้นสูง",
+        "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600"
     },
     {
-        id: "R-404",
-        name: "ห้อง 404",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 4)",
-        floor: "ชั้น 4",
-        capacity: 40,
-        status: "available",
-        currentClass: null,
-        facilities: ["Smart TV 65 นิ้ว", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ไมค์ไร้สาย"],
-        description: "ห้องเรียนมาตรฐาน ชั้น 4 สะอาด สงบ แสงธรรมชาติส่องทั่วถึง",
-        image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "R-405",
-        name: "ห้อง 405",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 4)",
-        floor: "ชั้น 4",
-        capacity: 55,
-        status: "reserved",
-        currentClass: {
-            subject: "สัมมนาเทคโนโลยีสารสนเทศ",
-            instructor: "ผศ.วิภาดา ลิขิตธรรม",
-            time: "13:30 - 16:30",
-            studentCount: 50
-        },
-        facilities: ["Projector 5000 ANSI", "เครื่องปรับอากาศ x3", "เวทียกพื้น", "ไมค์สัมมนา"],
-        description: "ห้องเรียนขนาดใหญ่แบบ Slope รองรับการบรรยายกลุ่มใหญ่",
-        image: "https://images.unsplash.com/photo-1562774053-701939374585?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "R-406",
-        name: "ห้อง 406",
-        type: "general",
-        categoryName: "ห้องเรียนทั่วไป",
-        building: "อาคารเรียนรวม (ชั้น 4)",
-        floor: "ชั้น 4",
-        capacity: 40,
-        status: "available",
-        currentClass: null,
-        facilities: ["Smart TV 65 นิ้ว", "เครื่องปรับอากาศ x2", "กระดาน Whiteboard", "ระบบเสียงสเตอริโอ"],
-        description: "ห้องเรียนชั้น 4 วิวโปร่งสบาย อุปกรณ์ครบครัน",
-        image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60"
-    },
-
-    // ----------------------------------------------------
-    // ห้องปฏิบัติการคอมพิวเตอร์ 1 - 4 (Computer Labs 1 - 4)
-    // ----------------------------------------------------
-    {
-        id: "LAB-1",
-        name: "ห้องปฏิบัติการคอม 1",
-        type: "computer_lab",
-        categoryName: "ห้องปฏิบัติการคอมพิวเตอร์",
-        building: "ศูนย์คอมพิวเตอร์และเทคโนโลยี",
-        floor: "ชั้น 3",
-        capacity: 40,
-        pcCount: 40,
-        status: "occupied",
-        currentClass: {
-            subject: "CS101 การเขียนโปรแกรมคอมพิวเตอร์เบื้องต้น",
-            instructor: "ผศ.ดร.ธีรภัทร ชาญวิทย์",
-            time: "09:00 - 12:00",
-            studentCount: 38
-        },
-        specs: {
-            cpu: "Intel Core i5-13400 (10 Cores, 16 Threads)",
-            ram: "16 GB DDR4 3200MHz",
-            storage: "512 GB NVMe M.2 SSD",
-            gpu: "Intel UHD Graphics 730",
-            monitor: "24\" Full HD IPS 75Hz",
-            os: "Windows 11 Pro 64-bit",
-            network: "LAN Gigabit 1000 Mbps"
-        },
-        software: ["VS Code", "Python 3.12", "Node.js & Git", "Microsoft Office 365", "Dev-C++", "MySQL Workbench"],
-        facilities: ["PC สำหรับนักศึกษา 40 เครื่อง", "PC เครื่องแม่ข่ายอาจารย์ 1 เครื่อง", "Projector 5000 ANSI จอใหญ่", "ระบบกระจายภาพหน้าจอ NetSupport", "แอร์ 4 เครื่อง", "UPS สำรองไฟ"],
-        description: "ห้องปฏิบัติการคอมพิวเตอร์ 1 เหมาะสำหรับการเขียนโปรแกรมและฝึกอบรมการใช้งานซอฟต์แวร์",
-        image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "LAB-2",
-        name: "ห้องปฏิบัติการคอม 2",
-        type: "computer_lab",
-        categoryName: "ห้องปฏิบัติการคอมพิวเตอร์",
-        building: "ศูนย์คอมพิวเตอร์และเทคโนโลยี",
-        floor: "ชั้น 3",
-        capacity: 40,
-        pcCount: 40,
-        status: "available",
-        currentClass: null,
-        specs: {
-            cpu: "Intel Core i7-13700 (16 Cores, 24 Threads)",
-            ram: "32 GB DDR5 5600MHz",
-            storage: "1 TB NVMe Gen4 SSD",
-            gpu: "NVIDIA GeForce RTX 3060 12GB",
-            monitor: "27\" 2K QHD IPS 144Hz",
-            os: "Windows 11 Pro / Ubuntu Dual Boot",
-            network: "LAN Gigabit 1000 Mbps"
-        },
-        software: ["IntelliJ IDEA Ultimate", "Android Studio", "Docker Desktop", "VS Code", "PostgreSQL", "Flutter SDK", "Unity 3D"],
-        facilities: ["PC สเปกสูง 40 เครื่อง", "Smart Board 86 นิ้ว", "ระบบเครื่องเสียงห้องแล็บ", "ระบบ NetSupport School", "เครื่องปรับอากาศ x4", "UPS กลาง"],
-        description: "ห้องปฏิบัติการคอมพิวเตอร์ 2 รองรับการรัน Docker, Virtualization และ Mobile Development",
-        image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "LAB-3",
-        name: "ห้องปฏิบัติการคอม 3",
-        type: "computer_lab",
-        categoryName: "ห้องปฏิบัติการคอมพิวเตอร์",
-        building: "ศูนย์คอมพิวเตอร์และเทคโนโลยี",
-        floor: "ชั้น 4",
-        capacity: 35,
-        pcCount: 35,
-        status: "reserved",
-        currentClass: {
-            subject: "AI & Deep Learning Workshop",
-            instructor: "ดร.กิตติคุณ ศิริวงศ์",
-            time: "13:00 - 17:00",
-            studentCount: 32
-        },
-        specs: {
-            cpu: "Intel Core i9-14900K (24 Cores, 32 Threads)",
-            ram: "64 GB DDR5 6000MHz",
-            storage: "2 TB NVMe Gen4 SSD High Speed",
-            gpu: "NVIDIA GeForce RTX 4080 Super 16GB VRAM (CUDA Capable)",
-            monitor: "27\" 4K UHD Color Calibrated 100% sRGB",
-            os: "Ubuntu 22.04 LTS / Windows 11 Pro",
-            network: "LAN 2.5 Gbps High Bandwidth"
-        },
-        software: ["PyTorch & TensorFlow (CUDA)", "JupyterLab / Anaconda", "Adobe Creative Cloud 2024", "Blender 4.0", "Unreal Engine 5", "AutoCAD 3D"],
-        facilities: ["PC ระดับ High-End Workstation 35 เครื่อง", "Dual Laser Projector", "เครื่องปรับอากาศควบคุมอุณหภูมิ 22°C x4", "เก้าอี้ Ergonomic", "UPS ประจำทุกเครื่อง"],
-        description: "ห้องปฏิบัติการคอมพิวเตอร์ 3 สำหรับปัญญาประดิษฐ์ (AI), กราฟิก 3D, โมเดล Deep Learning และมัลติมีเดียขั้นสูง",
-        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=60"
-    },
-    {
-        id: "LAB-4",
-        name: "ห้องปฏิบัติการคอม 4",
-        type: "computer_lab",
-        categoryName: "ห้องปฏิบัติการคอมพิวเตอร์",
-        building: "ศูนย์คอมพิวเตอร์และเทคโนโลยี",
-        floor: "ชั้น 4",
-        capacity: 40,
-        pcCount: 40,
-        status: "available",
-        currentClass: null,
-        specs: {
-            cpu: "AMD Ryzen 7 7700X (8 Cores, 16 Threads)",
-            ram: "32 GB DDR5 5200MHz",
-            storage: "1 TB NVMe SSD + Dual LAN Card",
-            gpu: "AMD Radeon RX 7600 8GB",
-            monitor: "24\" Full HD IPS 100Hz",
-            os: "Kali Linux / Windows Server / Windows 11 Pro",
-            network: "Isolated Managed Switch VLAN + Cisco Packet Tracer Lab"
-        },
-        software: ["Wireshark", "Cisco Packet Tracer", "GNS3", "VirtualBox & VMware Workstation", "Metasploit", "Nmap & Security Suite"],
-        facilities: ["PC เครือข่าย 40 เครื่อง", "ตู้ Rack Switch & Router ฝึกทดลอง", "Projector 4500 ANSI", "ระบบ Isolated Sandbox Network", "เครื่องปรับอากาศ x4"],
-        description: "ห้องปฏิบัติการคอมพิวเตอร์ 4 ความมั่นคงปลอดภัยไซเบอร์และระบบเครือข่าย พร้อมอุปกรณ์ Rack Switch",
-        image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop&q=60"
+        "id": "CONF-1",
+        "name": "ห้องประชุมพฤกษาพรรณชมพู",
+        "code": "CONF-PK",
+        "type": "general",
+        "categoryName": "ห้องประชุม / สัมมนา",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 1",
+        "capacity": 80,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "ระบบเสียงไมโครโฟนรอบทิศทาง",
+            "Dual Projector",
+            "เวทีบรรยาย",
+            "ระบบถ่ายทอดสด Live Streaming",
+            "เครื่องปรับอากาศ x4"
+        ],
+        "description": "ห้องประชุมพฤกษาพรรณชมพู คณะวิทยาการจัดการ รองรับการบรรยาย สัมมนา และการประชุมวิชาการ",
+        "image": "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600"
     }
 ];
 
-// ข้อมูลตารางการใช้งานประจำสัปดาห์
 const DEFAULT_TIMETABLE = [
-    // จันทร์ (Monday)
-    { id: "S-1", roomId: "R-303", day: "จันทร์", dayIndex: 1, startTime: "09:00", endTime: "12:00", subject: "TH101 ภาษาไทยเพื่อการสื่อสาร", code: "TH101", instructor: "อ.ดร.พรพิมล รัตนโชติ", group: "Sec 1", color: "blue" },
-    { id: "S-2", roomId: "R-402", day: "จันทร์", dayIndex: 1, startTime: "09:00", endTime: "12:00", subject: "EN201 ภาษาอังกฤษเชิงวิชาการ", code: "EN201", instructor: "Aj. Michael Anderson", group: "Sec 2", color: "purple" },
-    { id: "S-3", roomId: "LAB-1", day: "จันทร์", dayIndex: 1, startTime: "09:00", endTime: "12:00", subject: "CS101 การเขียนโปรแกรมเบื้องต้น", code: "CS101", instructor: "ผศ.ดร.ธีรภัทร ชาญวิทย์", group: "กลุ่ม 1", color: "indigo" },
-    { id: "S-4", roomId: "R-306", day: "จันทร์", dayIndex: 1, startTime: "13:00", endTime: "16:00", subject: "ประชุมวิชาการประจำสาขา", code: "CONF-01", instructor: "ผศ.ดร.สมชาย ใจดี", group: "คณาจารย์", color: "amber" },
-    { id: "S-5", roomId: "LAB-3", day: "จันทร์", dayIndex: 1, startTime: "13:00", endTime: "17:00", subject: "AI & Deep Learning Workshop", code: "AI-401", instructor: "ดร.กิตติคุณ ศิริวงศ์", group: "ปี 4 IT", color: "emerald" },
-
-    // อังคาร (Tuesday)
-    { id: "S-6", roomId: "R-302", day: "อังคาร", dayIndex: 2, startTime: "09:00", endTime: "12:00", subject: "GE101 การคิดเชิงวิพากษ์", code: "GE101", instructor: "อ.ปิยพร แก้วมณี", group: "Sec 3", color: "cyan" },
-    { id: "S-7", roomId: "R-401", day: "อังคาร", dayIndex: 2, startTime: "09:00", endTime: "12:00", subject: "BA201 หลักการตลาดดิจิทัล", code: "BA201", instructor: "ดร.กานดา สุวรรณ", group: "Sec 1", color: "pink" },
-    { id: "S-8", roomId: "LAB-2", day: "อังคาร", dayIndex: 2, startTime: "13:00", endTime: "16:00", subject: "CS302 Mobile App Development", code: "CS302", instructor: "อ.วรพงษ์ ทัศนีย์", group: "กลุ่ม 2", color: "orange" },
-    { id: "S-9", roomId: "LAB-4", day: "อังคาร", dayIndex: 2, startTime: "09:00", endTime: "12:00", subject: "NET201 Network Defense & Security", code: "NET201", instructor: "อ.ภาณุมาศ รัตนกุล", group: "ปี 3", color: "red" },
-    { id: "S-10", roomId: "R-308", day: "อังคาร", dayIndex: 2, startTime: "13:00", endTime: "16:00", subject: "ST201 สถิติประยุกต์สำหรับงานวิจัย", code: "ST201", instructor: "ผศ.ดร.วิชัย รุ่งเรือง", group: "Sec 1", color: "teal" },
-
-    // พุธ (Wednesday)
-    { id: "S-11", roomId: "LAB-1", day: "พุธ", dayIndex: 3, startTime: "13:00", endTime: "16:00", subject: "DB201 ระบบฐานข้อมูลเชิงสัมพันธ์", code: "DB201", instructor: "อ.พิมพ์ใจ ทิพยวานิช", group: "กลุ่ม 1", color: "indigo" },
-    { id: "S-12", roomId: "R-307", day: "พุธ", dayIndex: 3, startTime: "10:00", endTime: "12:00", subject: "MA102 แคลคูลัสสำหรับวิทยาศาสตร์", code: "MA102", instructor: "รศ.ดร.เกียรติศักดิ์ ศรีสุข", group: "Sec 2", color: "blue" },
-    { id: "S-13", roomId: "R-403", day: "พุธ", dayIndex: 3, startTime: "08:30", endTime: "11:30", subject: "PY101 ฟิสิกส์พื้นฐาน", code: "PY101", instructor: "ดร.นพดล วรศิลป์", group: "Sec 4", color: "violet" },
-    { id: "S-14", roomId: "LAB-3", day: "พุธ", dayIndex: 3, startTime: "09:00", endTime: "12:00", subject: "CG301 Computer Graphics & Animation", code: "CG301", instructor: "อ.ชาญวิทย์ วงศ์สว่าง", group: "ปี 3 มัลติ", color: "emerald" },
-
-    // พฤหัสบดี (Thursday)
-    { id: "S-15", roomId: "LAB-2", day: "พฤหัสบดี", dayIndex: 4, startTime: "09:00", endTime: "12:00", subject: "SE301 Software Engineering Workshop", code: "SE301", instructor: "ผศ.มนตรี พิทักษ์พงษ์", group: "กลุ่ม 1", color: "orange" },
-    { id: "S-16", roomId: "R-405", day: "พฤหัสบดี", dayIndex: 4, startTime: "13:30", endTime: "16:30", subject: "สัมมนาเทคโนโลยีสารสนเทศ", code: "IT499", instructor: "ผศ.วิภาดา ลิขิตธรรม", group: "ปี 4 รวม", color: "rose" },
-    { id: "S-17", roomId: "LAB-4", day: "พฤหัสบดี", dayIndex: 4, startTime: "13:00", endTime: "16:00", subject: "SEC402 Ethical Hacking & Pentest", code: "SEC402", instructor: "อ.ภาณุมาศ รัตนกุล", group: "กลุ่ม 1", color: "red" },
-
-    // ศุกร์ (Friday)
-    { id: "S-18", roomId: "R-305", day: "ศุกร์", dayIndex: 5, startTime: "09:00", endTime: "12:00", subject: "SC101 สิ่งแวดล้อมกับการพัฒนาที่ยั่งยืน", code: "SC101", instructor: "ผศ.ดร.จิรวรรณ ทองดี", group: "Sec 1", color: "green" },
-    { id: "S-19", roomId: "LAB-1", day: "ศุกร์", dayIndex: 5, startTime: "13:00", endTime: "16:00", subject: "WEB201 Web Frontend Architecture", code: "WEB201", instructor: "อ.ธนากร วัฒนศิลป์", group: "กลุ่ม 2", color: "indigo" },
-    { id: "S-20", roomId: "R-406", day: "ศุกร์", dayIndex: 5, startTime: "13:00", endTime: "16:00", subject: "AC101 บัญชีเบื้องต้นสำหรับผู้บริหาร", code: "AC101", instructor: "ดร.สุภาพร เลิศรัตน์", group: "Sec 2", color: "amber" }
+    {
+        "id": "TT-01",
+        "roomId": "LAB-1",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ทฤษฎี)",
+        "code": "07-064-261",
+        "instructor": "อ.พระรักษ์ อมรศักดิ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1, 3)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-02",
+        "roomId": "LAB-1",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ปฏิบัติ)",
+        "code": "07-064-261",
+        "instructor": "อ.พระรักษ์ อมรศักดิ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1, 3)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-03",
+        "roomId": "LAB-1",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-044-224 การภาษีอากร 2 (ทฤษฎี)",
+        "code": "07-044-224",
+        "instructor": "อาจารย์ ดร.พูนพิศ ธิตินันทน์",
+        "group": "กลุ่ม 01 (ชั้นปี 3 บัญชี)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-04",
+        "roomId": "LAB-1",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-044-224 การภาษีอากร 2 (ปฏิบัติ)",
+        "code": "07-044-224",
+        "instructor": "อาจารย์ ดร.พูนพิศ ธิตินันทน์",
+        "group": "กลุ่ม 01 (ชั้นปี 3 บัญชี)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-05",
+        "roomId": "LAB-1",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-268 ระบบสารสนเทศเพื่อการจัดการภาครัฐ (ทฤษฎี)",
+        "code": "07-064-268",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 02 (ชั้นปี 3 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-06",
+        "roomId": "LAB-1",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-268 ระบบสารสนเทศเพื่อการจัดการภาครัฐ (ปฏิบัติ)",
+        "code": "07-064-268",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 02 (ชั้นปี 3 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-07",
+        "roomId": "LAB-1",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-251 การประยุกต์โปรแกรมตารางงานเพื่องานบัญชี (ทฤษฎี)",
+        "code": "07-044-251",
+        "instructor": "อ.นิฟาตีฮะ ปัตนวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-08",
+        "roomId": "LAB-1",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-251 การประยุกต์โปรแกรมตารางงานเพื่องานบัญชี (ปฏิบัติ)",
+        "code": "07-044-251",
+        "instructor": "อ.นิฟาตีฮะ ปัตนวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-09",
+        "roomId": "LAB-1",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-268 ระบบสารสนเทศเพื่อการจัดการภาครัฐ (ทฤษฎี)",
+        "code": "07-064-268",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-10",
+        "roomId": "LAB-1",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-268 ระบบสารสนเทศเพื่อการจัดการภาครัฐ (ปฏิบัติ)",
+        "code": "07-064-268",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-11",
+        "roomId": "LAB-1",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-034-218 โปรแกรมสำเร็จรูปในสำนักงาน (ทฤษฎี)",
+        "code": "07-034-218",
+        "instructor": "อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 02 (ชั้นปี 4 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-12",
+        "roomId": "LAB-1",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-034-218 โปรแกรมสำเร็จรูปในสำนักงาน (ปฏิบัติ)",
+        "code": "07-034-218",
+        "instructor": "อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 02 (ชั้นปี 4 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-13",
+        "roomId": "LAB-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ทฤษฎี)",
+        "code": "07-064-261",
+        "instructor": "อ.พระรักษ์ อมรศักดิ์",
+        "group": "กลุ่ม 03 (ชั้นปี 1, 5, 3 รปศ.)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-14",
+        "roomId": "LAB-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ปฏิบัติ)",
+        "code": "07-064-261",
+        "instructor": "อ.พระรักษ์ อมรศักดิ์",
+        "group": "กลุ่ม 03 (ชั้นปี 1, 5, 3 รปศ.)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-15",
+        "roomId": "LAB-1",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "13:00",
+        "endTime": "16:00",
+        "subject": "07-086-311 ระบบสารสนเทศเพื่อการจัดการภาครัฐและภาคเอกชน",
+        "code": "07-086-311",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-16",
+        "roomId": "R-302",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-014-212 การจัดการโลจิสติกส์และห่วงโซ่อุปทาน",
+        "code": "07-014-212",
+        "instructor": "ผศ.มัณฑนา กระโหมวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 1, 3 เกินเกณฑ์)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-17",
+        "roomId": "R-302",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-204 การจัดการเชิงกลยุทธ์",
+        "code": "07-004-204",
+        "instructor": "อาจารย์ ดร.กชพรพรรณ พงค์ทองเมือง",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การจัดการ)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-18",
+        "roomId": "R-302",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-014-213 การเตรียมความพร้อมสหกิจศึกษาและฝึกประสบการณ์ วิชาชีพการจัดการ",
+        "code": "07-014-213",
+        "instructor": "อ.โซเฟีย สามะอาลี",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-19",
+        "roomId": "R-302",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-210 รายงานทางการเงินและการวิเคราะห์งบการเงิน (ทฤษฎี)",
+        "code": "07-044-210",
+        "instructor": "อ.เนตรวดี เพชรประดับ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-20",
+        "roomId": "R-302",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-210 รายงานทางการเงินและการวิเคราะห์งบการเงิน (ปฏิบัติ)",
+        "code": "07-044-210",
+        "instructor": "อ.เนตรวดี เพชรประดับ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-21",
+        "roomId": "R-302",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-014-232 การเป็นผู้ประกอบการ (ทฤษฎี)",
+        "code": "07-014-232",
+        "instructor": "อ.โซเฟีย สามะอาลี",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 2 การจัดการ/บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-22",
+        "roomId": "R-302",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-014-232 การเป็นผู้ประกอบการ (ปฏิบัติ)",
+        "code": "07-014-232",
+        "instructor": "อ.โซเฟีย สามะอาลี",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 2 การจัดการ/บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-23",
+        "roomId": "R-302",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-004-237 การจัดการทางการเงิน (หลักสูตรปรับปรุง 2568)",
+        "code": "07-004-237",
+        "instructor": "อ.เนตรวดี เพชรประดับ",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-24",
+        "roomId": "R-302",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-237 การจัดการทางการเงิน (หลักสูตรปรับปรุง 2568)",
+        "code": "07-004-237",
+        "instructor": "อ.เนตรวดี เพชรประดับ",
+        "group": "กลุ่ม 02 (ชั้นปี 1 IT)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-25",
+        "roomId": "R-303",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-241 การบัญชีต้นทุน (ทฤษฎี)",
+        "code": "07-044-241",
+        "instructor": "อ.นันทพร โกสิยาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-26",
+        "roomId": "R-303",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-241 การบัญชีต้นทุน (ปฏิบัติ)",
+        "code": "07-044-241",
+        "instructor": "อ.นันทพร โกสิยาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-27",
+        "roomId": "R-303",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-212 กลยุทธ์การตลาดและการประยุกต์ศิลปะการรบ (ทฤษฎี)",
+        "code": "07-024-212",
+        "instructor": "อาจารย์ ดร.รุ่งศิริ ผดุงรัตน์",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การตลาดดิจิทัล)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-28",
+        "roomId": "R-303",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-212 กลยุทธ์การตลาดและการประยุกต์ศิลปะการรบ (ปฏิบัติ)",
+        "code": "07-024-212",
+        "instructor": "อาจารย์ ดร.รุ่งศิริ ผดุงรัตน์",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การตลาดดิจิทัล)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-29",
+        "roomId": "R-303",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-044-225 การเตรียมความพร้อมสหกิจศึกษาและการฝึกประสบการณ์วิชาชีพบัญชี",
+        "code": "07-044-225",
+        "instructor": "อ.นันทพร โกสิยาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-30",
+        "roomId": "R-303",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-014-237 การจัดการธุรกิจชุมชน (ทฤษฎี)",
+        "code": "07-014-237",
+        "instructor": "อาจารย์ ดร.กฤษณา พรหมชาติ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การจัดการ)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-31",
+        "roomId": "R-303",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-014-237 การจัดการธุรกิจชุมชน (ปฏิบัติ)",
+        "code": "07-014-237",
+        "instructor": "อาจารย์ ดร.กฤษณา พรหมชาติ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การจัดการ)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-32",
+        "roomId": "R-303",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-205 หลักการตลาด",
+        "code": "07-004-205",
+        "instructor": "อาจารย์ ดร.สุมาลี กรดกางกั้น",
+        "group": "กลุ่ม 01 (ชั้นปี 1, 4)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-33",
+        "roomId": "R-303",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-044-226 สัมมนาการบัญชีการเงิน (ทฤษฎี)",
+        "code": "07-044-226",
+        "instructor": "อ.ทิพวรรณ รัตนพรหม",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-34",
+        "roomId": "R-303",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-044-226 สัมมนาการบัญชีการเงิน (ปฏิบัติ)",
+        "code": "07-044-226",
+        "instructor": "อ.ทิพวรรณ รัตนพรหม",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-35",
+        "roomId": "R-303",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-214 กฎหมายธุรกิจ",
+        "code": "07-004-214",
+        "instructor": "อ.ศรัณ เนื้อน้อย",
+        "group": "กลุ่ม 01 (ชั้นปี 2 การจัดการ)",
+        "color": "red"
+    },
+    {
+        "id": "TT-36",
+        "roomId": "R-305",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-054-101 ธุรกิจและการเป็นผู้ประกอบการ (ทฤษฎี)",
+        "code": "07-054-101",
+        "instructor": "อ.มธุรส ทอ. , อ.วีรศักดิ์ โศ.",
+        "group": "กลุ่ม 01 (ชั้นปี 1 ไฟฟ้า/IT)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-37",
+        "roomId": "R-305",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-054-101 ธุรกิจและการเป็นผู้ประกอบการ (ปฏิบัติ)",
+        "code": "07-054-101",
+        "instructor": "อ.มธุรส ทอ. , อ.วีรศักดิ์ โศ.",
+        "group": "กลุ่ม 01 (ชั้นปี 1 ไฟฟ้า/IT)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-38",
+        "roomId": "R-305",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-014-216 การสัมมนาการจัดการ (ทฤษฎี)",
+        "code": "07-014-216",
+        "instructor": "อ.รอยฮาน สะอารี",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-39",
+        "roomId": "R-305",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-014-216 การสัมมนาการจัดการ (ปฏิบัติ)",
+        "code": "07-014-216",
+        "instructor": "อ.รอยฮาน สะอารี",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-40",
+        "roomId": "R-305",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-004-210 การภาษีอากร",
+        "code": "07-004-210",
+        "instructor": "อ.นิฟาตีฮะ ปัตนวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การจัดการ)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-41",
+        "roomId": "R-305",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-004-223 หลักการจัดการธุรกิจและการเขียนแผนธุรกิจ (ทฤษฎี)",
+        "code": "07-004-223",
+        "instructor": "อ.รอยฮาน สะอารี",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 2)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-42",
+        "roomId": "R-305",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-004-223 หลักการจัดการธุรกิจและการเขียนแผนธุรกิจ (ปฏิบัติ)",
+        "code": "07-004-223",
+        "instructor": "อ.รอยฮาน สะอารี",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 2)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-43",
+        "roomId": "R-305",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-204 การจัดการเชิงกลยุทธ์ (สาขาวิชาการบัญชี)",
+        "code": "07-004-204",
+        "instructor": "ผศ.ดร.บงกช กมลเปรม",
+        "group": "กลุ่ม 01 (ชั้นปี 4, 2)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-44",
+        "roomId": "R-305",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-014-215 การจัดการธุรกิจระหว่างประเทศ",
+        "code": "07-014-215",
+        "instructor": "อ.วีรศักดิ์ โศจิพันธุ์",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 1)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-45",
+        "roomId": "R-306",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-004-209 หลักการบัญชี (ทฤษฎี)",
+        "code": "07-004-209",
+        "instructor": "อ.ทิพวรรณ รัตนพรหม",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 1, 4)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-46",
+        "roomId": "R-306",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-004-209 หลักการบัญชี (ปฏิบัติ)",
+        "code": "07-004-209",
+        "instructor": "อ.ทิพวรรณ รัตนพรหม",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 1, 4)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-47",
+        "roomId": "R-306",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-034-252 การเตรียมความพร้อมสหกิจศึกษาและฝึกประสบการณ์วิชาชีพ",
+        "code": "07-034-252",
+        "instructor": "อ.ผการัตน์ ทองจันทร์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 IT)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-48",
+        "roomId": "R-306",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-014-244 พฤติกรรมองค์การและภาวะผู้นำ",
+        "code": "07-014-244",
+        "instructor": "อาจารย์ ดร.สรัญณี อุเส็นยาง",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 5, 4)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-49",
+        "roomId": "R-306",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-014-258 การบริหารความเสี่ยงและการเปลี่ยนแปลง",
+        "code": "07-014-258",
+        "instructor": "อาจารย์ ดร.อัฟซา อาแว",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-50",
+        "roomId": "R-306",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-014-256 นวัตกรรมและการตลาดเชิงสร้างสรรค์ (ทฤษฎี)",
+        "code": "07-014-256",
+        "instructor": "อาจารย์ ดร.สรัญณี อุเส็นยาง",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-51",
+        "roomId": "R-306",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-014-256 นวัตกรรมและการตลาดเชิงสร้างสรรค์ (ปฏิบัติ)",
+        "code": "07-014-256",
+        "instructor": "อาจารย์ ดร.สรัญณี อุเส็นยาง",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-52",
+        "roomId": "R-306",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-004-221 สถิติธุรกิจ (ทฤษฎี)",
+        "code": "07-004-221",
+        "instructor": "อาจารย์ ดร.อัฟซา อา. , อ.วีรศักดิ์ โศ.",
+        "group": "กลุ่ม 01 (ชั้นปี 3)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-53",
+        "roomId": "R-306",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-004-221 สถิติธุรกิจ (ปฏิบัติ)",
+        "code": "07-004-221",
+        "instructor": "อาจารย์ ดร.อัฟซา อา. , อ.วีรศักดิ์ โศ.",
+        "group": "กลุ่ม 01 (ชั้นปี 3)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-54",
+        "roomId": "R-307",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-214 ผู้ประกอบการพาณิชย์อิเล็กทรอนิกส์ (ทฤษฎี)",
+        "code": "07-024-214",
+        "instructor": "อ.ชลกาญจน์ สถะบดี",
+        "group": "กลุ่ม 01 (ชั้นปี 3)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-55",
+        "roomId": "R-307",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-214 ผู้ประกอบการพาณิชย์อิเล็กทรอนิกส์ (ปฏิบัติ)",
+        "code": "07-024-214",
+        "instructor": "อ.ชลกาญจน์ สถะบดี",
+        "group": "กลุ่ม 01 (ชั้นปี 3)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-56",
+        "roomId": "R-307",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-044-229 ภาวะผู้นำและจริยธรรมวิชาชีพบัญชี",
+        "code": "07-044-229",
+        "instructor": "อาจารย์ ดร.พูนพิศ ธิ. , อาจารย์ ดร.สรัญณี อุ.",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-57",
+        "roomId": "R-307",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-024-217 การเตรียมความพร้อมสหกิจศึกษาและฝึกประสบการณ์วิชาชีพ",
+        "code": "07-024-217",
+        "instructor": "อาจารย์ ดร.รุ่งศิริ ผดุงรัตน์",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-58",
+        "roomId": "R-307",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-201 องค์การและการจัดการ (สาขาวิชาการบัญชี)",
+        "code": "07-004-201",
+        "instructor": "ผศ.มัณฑนา กร. , ผศ.ดร.ธมยันตี ปร.",
+        "group": "กลุ่ม 02 (ชั้นปี 1 บัญชี)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-59",
+        "roomId": "R-307",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-233 การนำเสนอและโน้มน้าวทางธุรกิจ (ทฤษฎี)",
+        "code": "07-024-233",
+        "instructor": "อ.ชลกาญจน์ สถะบดี",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-60",
+        "roomId": "R-307",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-233 การนำเสนอและโน้มน้าวทางธุรกิจ (ปฏิบัติ)",
+        "code": "07-024-233",
+        "instructor": "อ.ชลกาญจน์ สถะบดี",
+        "group": "กลุ่ม 01 (ชั้นปี 4)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-61",
+        "roomId": "R-308",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-243 เทคนิคการบริหาร",
+        "code": "07-064-243",
+        "instructor": "อ.คมสัน หลงละเลิง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-62",
+        "roomId": "R-308",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-273 นวัตกรรมการจัดการท้องถิ่น (ทฤษฎี)",
+        "code": "07-064-273",
+        "instructor": "อาจารย์ ดร.พรทิพย์ มานพคำ",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-63",
+        "roomId": "R-308",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-273 นวัตกรรมการจัดการท้องถิ่น (ปฏิบัติ)",
+        "code": "07-064-273",
+        "instructor": "อาจารย์ ดร.พรทิพย์ มานพคำ",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-64",
+        "roomId": "R-308",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-260 หลักรัฐศาสตร์",
+        "code": "07-064-260",
+        "instructor": "ผศ.พัชนี ตูเล๊ะ",
+        "group": "กลุ่ม 02 (ชั้นปี 1, 4 รปศ.)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-65",
+        "roomId": "R-308",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-270 สถิติสำหรับนักบริหาร (ทฤษฎี)",
+        "code": "07-064-270",
+        "instructor": "อาจารย์ ดร.ชนาธิป หว. , อาจารย์ ดร.อัฟซา อา.",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-66",
+        "roomId": "R-308",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-270 สถิติสำหรับนักบริหาร (ปฏิบัติ)",
+        "code": "07-064-270",
+        "instructor": "อาจารย์ ดร.ชนาธิป หว. , อาจารย์ ดร.อัฟซา อา.",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-67",
+        "roomId": "R-308",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-262 เศรษฐศาสตร์และการคลังสาธารณะสำหรับนักบริหาร",
+        "code": "07-064-262",
+        "instructor": "อาจารย์ ดร.ชนาธิป หวังวรวงศ์",
+        "group": "กลุ่ม 02 (ชั้นปี 1, 2, 3)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-68",
+        "roomId": "R-308",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-237 การบัญชีชั้นกลาง 1 (ทฤษฎี)",
+        "code": "07-044-237",
+        "instructor": "อ.นิฟาตีฮะ ปัตนวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-69",
+        "roomId": "R-308",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-237 การบัญชีชั้นกลาง 1 (ปฏิบัติ)",
+        "code": "07-044-237",
+        "instructor": "อ.นิฟาตีฮะ ปัตนวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-70",
+        "roomId": "R-401",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-209 กฎหมายปกครอง",
+        "code": "07-064-209",
+        "instructor": "อ.ศรัณ เนื้อน้อย",
+        "group": "กลุ่ม 01 (ชั้นปี 2 รปศ.)",
+        "color": "red"
+    },
+    {
+        "id": "TT-71",
+        "roomId": "R-401",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-064-262 เศรษฐศาสตร์และการคลังสาธารณะสำหรับนักบริหาร",
+        "code": "07-064-262",
+        "instructor": "อาจารย์ ดร.ชนาธิป หวังวรวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1, 3 รปศ.)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-72",
+        "roomId": "R-401",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-054-101 ธุรกิจและการเป็นผู้ประกอบการ (ทฤษฎี)",
+        "code": "07-054-101",
+        "instructor": "อ.มธุรส ทอ. , อ.วีรศักดิ์ โศ.",
+        "group": "กลุ่ม 02 (ชั้นปี 2 ภาษาอังกฤษ/บริการ)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-73",
+        "roomId": "R-401",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-054-101 ธุรกิจและการเป็นผู้ประกอบการ (ปฏิบัติ)",
+        "code": "07-054-101",
+        "instructor": "อ.มธุรส ทอ. , อ.วีรศักดิ์ โศ.",
+        "group": "กลุ่ม 02 (ชั้นปี 2 ภาษาอังกฤษ/บริการ)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-74",
+        "roomId": "R-401",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-227 การเตรียมความพร้อมสหกิจศึกษาและฝึกประสบการณ์ วิชาชีพรัฐประศาสนศาสตร์",
+        "code": "07-064-227",
+        "instructor": "อาจารย์ ดร.พรทิพย์ มานพคำ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-75",
+        "roomId": "R-401",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-260 หลักรัฐศาสตร์",
+        "code": "07-064-260",
+        "instructor": "ผศ.พัชนี ตูเล๊ะ",
+        "group": "กลุ่ม 01 (ชั้นปี 1, 4, 2 รปศ.)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-76",
+        "roomId": "R-401",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-278 นวัตกรรมการจัดการภาครัฐและภาคเอกชน (ทฤษฎี)",
+        "code": "07-064-278",
+        "instructor": "อาจารย์ ดร.อิบรอฮิม สา. , อ.บารมี หลังยาหน่าย",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-77",
+        "roomId": "R-401",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-278 นวัตกรรมการจัดการภาครัฐและภาคเอกชน (ปฏิบัติ)",
+        "code": "07-064-278",
+        "instructor": "อาจารย์ ดร.อิบรอฮิม สา. , อ.บารมี หลังยาหน่าย",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-78",
+        "roomId": "R-401",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-201 องค์การและการจัดการ",
+        "code": "07-004-201",
+        "instructor": "ผศ.มัณฑนา กระโหมวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 การจัดการ)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-79",
+        "roomId": "R-401",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-064-231 กฎหมายอาญา 2",
+        "code": "07-064-231",
+        "instructor": "ผศ.สัญญา วัชราทักษิณ",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "red"
+    },
+    {
+        "id": "TT-80",
+        "roomId": "R-402",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-233 กฎหมายลักษณะพยาน",
+        "code": "07-064-233",
+        "instructor": "ผศ.สัญญา วัชราทักษิณ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-81",
+        "roomId": "R-402",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-281 นวัตกรรมกับการเป็นผู้ประกอบการ (ทฤษฎี)",
+        "code": "07-064-281",
+        "instructor": "อาจารย์ ดร.อิบรอฮิม สารีมาแซ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-82",
+        "roomId": "R-402",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-281 นวัตกรรมกับการเป็นผู้ประกอบการ (ปฏิบัติ)",
+        "code": "07-064-281",
+        "instructor": "อาจารย์ ดร.อิบรอฮิม สารีมาแซ",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-83",
+        "roomId": "R-402",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-235 เศรษฐศาสตร์ยุคดิจิทัล",
+        "code": "07-004-235",
+        "instructor": "อ.โซเฟีย สามะอาลี",
+        "group": "กลุ่ม 01 (ชั้นปี 1, 5 IT/บัญชี)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-84",
+        "roomId": "R-402",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-004-231 การเงินธุรกิจยุคดิจิทัล / การเงินธุรกิจ",
+        "code": "07-004-231",
+        "instructor": "อ.เนตรวดี เพชรประดับ",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 3 การตลาด/IT)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-85",
+        "roomId": "R-402",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-024-202 การจัดการการตั้งราคาและงบประมาณ",
+        "code": "07-024-202",
+        "instructor": "อาจารย์ ดร.สุมาลี กรดกางกั้น",
+        "group": "กลุ่ม 01 (ชั้นปี 2 การตลาดดิจิทัล)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-86",
+        "roomId": "R-402",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-235 หลักการบัญชี 1 (ทฤษฎี)",
+        "code": "07-044-235",
+        "instructor": "อาจารย์ ดร.พูนพิศ ธิตินันทน์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-87",
+        "roomId": "R-402",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-235 หลักการบัญชี 1 (ปฏิบัติ)",
+        "code": "07-044-235",
+        "instructor": "อาจารย์ ดร.พูนพิศ ธิตินันทน์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-88",
+        "roomId": "R-402",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-024-210 การตลาดระหว่างประเทศ",
+        "code": "07-024-210",
+        "instructor": "อาจารย์ ดร.รุ่งศิริ ผดุงรัตน์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การตลาดดิจิทัล)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-89",
+        "roomId": "R-402",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "08:00",
+        "endTime": "10:00",
+        "subject": "07-064-276 การจัดการเศรษฐกิจท้องถิ่น (ทฤษฎี)",
+        "code": "07-064-276",
+        "instructor": "อ.บารมี หลังยาหน่าย",
+        "group": "กลุ่ม 01-s (ชั้นปี 4 รปศ.)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-90",
+        "roomId": "R-402",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "10:00",
+        "endTime": "12:00",
+        "subject": "07-064-276 การจัดการเศรษฐกิจท้องถิ่น (ปฏิบัติ)",
+        "code": "07-064-276",
+        "instructor": "อ.บารมี หลังยาหน่าย",
+        "group": "กลุ่ม 01-s (ชั้นปี 4 รปศ.)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-91",
+        "roomId": "R-402",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "13:00",
+        "endTime": "16:00",
+        "subject": "07-064-243 เทคนิคการบริหาร",
+        "code": "07-064-243",
+        "instructor": "อ.คมสัน หลงละเลิง",
+        "group": "กลุ่ม 01-s (ชั้นปี 4 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-92",
+        "roomId": "R-402",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "subject": "07-064-277 สัมมนานวัตกรรมการจัดการท้องถิ่น (ทฤษฎี)",
+        "code": "07-064-277",
+        "instructor": "อ.เปาซี วานอง",
+        "group": "กลุ่ม 01-s (ชั้นปี 4)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-93",
+        "roomId": "R-402",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "18:00",
+        "endTime": "20:00",
+        "subject": "07-064-277 สัมมนานวัตกรรมการจัดการท้องถิ่น (ปฏิบัติ)",
+        "code": "07-064-277",
+        "instructor": "อ.เปาซี วานอง",
+        "group": "กลุ่ม 01-s (ชั้นปี 4)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-94",
+        "roomId": "R-403",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-276 การจัดการเศรษฐกิจท้องถิ่น (ทฤษฎี)",
+        "code": "07-064-276",
+        "instructor": "อ.บารมี หลังยาหน่าย",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-95",
+        "roomId": "R-403",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-276 การจัดการเศรษฐกิจท้องถิ่น (ปฏิบัติ)",
+        "code": "07-064-276",
+        "instructor": "อ.บารมี หลังยาหน่าย",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-96",
+        "roomId": "R-403",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-264 การจัดการทรัพยากรมนุษย์เชิงกลยุทธ์",
+        "code": "07-064-264",
+        "instructor": "อาจารย์ ดร.พรทิพย์ มานพคำ",
+        "group": "กลุ่ม 02 (ชั้นปี 2 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-97",
+        "roomId": "R-403",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-265 ธรรมาภิบาลและจิตสาธารณะเพื่อการพัฒนา (ทฤษฎี)",
+        "code": "07-064-265",
+        "instructor": "อ.บูชิตา อารียาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 รปศ.)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-98",
+        "roomId": "R-403",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-265 ธรรมาภิบาลและจิตสาธารณะเพื่อการพัฒนา (ปฏิบัติ)",
+        "code": "07-064-265",
+        "instructor": "อ.บูชิตา อารียาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 รปศ.)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-99",
+        "roomId": "R-403",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-207 สื่อสร้างสรรค์ดิจิทัล (ทฤษฎี)",
+        "code": "07-024-207",
+        "instructor": "อ.มธุรส ทองอินทราช",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-100",
+        "roomId": "R-403",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-207 สื่อสร้างสรรค์ดิจิทัล (ปฏิบัติ)",
+        "code": "07-024-207",
+        "instructor": "อ.มธุรส ทองอินทราช",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-101",
+        "roomId": "R-403",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-004-242 กลยุทธ์การตลาดเชิงปฏิบัติ (ทฤษฎี)",
+        "code": "07-004-242",
+        "instructor": "อ.มธุรส ทองอินทราช",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-102",
+        "roomId": "R-403",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-004-242 กลยุทธ์การตลาดเชิงปฏิบัติ (ปฏิบัติ)",
+        "code": "07-004-242",
+        "instructor": "อ.มธุรส ทองอินทราช",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-103",
+        "roomId": "R-403",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-004-228 หลักการตลาดยุคดิจิทัล",
+        "code": "07-004-228",
+        "instructor": "อ.มธุรส ทองอินทราช",
+        "group": "กลุ่ม 01 (ชั้นปี 1 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-104",
+        "roomId": "R-404",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-208 การสร้างตราสินค้ายุคเศรษฐกิจดิจิทัล (ทฤษฎี)",
+        "code": "07-024-208",
+        "instructor": "อาจารย์ ดร.รุ่งศิริ ผดุงรัตน์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 การตลาดดิจิทัล)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-105",
+        "roomId": "R-404",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-208 การสร้างตราสินค้ายุคเศรษฐกิจดิจิทัล (ปฏิบัติ)",
+        "code": "07-024-208",
+        "instructor": "อาจารย์ ดร.รุ่งศิริ ผดุงรัตน์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 การตลาดดิจิทัล)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-106",
+        "roomId": "R-404",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-208 องค์การและการจัดการสมัยใหม่",
+        "code": "07-064-208",
+        "instructor": "อ.เปาซี วา. , อ.คมสัน หล.",
+        "group": "กลุ่ม 01 (ชั้นปี 2 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-107",
+        "roomId": "R-404",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-269 การบริหารและประเมินผลโครงการ (ทฤษฎี)",
+        "code": "07-064-269",
+        "instructor": "ผศ.พัชนี ตู. , อาจารย์ ดร.อิบรอฮิม สา.",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-108",
+        "roomId": "R-404",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-269 การบริหารและประเมินผลโครงการ (ปฏิบัติ)",
+        "code": "07-064-269",
+        "instructor": "ผศ.พัชนี ตู. , อาจารย์ ดร.อิบรอฮิม สา.",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-109",
+        "roomId": "R-404",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-277 สัมมนานวัตกรรมการจัดการท้องถิ่น (ทฤษฎี)",
+        "code": "07-064-277",
+        "instructor": "อ.เปาซี วานอง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-110",
+        "roomId": "R-404",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-277 สัมมนานวัตกรรมการจัดการท้องถิ่น (ปฏิบัติ)",
+        "code": "07-064-277",
+        "instructor": "อ.เปาซี วานอง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-111",
+        "roomId": "R-404",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-014-248 การจัดการการค้าชายแดน",
+        "code": "07-014-248",
+        "instructor": "อ.รอยฮาน สะอารี",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-112",
+        "roomId": "R-404",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-269 การบริหารและประเมินผลโครงการ (ทฤษฎี)",
+        "code": "07-064-269",
+        "instructor": "ผศ.พัชนี ตู. , อาจารย์ ดร.อิบรอฮิม สา.",
+        "group": "กลุ่ม 02 (ชั้นปี 3 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-113",
+        "roomId": "R-404",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-269 การบริหารและประเมินผลโครงการ (ปฏิบัติ)",
+        "code": "07-064-269",
+        "instructor": "ผศ.พัชนี ตู. , อาจารย์ ดร.อิบรอฮิม สา.",
+        "group": "กลุ่ม 02 (ชั้นปี 3 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-114",
+        "roomId": "R-405",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-024-234 การส่งเสริมการตลาดและการบริหารสื่อใหม่",
+        "code": "07-024-234",
+        "instructor": "อาจารย์ ดร.กชพรพรรณ พงค์ทองเมือง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การตลาด/การจัดการ)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-115",
+        "roomId": "R-405",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-230 การบัญชีเพื่อการจัดการธุรกิจชุมชน (ทฤษฎี)",
+        "code": "07-044-230",
+        "instructor": "อ.นันทพร โกสิยาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-116",
+        "roomId": "R-405",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-230 การบัญชีเพื่อการจัดการธุรกิจชุมชน (ปฏิบัติ)",
+        "code": "07-044-230",
+        "instructor": "อ.นันทพร โกสิยาภรณ์",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-117",
+        "roomId": "R-405",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-231 การบริหารความเสี่ยงและการควบคุมภายใน (ทฤษฎี)",
+        "code": "07-044-231",
+        "instructor": "อ.ทิพวรรณ รัตนพรหม",
+        "group": "กลุ่ม 01 (ชั้นปี 3 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-118",
+        "roomId": "R-405",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-231 การบริหารความเสี่ยงและการควบคุมภายใน (ปฏิบัติ)",
+        "code": "07-044-231",
+        "instructor": "อ.ทิพวรรณ รัตนพรหม",
+        "group": "กลุ่ม 01 (ชั้นปี 3 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-119",
+        "roomId": "R-405",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-282 สัมมนานวัตกรรมการจัดการภาครัฐและภาคเอกชน (ทฤษฎี)",
+        "code": "07-064-282",
+        "instructor": "อ.เปาซี วานอง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-120",
+        "roomId": "R-405",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-282 สัมมนานวัตกรรมการจัดการภาครัฐและภาคเอกชน (ปฏิบัติ)",
+        "code": "07-064-282",
+        "instructor": "อ.เปาซี วานอง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-121",
+        "roomId": "R-405",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-064-265 ธรรมาภิบาลและจิตสาธารณะเพื่อการพัฒนา (ทฤษฎี)",
+        "code": "07-064-265",
+        "instructor": "อ.บูชิตา อารียาภรณ์",
+        "group": "กลุ่ม 02 (ชั้นปี 2 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-122",
+        "roomId": "R-405",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-064-265 ธรรมาภิบาลและจิตสาธารณะเพื่อการพัฒนา (ปฏิบัติ)",
+        "code": "07-064-265",
+        "instructor": "อ.บูชิตา อารียาภรณ์",
+        "group": "กลุ่ม 02 (ชั้นปี 2 รปศ.)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-123",
+        "roomId": "R-405",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-064-264 การจัดการทรัพยากรมนุษย์เชิงกลยุทธ์",
+        "code": "07-064-264",
+        "instructor": "อาจารย์ ดร.พรทิพย์ มานพคำ",
+        "group": "กลุ่ม 01 (ชั้นปี 2 รปศ.)",
+        "color": "rose"
+    },
+    {
+        "id": "TT-124",
+        "roomId": "R-405",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-024-206 การออกแบบเนื้อหาบนตลาดดิจิทัล (ทฤษฎี)",
+        "code": "07-024-206",
+        "instructor": "อ.ชลกาญจน์ สถ. , อ.มธุรส ทอ.",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 4)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-125",
+        "roomId": "R-405",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-024-206 การออกแบบเนื้อหาบนตลาดดิจิทัล (ปฏิบัติ)",
+        "code": "07-024-206",
+        "instructor": "อ.ชลกาญจน์ สถ. , อ.มธุรส ทอ.",
+        "group": "กลุ่ม 01 (ชั้นปี 2, 4)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-126",
+        "roomId": "R-406",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-044-218 การบัญชีเฉพาะกิจการ",
+        "code": "07-044-218",
+        "instructor": "อ.นิฟาตีฮะ ปัตนวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-127",
+        "roomId": "R-406",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-209 เครื่องมือและแอปพลิเคชันสำหรับผู้ประกอบการ (ทฤษฎี)",
+        "code": "07-024-209",
+        "instructor": "อ.ชลกาญจน์ สถะบดี",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การตลาดดิจิทัล)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-128",
+        "roomId": "R-406",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-209 เครื่องมือและแอปพลิเคชันสำหรับผู้ประกอบการ (ปฏิบัติ)",
+        "code": "07-024-209",
+        "instructor": "อ.ชลกาญจน์ สถะบดี",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การตลาดดิจิทัล)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-129",
+        "roomId": "R-406",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-064-208 องค์การและการจัดการสมัยใหม่",
+        "code": "07-064-208",
+        "instructor": "อ.เปาซี วา. , อ.คมสัน หล.",
+        "group": "กลุ่ม 02 (ชั้นปี 2 รปศ.)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-130",
+        "roomId": "R-406",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-024-213 แผนธุรกิจ (ทฤษฎี)",
+        "code": "07-024-213",
+        "instructor": "อ.มธุรส ทอ. , อาจารย์ ดร.กชพรพรรณ พง.",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 4)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-131",
+        "roomId": "R-406",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-024-213 แผนธุรกิจ (ปฏิบัติ)",
+        "code": "07-024-213",
+        "instructor": "อ.มธุรส ทอ. , อาจารย์ ดร.กชพรพรรณ พง.",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 4)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-132",
+        "roomId": "R-406",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-004-233 กฎหมายธุรกิจและกฎหมายอิเล็กทรอนิกส์",
+        "code": "07-004-233",
+        "instructor": "อ.ศรัณ เนื้อน้อย",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การตลาด)",
+        "color": "red"
+    },
+    {
+        "id": "TT-133",
+        "roomId": "R-406",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "11:20",
+        "subject": "07-044-204 การบัญชีชั้นสูง 1",
+        "code": "07-044-204",
+        "instructor": "อ.ไฮดา สุดินปรีดา",
+        "group": "กลุ่ม 01 (ชั้นปี 3, 4 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-134",
+        "roomId": "LAB-4",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-014-245 สถิติเพื่อการวิจัย (ทฤษฎี)",
+        "code": "07-014-245",
+        "instructor": "อาจารย์ ดร.กฤษณา พรหมชาติ",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การจัดการ)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-135",
+        "roomId": "LAB-4",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-014-245 สถิติเพื่อการวิจัย (ปฏิบัติ)",
+        "code": "07-014-245",
+        "instructor": "อาจารย์ ดร.กฤษณา พรหมชาติ",
+        "group": "กลุ่ม 01 (ชั้นปี 3 การจัดการ)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-136",
+        "roomId": "LAB-4",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-034-245 การออกแบบมัลติมีเดียสำหรับงานธุรกิจ (ทฤษฎี)",
+        "code": "07-034-245",
+        "instructor": "อ.ผการัตน์ ทองจันทร์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 IT)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-137",
+        "roomId": "LAB-4",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-034-245 การออกแบบมัลติมีเดียสำหรับงานธุรกิจ (ปฏิบัติ)",
+        "code": "07-034-245",
+        "instructor": "อ.ผการัตน์ ทองจันทร์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 IT)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-138",
+        "roomId": "LAB-4",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-205 หลักการเขียนโปรแกรมคอมพิวเตอร์ (ทฤษฎี)",
+        "code": "07-034-205",
+        "instructor": "อาจารย์ ดร.สุรเชษฐ์ สังขพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 IT)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-139",
+        "roomId": "LAB-4",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-205 หลักการเขียนโปรแกรมคอมพิวเตอร์ (ปฏิบัติ)",
+        "code": "07-034-205",
+        "instructor": "อาจารย์ ดร.สุรเชษฐ์ สังขพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 IT)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-140",
+        "roomId": "LAB-4",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-244 การวิเคราะห์และออกแบบระบบธุรกิจดิจิทัล (ทฤษฎี)",
+        "code": "07-034-244",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 01 (ชั้นปี 2 IT)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-141",
+        "roomId": "LAB-4",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-244 การวิเคราะห์และออกแบบระบบธุรกิจดิจิทัล (ปฏิบัติ)",
+        "code": "07-034-244",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 01 (ชั้นปี 2 IT)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-142",
+        "roomId": "LAB-4",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-034-257 โปรแกรมประยุกต์บนคลาวด์ (ทฤษฎี)",
+        "code": "07-034-257",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 01 (ชั้นปี 4 IT)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-143",
+        "roomId": "LAB-4",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-034-257 โปรแกรมประยุกต์บนคลาวด์ (ปฏิบัติ)",
+        "code": "07-034-257",
+        "instructor": "ผศ.ศิริลักษณ์ อินทสโร",
+        "group": "กลุ่ม 01 (ชั้นปี 4 IT)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-144",
+        "roomId": "LAB-3",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-014-214 ระบบสารสนเทศเพื่อการจัดการ (ทฤษฎี)",
+        "code": "07-014-214",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การจัดการ)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-145",
+        "roomId": "LAB-3",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-014-214 ระบบสารสนเทศเพื่อการจัดการ (ปฏิบัติ)",
+        "code": "07-014-214",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 การจัดการ)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-146",
+        "roomId": "LAB-3",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-034-260 อินเทอร์เน็ตผสานสรรพสิ่ง (ทฤษฎี)",
+        "code": "07-034-260",
+        "instructor": "อาจารย์ ดร.สุรเชษฐ์ สังขพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 IT)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-147",
+        "roomId": "LAB-3",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-034-260 อินเทอร์เน็ตผสานสรรพสิ่ง (ปฏิบัติ)",
+        "code": "07-034-260",
+        "instructor": "อาจารย์ ดร.สุรเชษฐ์ สังขพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 4 IT)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-148",
+        "roomId": "LAB-3",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-004-234 เทคโนโลยีดิจิทัลเพื่อการจัดการธุรกิจ (ทฤษฎี)",
+        "code": "07-004-234",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 การจัดการ)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-149",
+        "roomId": "LAB-3",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-004-234 เทคโนโลยีดิจิทัลเพื่อการจัดการธุรกิจ (ปฏิบัติ)",
+        "code": "07-004-234",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 การจัดการ)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-150",
+        "roomId": "LAB-3",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-266 การสร้างธุรกิจเริ่มต้นด้วยนวัตกรรมและเทคโนโลยี (ทฤษฎี)",
+        "code": "07-034-266",
+        "instructor": "อาจารย์ ดร.สุรเชษฐ์ สังขพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-151",
+        "roomId": "LAB-3",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-266 การสร้างธุรกิจเริ่มต้นด้วยนวัตกรรมและเทคโนโลยี (ปฏิบัติ)",
+        "code": "07-034-266",
+        "instructor": "อาจารย์ ดร.สุรเชษฐ์ สังขพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-152",
+        "roomId": "LAB-3",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-275 การเขียนงานทางวิชาการด้านเทคโนโลยีดิจิทัล (ทฤษฎี)",
+        "code": "07-034-275",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-153",
+        "roomId": "LAB-3",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-275 การเขียนงานทางวิชาการด้านเทคโนโลยีดิจิทัล (ปฏิบัติ)",
+        "code": "07-034-275",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-154",
+        "roomId": "LAB-3",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-261 การนำสนอข้อมูลด้วยระบบธุรกิจอัจฉริยะ (ทฤษฎี)",
+        "code": "07-034-261",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 ภาษาต่างประเทศ)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-155",
+        "roomId": "LAB-3",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-261 การนำสนอข้อมูลด้วยระบบธุรกิจอัจฉริยะ (ปฏิบัติ)",
+        "code": "07-034-261",
+        "instructor": "ผศ.ดร.เกศแก้ว ประดิษฐ์",
+        "group": "กลุ่ม 01 (ชั้นปี 2 ภาษาต่างประเทศ)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-156",
+        "roomId": "LAB-3",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-034-267 หลักการออกแบบสื่อมัลติมีเดียเชิงสร้างสรรค์ (ทฤษฎี)",
+        "code": "07-034-267",
+        "instructor": "อ.ผการัตน์ ทองจันทร์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-157",
+        "roomId": "LAB-3",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-034-267 หลักการออกแบบสื่อมัลติมีเดียเชิงสร้างสรรค์ (ปฏิบัติ)",
+        "code": "07-034-267",
+        "instructor": "อ.ผการัตน์ ทองจันทร์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 IT)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-158",
+        "roomId": "LAB-2",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-287 การประยุกต์ใช้ปัญญาประดิษฐ์ในงานมัลติมีเดีย (ทฤษฎี)",
+        "code": "07-034-287",
+        "instructor": "อ.ผการัตน์ ทอ. , อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-159",
+        "roomId": "LAB-2",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-287 การประยุกต์ใช้ปัญญาประดิษฐ์ในงานมัลติมีเดีย (ปฏิบัติ)",
+        "code": "07-034-287",
+        "instructor": "อ.ผการัตน์ ทอ. , อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 01 (ชั้นปี 3 รปศ.)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-160",
+        "roomId": "LAB-2",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "13:20",
+        "endTime": "15:20",
+        "subject": "07-044-217 โปรแกรมสำเร็จรูปเพื่องานบัญชี (ทฤษฎี)",
+        "code": "07-044-217",
+        "instructor": "อ.ไฮดา สุดินปรีดา",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-161",
+        "roomId": "LAB-2",
+        "day": "จันทร์",
+        "dayIndex": 1,
+        "startTime": "15:20",
+        "endTime": "17:20",
+        "subject": "07-044-217 โปรแกรมสำเร็จรูปเพื่องานบัญชี (ปฏิบัติ)",
+        "code": "07-044-217",
+        "instructor": "อ.ไฮดา สุดินปรีดา",
+        "group": "กลุ่ม 01 (ชั้นปี 4 บัญชี)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-162",
+        "roomId": "LAB-2",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-044-245 ระบบสารสนเทศทางการบัญชี (ทฤษฎี)",
+        "code": "07-044-245",
+        "instructor": "อ.ไฮดา สุดินปรีดา",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-163",
+        "roomId": "LAB-2",
+        "day": "อังคาร",
+        "dayIndex": 2,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-044-245 ระบบสารสนเทศทางการบัญชี (ปฏิบัติ)",
+        "code": "07-044-245",
+        "instructor": "อ.ไฮดา สุดินปรีดา",
+        "group": "กลุ่ม 01 (ชั้นปี 2 บัญชี)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-164",
+        "roomId": "LAB-2",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ทฤษฎี)",
+        "code": "07-064-261",
+        "instructor": "อ.พระรักษ์ อมรศักดิ์",
+        "group": "กลุ่ม 02 (ชั้นปี 1 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-165",
+        "roomId": "LAB-2",
+        "day": "พุธ",
+        "dayIndex": 3,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ปฏิบัติ)",
+        "code": "07-064-261",
+        "instructor": "อ.พระรักษ์ อมรศักดิ์",
+        "group": "กลุ่ม 02 (ชั้นปี 1 รปศ.)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-166",
+        "roomId": "LAB-2",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-287 การประยุกต์ใช้ปัญญาประดิษฐ์ในงานมัลติมีเดีย (ทฤษฎี)",
+        "code": "07-034-287",
+        "instructor": "อ.ผการัตน์ ทอ. , อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 02 (ชั้นปี 3 รปศ.)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-167",
+        "roomId": "LAB-2",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-287 การประยุกต์ใช้ปัญญาประดิษฐ์ในงานมัลติมีเดีย (ปฏิบัติ)",
+        "code": "07-034-287",
+        "instructor": "อ.ผการัตน์ ทอ. , อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 02 (ชั้นปี 3 รปศ.)",
+        "color": "cyan"
+    },
+    {
+        "id": "TT-168",
+        "roomId": "LAB-2",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "08:20",
+        "endTime": "10:20",
+        "subject": "07-034-218 โปรแกรมสำเร็จรูปในสำนักงาน (ทฤษฎี)",
+        "code": "07-034-218",
+        "instructor": "อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-169",
+        "roomId": "LAB-2",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "10:20",
+        "endTime": "12:20",
+        "subject": "07-034-218 โปรแกรมสำเร็จรูปในสำนักงาน (ปฏิบัติ)",
+        "code": "07-034-218",
+        "instructor": "อ.เจ๊ะอีลย๊าส โตะตาหยง",
+        "group": "กลุ่ม 01 (ชั้นปี 4 รปศ.)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-170",
+        "roomId": "MIL-1",
+        "day": "เสาร์",
+        "dayIndex": 6,
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "subject": "07-066-102 ภาษาอังกฤษสำหรับบัณฑิตศึกษา",
+        "code": "07-066-102",
+        "instructor": "อาจารย์ ดร.มุสลิม รอกา",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-171",
+        "roomId": "MIL-1",
+        "day": "เสาร์",
+        "dayIndex": 6,
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "subject": "07-086-103 ภาษาอังกฤษสำหรับนักบริหาร",
+        "code": "07-086-103",
+        "instructor": "อาจารย์ ดร.มุสลิม รอกา",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "blue"
+    },
+    {
+        "id": "TT-172",
+        "roomId": "MIL-1",
+        "day": "เสาร์",
+        "dayIndex": 6,
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "subject": "07-066-202 การจัดการทรัพยากรมนุษย์เชิงกลยุทธ์",
+        "code": "07-066-202",
+        "instructor": "อาจารย์ ดร.พรทิพย์ มานพคำ",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "purple"
+    },
+    {
+        "id": "TT-173",
+        "roomId": "MIL-1",
+        "day": "เสาร์",
+        "dayIndex": 6,
+        "startTime": "13:00",
+        "endTime": "15:00",
+        "subject": "07-066-203 การวิเคราะห์นโยบายและการประเมินนโยบายขั้นสูง (ทฤษฎี)",
+        "code": "07-066-203",
+        "instructor": "อาจารย์ ดร.ชนาธิป หวังวรวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-174",
+        "roomId": "MIL-1",
+        "day": "เสาร์",
+        "dayIndex": 6,
+        "startTime": "15:00",
+        "endTime": "17:00",
+        "subject": "07-066-203 การวิเคราะห์นโยบายและการประเมินนโยบายขั้นสูง (ปฏิบัติ)",
+        "code": "07-066-203",
+        "instructor": "อาจารย์ ดร.ชนาธิป หวังวรวงศ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-175",
+        "roomId": "MIL-1",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "subject": "07-066-101 หลักรัฐประศาสนศาสตร์",
+        "code": "07-066-101",
+        "instructor": "อาจารย์ ดร.อิบรอฮิม สารีมาแซ",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "amber"
+    },
+    {
+        "id": "TT-176",
+        "roomId": "MIL-1",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "subject": "07-066-201 ทฤษฎีรัฐประศาสนศาสตร์และการจัดการภาครัฐยุค AI",
+        "code": "07-066-201",
+        "instructor": "อาจารย์ ดร.อิบรอฮิม สารีมาแซ",
+        "group": "กลุ่ม 01 (ชั้นปี 1)",
+        "color": "emerald"
+    },
+    {
+        "id": "TT-177",
+        "roomId": "CONF-1",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "09:00",
+        "endTime": "11:00",
+        "subject": "07-086-208 การเปลี่ยนแปลงองค์การสู่ดิจิทัลและนวัตกรรม (ทฤษฎี)",
+        "code": "07-086-208",
+        "instructor": "อาจารย์ ดร.กฤษณา พรหมชาติ",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-178",
+        "roomId": "CONF-1",
+        "day": "พฤหัสบดี",
+        "dayIndex": 4,
+        "startTime": "11:00",
+        "endTime": "13:00",
+        "subject": "07-086-208 การเปลี่ยนแปลงองค์การสู่ดิจิทัลและนวัตกรรม (ปฏิบัติ)",
+        "code": "07-086-208",
+        "instructor": "อาจารย์ ดร.กฤษณา พรหมชาติ",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "orange"
+    },
+    {
+        "id": "TT-179",
+        "roomId": "CONF-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "09:00",
+        "endTime": "11:00",
+        "subject": "07-086-207 นวัตกรรมการจัดการเชิงกลยุทธ์ (ทฤษฎี)",
+        "code": "07-086-207",
+        "instructor": "ผศ.ดร.ธมยันตี ประยูรพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-180",
+        "roomId": "CONF-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "11:00",
+        "endTime": "13:00",
+        "subject": "07-086-207 นวัตกรรมการจัดการเชิงกลยุทธ์ (ปฏิบัติ)",
+        "code": "07-086-207",
+        "instructor": "ผศ.ดร.ธมยันตี ประยูรพันธ์",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "pink"
+    },
+    {
+        "id": "TT-181",
+        "roomId": "CONF-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "14:00",
+        "endTime": "15:00",
+        "subject": "07-086-102 การจัดการองค์การสมัยใหม่",
+        "code": "07-086-102",
+        "instructor": "อาจารย์ ดร.สรัญณี อุ. , อาจารย์ ดร.กฤษณา พร.",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "teal"
+    },
+    {
+        "id": "TT-182",
+        "roomId": "CONF-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "15:00",
+        "endTime": "17:00",
+        "subject": "07-086-206 ภาวะผู้นำและการบริหารทรัพยากรมนุษย์ในยุคดิจิทัล (ทฤษฎี)",
+        "code": "07-086-206",
+        "instructor": "อาจารย์ ดร.สรัญณี อุ. , อาจารย์ ดร.สุมาลี กร.",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-183",
+        "roomId": "CONF-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "17:00",
+        "endTime": "19:00",
+        "subject": "07-086-206 ภาวะผู้นำและการบริหารทรัพยากรมนุษย์ในยุคดิจิทัล (ปฏิบัติ)",
+        "code": "07-086-206",
+        "instructor": "อาจารย์ ดร.สรัญณี อุ. , อาจารย์ ดร.สุมาลี กร.",
+        "group": "กลุ่ม 01 (ชั้นปี 1 นวัตกรรม)",
+        "color": "indigo"
+    },
+    {
+        "id": "TT-184",
+        "roomId": "CONF-1",
+        "day": "อาทิตย์",
+        "dayIndex": 0,
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "subject": "07-086-304 การจัดการทรัพยากรมนุษย์เชิงกลยุทธ์",
+        "code": "07-086-304",
+        "instructor": "อาจารย์ ดร.สรัญณี อุ. , อาจารย์ ดร.สุมาลี กร.",
+        "group": "กลุ่ม 01 (ชั้นปี 2 นวัตกรรม)",
+        "color": "purple"
+    }
 ];
 
-// ข้อมูลการจองห้องเรียน
 const DEFAULT_BOOKINGS = [
     {
         id: "BK-1001",
-        roomId: "R-306",
-        roomName: "ห้อง 306",
-        date: "2026-09-01",
-        startTime: "13:00",
-        endTime: "16:00",
-        subject: "ประชุมวิชาการประจำสาขา",
-        bookerName: "ผศ.ดร.สมชาย ใจดี",
-        department: "ภาควิชาวิทยาการคอมพิวเตอร์",
-        purpose: "การประชุมเตรียมความพร้อมหลักสูตรใหม่",
+        roomId: "CONF-1",
+        roomName: "ห้องประชุมพฤกษาพรรณชมพู",
+        date: "2026-09-05",
+        startTime: "09:00",
+        endTime: "16:30",
+        subject: "ประชุมสัมมนาวิชาการระดับชาติ คณะวิทยาการจัดการ",
+        bookerName: "ผศ.มัณฑนา กระโหมวงศ์",
+        department: "คณะวิทยาการจัดการ",
+        purpose: "การนำเสนอผลงานวิจัยและการบรรยายพิเศษ",
         status: "approved",
-        createdAt: "2026-08-28 09:30"
+        createdAt: "2026-08-30 10:00"
     },
     {
         id: "BK-1002",
-        roomId: "LAB-3",
-        roomName: "ห้องปฏิบัติการคอม 3",
-        date: "2026-09-01",
-        startTime: "13:00",
-        endTime: "17:00",
-        subject: "AI & Deep Learning Workshop",
-        bookerName: "ดร.กิตติคุณ ศิริวงศ์",
-        department: "ศูนย์นวัตกรรม AI",
-        purpose: "อบรมเชิงปฏิบัติการ Generative AI และ PyTorch",
-        status: "approved",
-        createdAt: "2026-08-29 14:15"
-    },
-    {
-        id: "BK-1003",
-        roomId: "R-405",
-        roomName: "ห้อง 405",
-        date: "2026-09-01",
-        startTime: "13:30",
-        endTime: "16:30",
-        subject: "สัมมนาเทคโนโลยีสารสนเทศ",
-        bookerName: "ผศ.วิภาดา ลิขิตธรรม",
-        department: "คณะวิทยาการจัดการ",
-        purpose: "บรรยายพิเศษจากผู้เชี่ยวชาญภายนอก",
-        status: "approved",
-        createdAt: "2026-08-30 11:00"
-    },
-    {
-        id: "BK-1004",
-        roomId: "LAB-2",
-        roomName: "ห้องปฏิบัติการคอม 2",
-        date: "2026-09-02",
+        roomId: "MIL-1",
+        roomName: "ห้องปฏิบัติการนวัตกรรมการจัดการ",
+        date: "2026-09-04",
         startTime: "13:00",
         endTime: "16:00",
-        subject: "แข่งขันเขียนโปรแกรมระดับมหาวิทยาลัย",
-        bookerName: "อ.วรพงษ์ ทัศนีย์",
-        department: "สโมสรนักศึกษา IT",
-        purpose: "ทดสอบระบบและซักซ้อมก่อนแข่งรอบชิง",
-        status: "pending",
-        createdAt: "2026-08-31 16:40"
+        subject: "Workshop: การประยุกต์ใช้ AI ในการวิจัยภาครัฐ",
+        bookerName: "อาจารย์ ดร.อิบรอฮิม สารีมาแซ",
+        department: "สาขาวิชารัฐประศาสนศาสตร์",
+        purpose: "อบรมเชิงปฏิบัติการเครื่องมือวิจัยสำหรับคณาจารย์",
+        status: "approved",
+        createdAt: "2026-08-31 14:20"
     }
 ];
 
-// รายการแจ้งซ่อม
 const DEFAULT_MAINTENANCE = [
     {
         id: "MNT-001",
-        roomId: "R-305",
-        roomName: "ห้อง 305",
-        reportedDate: "2026-08-31",
-        title: "รีโมทแอร์ไม่ตอบสนอง / แอร์มีน้ำหยด",
-        details: "ปรับอุณหภูมิไม่ได้ ต้องการให้ช่างเข้าล้างแอร์",
-        reporter: "อ.ดร.พรพิมล รัตนโชติ",
+        roomId: "LAB-1",
+        roomName: "FMS201 - ห้องปฏิบัติการคอมพิวเตอร์ 1",
+        reportedDate: "2026-09-01",
+        title: "PC เครื่องที่ 15 เปิดไม่ติด / พัดลมมีเสียงดัง",
+        details: "พาวเวอร์ซัพพลายไม่จ่ายไฟ ต้องการเปลี่ยนอะไหล่",
+        reporter: "อ.พระรักษ์ อมรศักดิ์",
         status: "in_progress",
         priority: "medium"
-    },
-    {
-        id: "MNT-002",
-        roomId: "LAB-1",
-        roomName: "ห้องปฏิบัติการคอม 1",
-        reportedDate: "2026-08-30",
-        title: "PC เครื่องที่ 12 เมาส์คลิกซ้ายไม่ตอบสนอง",
-        details: "สาย USB ขาดใน ต้องการเปลี่ยนเมาส์ตัวใหม่",
-        reporter: "ผศ.ดร.ธีรภัทร ชาญวิทย์",
-        status: "completed",
-        priority: "low"
     }
 ];
 
@@ -1892,7 +4323,9 @@ function renderTimetable() {
         { name: 'อังคาร', index: 2 },
         { name: 'พุธ', index: 3 },
         { name: 'พฤหัสบดี', index: 4 },
-        { name: 'ศุกร์', index: 5 }
+        { name: 'ศุกร์', index: 5 },
+        { name: 'เสาร์', index: 6 },
+        { name: 'อาทิตย์', index: 0 }
     ];
 
     if (AppState.selectedRoomForSchedule === 'ALL') {
@@ -1910,9 +4343,9 @@ function renderTimetable() {
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
                             <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
-                            ตารางการใช้ห้องเรียนประจำวัน${days.find(d => d.index === AppState.selectedDayIndex)?.name}
+                            ตารางการใช้ห้องเรียนประจำวัน${days.find(d => d.index === AppState.selectedDayIndex)?.name} (ภาคการศึกษา 1/2569)
                         </h4>
-                        <span class="text-xs text-slate-500">แสดงรายการวิชาและกิจกรรมทั้งหมด</span>
+                        <span class="text-xs text-slate-500">แสดงรายการวิชาและอาจารย์ผู้สอนทั้งหมด</span>
                     </div>
 
                     ${renderScheduleListForDay(AppState.selectedDayIndex)}
@@ -1953,51 +4386,93 @@ function renderTimetable() {
                         <thead>
                             <tr class="bg-slate-800 text-white">
                                 <th class="p-3 border border-slate-700 w-28 text-center">วัน / เวลา</th>
-                                <th class="p-3 border border-slate-700 text-center">เช้า (09:00 - 12:00)</th>
-                                <th class="p-3 border border-slate-700 text-center bg-slate-900/50 w-20">พักเที่ยง</th>
-                                <th class="p-3 border border-slate-700 text-center">บ่าย (13:00 - 16:00 / 17:00)</th>
+                                <th class="p-3 border border-slate-700 text-center min-w-[220px]">ช่วงเช้า (08:20 - 12:20)</th>
+                                <th class="p-3 border border-slate-700 text-center bg-slate-900/50 w-24">พักกลางวัน<br>(12:20-13:20)</th>
+                                <th class="p-3 border border-slate-700 text-center min-w-[220px]">ช่วงบ่าย (13:20 - 17:20)</th>
+                                <th class="p-3 border border-slate-700 text-center min-w-[180px]">ช่วงเย็น / นอกเวลา (17:20 - 21:00)</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${days.map(day => {
-                                const morningItem = roomSchedules.find(s => s.dayIndex === day.index && parseInt(s.startTime.split(':')[0]) < 12);
-                                const afternoonItem = roomSchedules.find(s => s.dayIndex === day.index && parseInt(s.startTime.split(':')[0]) >= 12);
+                                const dayItems = roomSchedules.filter(s => s.dayIndex === day.index);
+                                const morningItems = dayItems.filter(s => {
+                                    const hour = parseInt(s.startTime.split(':')[0]);
+                                    return hour < 12;
+                                });
+                                const afternoonItems = dayItems.filter(s => {
+                                    const hour = parseInt(s.startTime.split(':')[0]);
+                                    return hour >= 12 && hour < 17;
+                                });
+                                const eveningItems = dayItems.filter(s => {
+                                    const hour = parseInt(s.startTime.split(':')[0]);
+                                    return hour >= 17;
+                                });
 
                                 return `
                                     <tr class="hover:bg-slate-50">
                                         <td class="p-3 border border-slate-200 font-bold bg-slate-50 text-slate-700 text-center">
                                             วัน${day.name}
                                         </td>
-                                        <td class="p-3 border border-slate-200">
-                                            ${morningItem ? `
-                                                <div class="p-3 rounded-xl tag-${morningItem.color || 'blue'} shadow-sm">
-                                                    <div class="font-bold text-sm">${morningItem.subject}</div>
-                                                    <div class="text-[11px] opacity-80 mt-1">${morningItem.instructor} (${morningItem.group || 'กลุ่มเรียน'})</div>
-                                                    <div class="text-[11px] font-semibold mt-2 flex items-center gap-1">
-                                                        <i data-lucide="clock" class="w-3 h-3"></i> ${morningItem.startTime} - ${morningItem.endTime} น.
-                                                    </div>
+                                        <td class="p-2 border border-slate-200 align-top">
+                                            ${morningItems.length > 0 ? `
+                                                <div class="space-y-2">
+                                                    ${morningItems.map(item => `
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm">
+                                                            <div class="font-bold text-xs">${item.subject}</div>
+                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
+                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
                                                 </div>
                                             ` : `
-                                                <div class="p-4 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '09:00', '12:00')">
+                                                <div class="p-3 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer text-[11px]" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '08:20', '12:20')">
                                                     + ว่าง (คลิกเพื่อจอง)
                                                 </div>
                                             `}
                                         </td>
-                                        <td class="p-2 border border-slate-200 text-center text-slate-400 bg-slate-100/50 text-[11px]">
-                                            12:00-13:00
+                                        <td class="p-2 border border-slate-200 text-center text-slate-400 bg-slate-100/50 text-[11px] align-middle">
+                                            พักเที่ยง
                                         </td>
-                                        <td class="p-3 border border-slate-200">
-                                            ${afternoonItem ? `
-                                                <div class="p-3 rounded-xl tag-${afternoonItem.color || 'indigo'} shadow-sm">
-                                                    <div class="font-bold text-sm">${afternoonItem.subject}</div>
-                                                    <div class="text-[11px] opacity-80 mt-1">${afternoonItem.instructor} (${afternoonItem.group || 'กลุ่มเรียน'})</div>
-                                                    <div class="text-[11px] font-semibold mt-2 flex items-center gap-1">
-                                                        <i data-lucide="clock" class="w-3 h-3"></i> ${afternoonItem.startTime} - ${afternoonItem.endTime} น.
-                                                    </div>
+                                        <td class="p-2 border border-slate-200 align-top">
+                                            ${afternoonItems.length > 0 ? `
+                                                <div class="space-y-2">
+                                                    ${afternoonItems.map(item => `
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'indigo'} shadow-sm">
+                                                            <div class="font-bold text-xs">${item.subject}</div>
+                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
+                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
                                                 </div>
                                             ` : `
-                                                <div class="p-4 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '13:00', '16:00')">
+                                                <div class="p-3 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer text-[11px]" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '13:20', '17:20')">
                                                     + ว่าง (คลิกเพื่อจอง)
+                                                </div>
+                                            `}
+                                        </td>
+                                        <td class="p-2 border border-slate-200 align-top">
+                                            ${eveningItems.length > 0 ? `
+                                                <div class="space-y-2">
+                                                    ${eveningItems.map(item => `
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'purple'} shadow-sm">
+                                                            <div class="font-bold text-xs">${item.subject}</div>
+                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
+                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            ` : `
+                                                <div class="p-3 text-center text-slate-300 font-medium border border-dashed border-slate-100 rounded-xl hover:border-blue-400 cursor-pointer text-[10px]" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '17:20', '20:00')">
+                                                    + ว่าง
                                                 </div>
                                             `}
                                         </td>

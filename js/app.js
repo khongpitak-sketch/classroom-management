@@ -489,7 +489,9 @@ function renderTimetable() {
         { name: 'อังคาร', index: 2 },
         { name: 'พุธ', index: 3 },
         { name: 'พฤหัสบดี', index: 4 },
-        { name: 'ศุกร์', index: 5 }
+        { name: 'ศุกร์', index: 5 },
+        { name: 'เสาร์', index: 6 },
+        { name: 'อาทิตย์', index: 0 }
     ];
 
     if (AppState.selectedRoomForSchedule === 'ALL') {
@@ -507,9 +509,9 @@ function renderTimetable() {
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
                             <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
-                            ตารางการใช้ห้องเรียนประจำวัน${days.find(d => d.index === AppState.selectedDayIndex)?.name}
+                            ตารางการใช้ห้องเรียนประจำวัน${days.find(d => d.index === AppState.selectedDayIndex)?.name} (ภาคการศึกษา 1/2569)
                         </h4>
-                        <span class="text-xs text-slate-500">แสดงรายการวิชาและกิจกรรมทั้งหมด</span>
+                        <span class="text-xs text-slate-500">แสดงรายการวิชาและอาจารย์ผู้สอนทั้งหมด</span>
                     </div>
 
                     ${renderScheduleListForDay(AppState.selectedDayIndex)}
@@ -550,51 +552,93 @@ function renderTimetable() {
                         <thead>
                             <tr class="bg-slate-800 text-white">
                                 <th class="p-3 border border-slate-700 w-28 text-center">วัน / เวลา</th>
-                                <th class="p-3 border border-slate-700 text-center">เช้า (09:00 - 12:00)</th>
-                                <th class="p-3 border border-slate-700 text-center bg-slate-900/50 w-20">พักเที่ยง</th>
-                                <th class="p-3 border border-slate-700 text-center">บ่าย (13:00 - 16:00 / 17:00)</th>
+                                <th class="p-3 border border-slate-700 text-center min-w-[220px]">ช่วงเช้า (08:20 - 12:20)</th>
+                                <th class="p-3 border border-slate-700 text-center bg-slate-900/50 w-24">พักกลางวัน<br>(12:20-13:20)</th>
+                                <th class="p-3 border border-slate-700 text-center min-w-[220px]">ช่วงบ่าย (13:20 - 17:20)</th>
+                                <th class="p-3 border border-slate-700 text-center min-w-[180px]">ช่วงเย็น / นอกเวลา (17:20 - 21:00)</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${days.map(day => {
-                                const morningItem = roomSchedules.find(s => s.dayIndex === day.index && parseInt(s.startTime.split(':')[0]) < 12);
-                                const afternoonItem = roomSchedules.find(s => s.dayIndex === day.index && parseInt(s.startTime.split(':')[0]) >= 12);
+                                const dayItems = roomSchedules.filter(s => s.dayIndex === day.index);
+                                const morningItems = dayItems.filter(s => {
+                                    const hour = parseInt(s.startTime.split(':')[0]);
+                                    return hour < 12;
+                                });
+                                const afternoonItems = dayItems.filter(s => {
+                                    const hour = parseInt(s.startTime.split(':')[0]);
+                                    return hour >= 12 && hour < 17;
+                                });
+                                const eveningItems = dayItems.filter(s => {
+                                    const hour = parseInt(s.startTime.split(':')[0]);
+                                    return hour >= 17;
+                                });
 
                                 return `
                                     <tr class="hover:bg-slate-50">
                                         <td class="p-3 border border-slate-200 font-bold bg-slate-50 text-slate-700 text-center">
                                             วัน${day.name}
                                         </td>
-                                        <td class="p-3 border border-slate-200">
-                                            ${morningItem ? `
-                                                <div class="p-3 rounded-xl tag-${morningItem.color || 'blue'} shadow-sm">
-                                                    <div class="font-bold text-sm">${morningItem.subject}</div>
-                                                    <div class="text-[11px] opacity-80 mt-1">${morningItem.instructor} (${morningItem.group || 'กลุ่มเรียน'})</div>
-                                                    <div class="text-[11px] font-semibold mt-2 flex items-center gap-1">
-                                                        <i data-lucide="clock" class="w-3 h-3"></i> ${morningItem.startTime} - ${morningItem.endTime} น.
-                                                    </div>
+                                        <td class="p-2 border border-slate-200 align-top">
+                                            ${morningItems.length > 0 ? `
+                                                <div class="space-y-2">
+                                                    ${morningItems.map(item => `
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm">
+                                                            <div class="font-bold text-xs">${item.subject}</div>
+                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
+                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
                                                 </div>
                                             ` : `
-                                                <div class="p-4 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '09:00', '12:00')">
+                                                <div class="p-3 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer text-[11px]" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '08:20', '12:20')">
                                                     + ว่าง (คลิกเพื่อจอง)
                                                 </div>
                                             `}
                                         </td>
-                                        <td class="p-2 border border-slate-200 text-center text-slate-400 bg-slate-100/50 text-[11px]">
-                                            12:00-13:00
+                                        <td class="p-2 border border-slate-200 text-center text-slate-400 bg-slate-100/50 text-[11px] align-middle">
+                                            พักเที่ยง
                                         </td>
-                                        <td class="p-3 border border-slate-200">
-                                            ${afternoonItem ? `
-                                                <div class="p-3 rounded-xl tag-${afternoonItem.color || 'indigo'} shadow-sm">
-                                                    <div class="font-bold text-sm">${afternoonItem.subject}</div>
-                                                    <div class="text-[11px] opacity-80 mt-1">${afternoonItem.instructor} (${afternoonItem.group || 'กลุ่มเรียน'})</div>
-                                                    <div class="text-[11px] font-semibold mt-2 flex items-center gap-1">
-                                                        <i data-lucide="clock" class="w-3 h-3"></i> ${afternoonItem.startTime} - ${afternoonItem.endTime} น.
-                                                    </div>
+                                        <td class="p-2 border border-slate-200 align-top">
+                                            ${afternoonItems.length > 0 ? `
+                                                <div class="space-y-2">
+                                                    ${afternoonItems.map(item => `
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'indigo'} shadow-sm">
+                                                            <div class="font-bold text-xs">${item.subject}</div>
+                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
+                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
                                                 </div>
                                             ` : `
-                                                <div class="p-4 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '13:00', '16:00')">
+                                                <div class="p-3 text-center text-slate-400 font-medium border border-dashed border-slate-200 rounded-xl hover:border-blue-400 cursor-pointer text-[11px]" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '13:20', '17:20')">
                                                     + ว่าง (คลิกเพื่อจอง)
+                                                </div>
+                                            `}
+                                        </td>
+                                        <td class="p-2 border border-slate-200 align-top">
+                                            ${eveningItems.length > 0 ? `
+                                                <div class="space-y-2">
+                                                    ${eveningItems.map(item => `
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'purple'} shadow-sm">
+                                                            <div class="font-bold text-xs">${item.subject}</div>
+                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
+                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            ` : `
+                                                <div class="p-3 text-center text-slate-300 font-medium border border-dashed border-slate-100 rounded-xl hover:border-blue-400 cursor-pointer text-[10px]" onclick="openBookingModalWithPrefill('${room.id}', '${day.name}', '17:20', '20:00')">
+                                                    + ว่าง
                                                 </div>
                                             `}
                                         </td>
