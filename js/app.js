@@ -16,6 +16,7 @@ const AppState = {
     statusFilter: 'all',
     buildingFilter: 'all',
     selectedRoomForSchedule: 'ALL',
+    selectedInstructorForSchedule: 'ALL',
     selectedDayIndex: 1, // 1 = Monday
     googleScriptUrl: '', // Google Apps Script Web App URL
     isGoogleConnected: false
@@ -481,8 +482,21 @@ function renderTimetable() {
         roomSelect.value = AppState.selectedRoomForSchedule;
     }
 
+    const instSelect = document.getElementById('timetable-instructor-selector');
+    if (instSelect) {
+        populateInstructorOptions(instSelect);
+        instSelect.value = AppState.selectedInstructorForSchedule;
+    }
+
     const container = document.getElementById('timetable-content-view');
     if (!container) return;
+
+    // If an instructor is selected, render instructor schedule
+    if (AppState.selectedInstructorForSchedule && AppState.selectedInstructorForSchedule !== 'ALL') {
+        container.innerHTML = renderInstructorSchedule(AppState.selectedInstructorForSchedule);
+        lucide.createIcons();
+        return;
+    }
 
     const days = [
         { name: 'จันทร์', index: 1 },
@@ -1521,6 +1535,18 @@ function setupEventListeners() {
     if (scheduleRoomSelect) {
         scheduleRoomSelect.addEventListener('change', (e) => {
             AppState.selectedRoomForSchedule = e.target.value;
+            AppState.selectedInstructorForSchedule = 'ALL';
+            renderTimetable();
+        });
+    }
+
+    const scheduleInstructorSelect = document.getElementById('timetable-instructor-selector');
+    if (scheduleInstructorSelect) {
+        scheduleInstructorSelect.addEventListener('change', (e) => {
+            AppState.selectedInstructorForSchedule = e.target.value;
+            if (e.target.value !== 'ALL') {
+                AppState.selectedRoomForSchedule = 'ALL';
+            }
             renderTimetable();
         });
     }
@@ -1668,4 +1694,139 @@ function showToast(message, type = 'info') {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
     }, 3500);
+}
+
+function populateInstructorOptions(selectElem) {
+    if (!selectElem) return;
+    
+    // Extract unique instructors
+    const instructorsSet = new Set();
+    AppState.timetable.forEach(t => {
+        if (t.instructor) {
+            // Split multi-instructors if comma separated
+            t.instructor.split(',').forEach(inst => {
+                const clean = inst.trim();
+                if (clean) instructorsSet.add(clean);
+            });
+        }
+    });
+
+    const sortedInstructors = Array.from(instructorsSet).sort((a, b) => a.localeCompare(b, 'th'));
+
+    let html = `<option value="ALL">👨‍🏫 อาจารย์ผู้สอนทั้งหมด (${sortedInstructors.length} ท่าน)</option>`;
+    html += sortedInstructors.map(inst => `<option value="${inst}">👤 ${inst}</option>`).join('');
+    
+    selectElem.innerHTML = html;
+}
+
+function renderInstructorSchedule(instructorName) {
+    const instSchedules = AppState.timetable.filter(s => s.instructor && s.instructor.includes(instructorName));
+    
+    const days = [
+        { name: 'จันทร์', index: 1 },
+        { name: 'อังคาร', index: 2 },
+        { name: 'พุธ', index: 3 },
+        { name: 'พฤหัสบดี', index: 4 },
+        { name: 'ศุกร์', index: 5 },
+        { name: 'เสาร์', index: 6 },
+        { name: 'อาทิตย์', index: 0 }
+    ];
+
+    // Unique subjects taught
+    const subjects = Array.from(new Set(instSchedules.map(s => s.subject)));
+    // Unique rooms used
+    const roomIds = Array.from(new Set(instSchedules.map(s => s.roomId)));
+    const roomNames = roomIds.map(rid => {
+        const r = AppState.rooms.find(rm => rm.id === rid);
+        return r ? r.name : rid;
+    });
+
+    return `
+        <div class="space-y-6">
+            <!-- Lecturer Profile Header Banner -->
+            <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md border border-blue-800">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-2xl font-bold text-blue-200 shadow-inner">
+                            👨‍🏫
+                        </div>
+                        <div>
+                            <div class="inline-block px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[11px] font-semibold mb-1">
+                                คณาจารย์ประจำ คณะวิทยาการจัดการ มรน.
+                            </div>
+                            <h3 class="text-xl font-bold text-white">${instructorName}</h3>
+                            <p class="text-xs text-slate-300 mt-1">
+                                ภาคการศึกษา 1 / ปีการศึกษา 2569 • ภาระงานสอน ${instSchedules.length} คาบ (${subjects.length} รายวิชา)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.print()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-white/20">
+                            <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์ตารางสอน
+                        </button>
+                        <button onclick="AppState.selectedInstructorForSchedule = 'ALL'; renderTimetable();" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> ดูทุกท่าน
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-white/10 text-xs">
+                    <div>
+                        <span class="text-slate-400 block text-[11px]">จำนวนคาบสอนรวม</span>
+                        <span class="font-bold text-lg text-emerald-400">${instSchedules.length} คาบ</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[11px]">รายวิชาที่รับผิดชอบ</span>
+                        <span class="font-bold text-lg text-blue-300">${subjects.length} วิชา</span>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="text-slate-400 block text-[11px]">ห้องเรียนที่ใช้สอน</span>
+                        <span class="font-medium text-xs text-white truncate block">${roomNames.join(', ')}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Teaching Grid for Instructor -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <h4 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
+                    ตารางสอนประจำสัปดาห์ของ ${instructorName}
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${days.map(d => {
+                        const dayClasses = instSchedules.filter(s => s.dayIndex === d.index).sort((a, b) => a.startTime.localeCompare(b.startTime));
+                        if (dayClasses.length === 0) return '';
+
+                        return `
+                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                                    <span class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> วัน${d.name}
+                                    </span>
+                                    <span class="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">${dayClasses.length} คาบ</span>
+                                </div>
+                                <div class="space-y-2">
+                                    ${dayClasses.map(c => {
+                                        const room = AppState.rooms.find(rm => rm.id === c.roomId) || { name: c.roomId };
+                                        return `
+                                            <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 transition">
+                                                <div class="flex items-center justify-between text-xs mb-1">
+                                                    <span class="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">${room.name}</span>
+                                                    <span class="font-semibold text-slate-600 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${c.startTime} - ${c.endTime}</span>
+                                                </div>
+                                                <div class="font-bold text-xs text-slate-800">${c.subject}</div>
+                                                <div class="text-[11px] text-slate-500 mt-1">${c.group || 'กลุ่มเรียน'}</div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        </div>
+    `;
 }
