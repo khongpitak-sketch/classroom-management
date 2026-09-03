@@ -4,7 +4,7 @@
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v5_tv_and_projector_facilities_update";
+const DATA_VERSION = "v6_meeting_room_menu_update";
 
 const DEFAULT_ROOMS = [
     {
@@ -395,8 +395,8 @@ const DEFAULT_ROOMS = [
         "id": "MIL-1",
         "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)",
         "code": "MIL",
-        "type": "general",
-        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
+        "type": "meeting_room",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม & ประชุม",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 2",
         "capacity": 40,
@@ -415,7 +415,7 @@ const DEFAULT_ROOMS = [
         "id": "CONF-1",
         "name": "ห้องประชุมพฤกษาพรรณชมพู",
         "code": "CONF-PK",
-        "type": "general",
+        "type": "meeting_room",
         "categoryName": "ห้องประชุม / สัมมนา",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 1",

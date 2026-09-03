@@ -389,8 +389,8 @@ function renderRooms() {
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent"></div>
                         
                         <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
-                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : '📖 ห้องเรียน'}
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : room.type === 'meeting_room' ? 'bg-amber-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
+                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม' : '📖 ห้องเรียน'}
                             </span>
                         </div>
                         <div class="absolute top-3 right-3">
@@ -1386,9 +1386,18 @@ function populateRoomOptions(selectElem, includeAll = false) {
         html += `</optgroup>`;
     }
 
-    if (others.length > 0) {
-        html += `<optgroup label="ห้องเรียนอื่นๆ (${others.length} ห้อง)">`;
-        html += others.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
+    const meetings = AppState.rooms.filter(r => r.type === 'meeting_room');
+    const remaining = AppState.rooms.filter(r => !labs.includes(r) && !floor3.includes(r) && !floor4.includes(r) && !meetings.includes(r));
+
+    if (meetings.length > 0) {
+        html += `<optgroup label="ห้องประชุม (${meetings.length} ห้อง)">`;
+        html += meetings.map(r => `<option value="${r.id}">🏛️ ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
+        html += `</optgroup>`;
+    }
+
+    if (remaining.length > 0) {
+        html += `<optgroup label="ห้องเรียนอื่นๆ (${remaining.length} ห้อง)">`;
+        html += remaining.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 

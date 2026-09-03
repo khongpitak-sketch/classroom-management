@@ -493,15 +493,18 @@ body {
 
                     <div class="flex items-center gap-2">
                         <!-- Category Filter Buttons -->
-                        <div class="flex items-center bg-slate-100 p-1 rounded-xl gap-1">
-                            <button data-type="all" class="filter-type-btn px-4 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white shadow-xs">
+                        <div class="flex flex-wrap items-center bg-slate-100 p-1 rounded-xl gap-1">
+                            <button data-type="all" class="filter-type-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white shadow-xs">
                                 ทั้งหมด
                             </button>
-                            <button data-type="general" class="filter-type-btn px-4 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
+                            <button data-type="general" class="filter-type-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
                                 📖 ห้องเรียน
                             </button>
-                            <button data-type="computer_lab" class="filter-type-btn px-4 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
+                            <button data-type="computer_lab" class="filter-type-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
                                 💻 แล็บคอม
+                            </button>
+                            <button data-type="meeting_room" class="filter-type-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
+                                🏛️ ห้องประชุม
                             </button>
                         </div>
                         
@@ -969,6 +972,7 @@ body {
                         <select name="roomType" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
                             <option value="general">📖 ห้องเรียนทั่วไป (Lecture)</option>
                             <option value="computer_lab">💻 ห้องปฏิบัติการคอมพิวเตอร์ (Lab)</option>
+                            <option value="meeting_room">🏛️ ห้องประชุม / สัมมนา (Meeting)</option>
                         </select>
                     </div>
                     <div>
@@ -1022,7 +1026,7 @@ body {
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v5_tv_and_projector_facilities_update";
+const DATA_VERSION = "v6_meeting_room_menu_update";
 
 const DEFAULT_ROOMS = [
     {
@@ -1413,8 +1417,8 @@ const DEFAULT_ROOMS = [
         "id": "MIL-1",
         "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)",
         "code": "MIL",
-        "type": "general",
-        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
+        "type": "meeting_room",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม & ประชุม",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 2",
         "capacity": 40,
@@ -1433,7 +1437,7 @@ const DEFAULT_ROOMS = [
         "id": "CONF-1",
         "name": "ห้องประชุมพฤกษาพรรณชมพู",
         "code": "CONF-PK",
-        "type": "general",
+        "type": "meeting_room",
         "categoryName": "ห้องประชุม / สัมมนา",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 1",
@@ -4284,8 +4288,8 @@ function renderRooms() {
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent"></div>
                         
                         <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
-                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : '📖 ห้องเรียน'}
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : room.type === 'meeting_room' ? 'bg-amber-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
+                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม' : '📖 ห้องเรียน'}
                             </span>
                         </div>
                         <div class="absolute top-3 right-3">
@@ -5281,9 +5285,18 @@ function populateRoomOptions(selectElem, includeAll = false) {
         html += `</optgroup>`;
     }
 
-    if (others.length > 0) {
-        html += `<optgroup label="ห้องเรียนอื่นๆ (${others.length} ห้อง)">`;
-        html += others.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
+    const meetings = AppState.rooms.filter(r => r.type === 'meeting_room');
+    const remaining = AppState.rooms.filter(r => !labs.includes(r) && !floor3.includes(r) && !floor4.includes(r) && !meetings.includes(r));
+
+    if (meetings.length > 0) {
+        html += `<optgroup label="ห้องประชุม (${meetings.length} ห้อง)">`;
+        html += meetings.map(r => `<option value="${r.id}">🏛️ ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
+        html += `</optgroup>`;
+    }
+
+    if (remaining.length > 0) {
+        html += `<optgroup label="ห้องเรียนอื่นๆ (${remaining.length} ห้อง)">`;
+        html += remaining.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
