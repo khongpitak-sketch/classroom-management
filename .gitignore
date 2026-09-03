@@ -1,0 +1,13 @@
+# Ignore Mingit portable binaries if extracted inside
+mingit/
+mingit.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS Files
+Thumbs.db
+.DS_Store
+*.tmp
