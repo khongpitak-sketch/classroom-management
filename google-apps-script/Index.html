@@ -283,6 +283,59 @@ body {
                 </div>
             </div>
 
+            
+            <!-- Live Timetable Sync & Time Simulation Controller -->
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-4 sm:p-5 border border-indigo-800/60 shadow-lg text-white flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-blue-500/20 text-blue-300 rounded-xl border border-blue-400/30 shrink-0">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h4 class="font-bold text-white text-sm sm:text-base">สถานะห้องสัมพันธ์กับตารางสอนจริงอัตโนมัติ</h4>
+                            <div id="time-sync-badge">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> เวลาจริง
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-1">
+                            ระบบคำนวณสถานะ <b class="text-emerald-300">"ว่าง"</b> หรือ <b class="text-amber-300">"ไม่ว่าง (กำลังสอน)"</b> ตามวัน-เวลาจริงของตารางเรียน 184 คาบโดยอัตโนมัติ
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Simulation Quick Buttons -->
+                <div class="flex flex-wrap items-center gap-1.5 bg-black/30 p-2 rounded-xl border border-white/10">
+                    <span class="text-[11px] font-semibold text-slate-300 px-1">ลองดูสถานะ:</span>
+                    <button onclick="resetToRealTime()" class="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1" title="กลับสู่เวลาจริงตามนาฬิกา">
+                        <i data-lucide="clock" class="w-3 h-3"></i> เวลาจริง
+                    </button>
+                    <button onclick="setSimulatedTime(1, 'จันทร์', '09:00')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition" title="วันจันทร์ 09:00 (ช่วงสอนเช้า)">
+                        จันทร์ 09:00
+                    </button>
+                    <button onclick="setSimulatedTime(1, 'จันทร์', '12:30')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition" title="วันจันทร์ 12:30 (พักเที่ยง ว่างทุกห้อง)">
+                        จันทร์ พักเที่ยง
+                    </button>
+                    <button onclick="setSimulatedTime(2, 'อังคาร', '14:00')" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-medium transition" title="วันอังคาร 14:00 (สอนบ่าย)">
+                        อังคาร 14:00
+                    </button>
+                    <button onclick="setSimulatedTime(3, 'พุธ', '10:00')" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-medium transition" title="วันพุธ 10:00 (แล็บคอม)">
+                        พุธ 10:00
+                    </button>
+                    <button onclick="setSimulatedTime(4, 'พฤหัสบดี', '14:00')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition" title="วันพฤหัสบดี 14:00">
+                        พฤหัสฯ 14:00
+                    </button>
+                    <button onclick="setSimulatedTime(5, 'ศุกร์', '10:00')" class="px-2.5 py-1 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-xs font-medium transition" title="วันศุกร์ 10:00">
+                        ศุกร์ 10:00
+                    </button>
+                    <button onclick="setSimulatedTime(0, 'อาทิตย์', '10:00')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-medium transition" title="วันอาทิตย์ 10:00 (วิชาพิเศษ)">
+                        อาทิตย์ 10:00
+                    </button>
+                </div>
+            </div>
+
+
             <!-- Quick Status Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
@@ -3859,6 +3912,9 @@ const AppState = {
     buildingFilter: 'all',
     selectedRoomForSchedule: 'ALL',
     selectedInstructorForSchedule: 'ALL',
+    simulatedTime: null, // null = live real-time, or 'HH:MM'
+    simulatedDayIndex: null, // 0 = Sunday, 1 = Monday, ...
+    simulatedDayName: null,
     selectedDayIndex: 1, // 1 = Monday
     googleScriptUrl: '', // Google Apps Script Web App URL
     isGoogleConnected: false
@@ -4031,6 +4087,7 @@ function renderCurrentTab() {
 
 // Digital Clock & Date
 function updateClock() {
+    syncRoomStatusWithTimetable();
     const now = new Date();
     const timeElem = document.getElementById('current-time-display');
     const dateElem = document.getElementById('current-date-display');
@@ -4281,13 +4338,24 @@ function renderRooms() {
                                 <div class="text-[11px] mt-0.5 text-red-600 truncate">${room.description || 'อยู่ระหว่างซ่อมบำรุง'}</div>
                             </div>
                         ` : `
-                            <div class="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/70 text-xs text-emerald-800 flex items-center justify-between">
-                                <span class="flex items-center gap-1.5 font-medium">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ห้องว่าง พร้อมใช้งาน
-                                </span>
-                                <button onclick="quickToggleOccupied('${room.id}')" class="text-[11px] px-2 py-0.5 bg-white border border-emerald-300 rounded font-semibold text-emerald-700 hover:bg-emerald-100 transition">
-                                    เช็คอินเข้าใช้
-                                </button>
+                            <div class="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/70 text-xs text-emerald-800 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5 font-bold">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ห้องว่าง พร้อมใช้งาน
+                                    </span>
+                                    <button onclick="openBookingModalForRoom('${room.id}')" class="text-[11px] px-2 py-0.5 bg-emerald-600 text-white rounded font-semibold hover:bg-emerald-700 transition">
+                                        จองห้องนี้
+                                    </button>
+                                </div>
+                                ${room.nextClass ? `
+                                    <div class="text-[11px] text-emerald-700/90 pt-1 border-t border-emerald-200 flex items-center gap-1 truncate">
+                                        <i data-lucide="clock" class="w-3 h-3 shrink-0"></i> คาบถัดไป: <b>${room.nextClass.time}</b> (${room.nextClass.subject.split(' ')[0]})
+                                    </div>
+                                ` : `
+                                    <div class="text-[10px] text-emerald-600/80 pt-1 border-t border-emerald-200">
+                                        ไม่มีคาบเรียนอื่นในวันนี้
+                                    </div>
+                                `}
                             </div>
                         `}
 
@@ -5671,6 +5739,149 @@ function renderInstructorSchedule(instructorName) {
             </div>
         </div>
     `;
+}
+
+
+// ----------------------------------------------------
+// DYNAMIC ROOM STATUS SYNC WITH TIMETABLE & BOOKINGS
+// ----------------------------------------------------
+function syncRoomStatusWithTimetable() {
+    const now = new Date();
+    
+    let dayIndex;
+    let timeStr;
+    let dayName;
+
+    if (AppState.simulatedTime) {
+        dayIndex = AppState.simulatedDayIndex;
+        timeStr = AppState.simulatedTime;
+        dayName = AppState.simulatedDayName;
+    } else {
+        dayIndex = now.getDay(); // 0 = Sun, 1 = Mon, ...
+        const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+        dayName = days[dayIndex];
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeStr = `${hours}:${minutes}`;
+    }
+
+    const dateStr = now.toISOString().split('T')[0];
+
+    // Find rooms with active maintenance
+    const activeMaintenanceRoomIds = new Set(
+        (AppState.maintenance || [])
+            .filter(m => m.status === 'open' || m.status === 'in_progress')
+            .map(m => m.roomId)
+    );
+
+    AppState.rooms.forEach(room => {
+        // Priority 1: Maintenance
+        if (activeMaintenanceRoomIds.has(room.id)) {
+            room.status = 'maintenance';
+            room.currentClass = null;
+            return;
+        }
+
+        // Priority 2: Approved booking right now
+        const activeBooking = (AppState.bookings || []).find(b => 
+            b.roomId === room.id &&
+            b.status === 'approved' &&
+            b.date === dateStr &&
+            timeStr >= b.startTime && timeStr < b.endTime
+        );
+
+        if (activeBooking) {
+            room.status = 'reserved';
+            room.currentClass = {
+                subject: activeBooking.subject,
+                instructor: activeBooking.bookerName,
+                time: `${activeBooking.startTime} - ${activeBooking.endTime} น.`,
+                group: activeBooking.department || 'รายการจองใช้งาน',
+                type: 'booking'
+            };
+            return;
+        }
+
+        // Priority 3: Scheduled class in timetable for this day & time
+        const activeClass = (AppState.timetable || []).find(t => 
+            t.roomId === room.id &&
+            t.dayIndex === dayIndex &&
+            timeStr >= t.startTime && timeStr < t.endTime
+        );
+
+        if (activeClass) {
+            room.status = 'occupied';
+            room.currentClass = {
+                subject: activeClass.subject,
+                instructor: activeClass.instructor,
+                time: `${activeClass.startTime} - ${activeClass.endTime} น.`,
+                group: activeClass.group || 'ภาคปกติ',
+                type: 'class'
+            };
+            return;
+        }
+
+        // Priority 4: Room is available!
+        room.status = 'available';
+        room.currentClass = null;
+
+        // Upcoming class today (if any)
+        const upcomingClasses = (AppState.timetable || [])
+            .filter(t => t.roomId === room.id && t.dayIndex === dayIndex && t.startTime > timeStr)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+            
+        if (upcomingClasses.length > 0) {
+            room.nextClass = {
+                subject: upcomingClasses[0].subject,
+                instructor: upcomingClasses[0].instructor,
+                time: `${upcomingClasses[0].startTime} - ${upcomingClasses[0].endTime} น.`
+            };
+        } else {
+            room.nextClass = null;
+        }
+    });
+
+    // Update simulation status indicator in UI if exists
+    updateSimulationBadge(dayName, timeStr);
+}
+
+function updateSimulationBadge(dayName, timeStr) {
+    const badge = document.getElementById('time-sync-badge');
+    if (!badge) return;
+
+    if (AppState.simulatedTime) {
+        badge.innerHTML = `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                จำลองเวลา: วัน${dayName} ${timeStr} น.
+            </span>
+        `;
+    } else {
+        badge.innerHTML = `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                เวลาจริง: วัน${dayName} ${timeStr} น.
+            </span>
+        `;
+    }
+}
+
+function setSimulatedTime(dayIndex, dayName, timeStr) {
+    AppState.simulatedDayIndex = dayIndex;
+    AppState.simulatedDayName = dayName;
+    AppState.simulatedTime = timeStr;
+    syncRoomStatusWithTimetable();
+    renderCurrentTab();
+    showToast(`จำลองเวลาเป็น: วัน${dayName} เวลา ${timeStr} น. สถานะห้องถูกอัปเดตสัมพันธ์กับตารางเรียนแล้ว`, 'info');
+}
+
+function resetToRealTime() {
+    AppState.simulatedDayIndex = null;
+    AppState.simulatedDayName = null;
+    AppState.simulatedTime = null;
+    syncRoomStatusWithTimetable();
+    renderCurrentTab();
+    showToast('กลับสู่โหมดเวลาจริงของระบบแล้ว', 'success');
 }
 
 </script>
