@@ -4,7 +4,7 @@
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v6_meeting_room_menu_update";
+const DATA_VERSION = "v7_add_wipha_wangsirikul_meeting_room";
 
 const DEFAULT_ROOMS = [
     {
@@ -431,6 +431,35 @@ const DEFAULT_ROOMS = [
         ],
         "description": "ห้องประชุมพฤกษาพรรณชมพู คณะวิทยาการจัดการ รองรับการบรรยาย สัมมนา และการประชุมวิชาการ",
         "image": "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600"
+    },
+    {
+        "id": "CONF-2",
+        "code": "CONF-VW",
+        "name": "ห้องประชุมวิภา วังศิริกุล",
+        "type": "meeting_room",
+        "categoryName": "ห้องประชุม / สัมมนา",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 2",
+        "capacity": 50,
+        "pcCount": 0,
+        "status": "available",
+        "facilities": [
+            "Smart TV จอแสดงผลขนาดใหญ่",
+            "เครื่องโปรเจกเตอร์ความคมชัดสูง",
+            "ระบบ Video Conference (Zoom / Teams)",
+            "ไมโครโฟนประชุมรอบทิศทาง",
+            "เครื่องปรับอากาศ x2",
+            "ระบบเครื่องเสียงดิจิทัล"
+        ],
+        "description": "ห้องประชุมวิภา วังศิริกุล อาคารคณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ สำหรับการประชุมผู้บริหาร ประชุมคณะกรรมการ และสัมมนาวิชาการ",
+        "image": "https://images.unsplash.com/photo-1431540015161-0bf8663c16ba?w=600&auto=format&fit=crop&q=60",
+        "specs": {},
+        "software": [
+            "Zoom Rooms",
+            "Microsoft Teams",
+            "Wireless Presentation"
+        ],
+        "currentClass": null
     }
 ];
 

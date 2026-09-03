@@ -214,6 +214,7 @@ function renderDashboard() {
     const totalRooms = AppState.rooms.length;
     const generalRooms = AppState.rooms.filter(r => r.type === 'general');
     const comLabs = AppState.rooms.filter(r => r.type === 'computer_lab');
+    const meetingRooms = AppState.rooms.filter(r => r.type === 'meeting_room');
 
     const availableCount = AppState.rooms.filter(r => r.status === 'available').length;
     const occupiedCount = AppState.rooms.filter(r => r.status === 'occupied').length;
@@ -223,6 +224,8 @@ function renderDashboard() {
     document.querySelectorAll('.total-rooms-count').forEach(el => el.textContent = totalRooms);
     document.getElementById('dash-general-count').textContent = `${generalRooms.length} ห้อง`;
     document.getElementById('dash-lab-count').textContent = `${comLabs.length} ห้อง`;
+    const meetingCountElem = document.getElementById('dash-meeting-count');
+    if (meetingCountElem) meetingCountElem.textContent = `${meetingRooms.length} ห้อง`;
     
     document.getElementById('dash-available-count').textContent = availableCount;
     document.getElementById('dash-occupied-count').textContent = occupiedCount;
