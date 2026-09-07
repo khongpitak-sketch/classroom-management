@@ -4,7 +4,7 @@
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v11_remove_podium";
+const DATA_VERSION = "v12_public_booking_and_admin_portal";
 
 const DEFAULT_ROOMS = [
     {

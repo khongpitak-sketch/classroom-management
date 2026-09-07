@@ -101,10 +101,56 @@ function handleApiGet(params) {
         success: true,
         data: apiGetData()
       };
+    } else if (action === 'addBooking') {
+      let booking = {};
+      if (params.booking) {
+        booking = typeof params.booking === 'string' ? JSON.parse(params.booking) : params.booking;
+      } else if (params.data) {
+        booking = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      } else {
+        booking = params;
+      }
+      responseData = apiAddBooking(booking);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'approveBooking') {
+      responseData = apiApproveBooking(params.id);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'rejectBooking') {
+      responseData = apiRejectBooking(params.id);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'cancelBooking' || action === 'deleteBooking') {
+      responseData = apiCancelBooking(params.id);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'addMaintenance') {
+      let ticket = {};
+      if (params.ticket) {
+        ticket = typeof params.ticket === 'string' ? JSON.parse(params.ticket) : params.ticket;
+      } else if (params.data) {
+        ticket = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      } else {
+        ticket = params;
+      }
+      responseData = apiAddMaintenance(ticket);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
     } else if (action === 'init') {
       responseData = setupDatabase();
     } else {
-      responseData = { success: false, message: "Invalid action" };
+      responseData = { success: false, message: "Invalid action: " + action };
+    }
+
+    if (params.callback) {
+      return ContentService.createTextOutput(params.callback + '(' + JSON.stringify(responseData) + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
     }
 
     return ContentService.createTextOutput(JSON.stringify(responseData))
@@ -474,4 +520,26 @@ function formatHeaderRow(sheet, bgColor) {
   range.setFontWeight("bold");
   range.setHorizontalAlignment("center");
   sheet.setFrozenRows(1);
+}
+
+/**
+ * ปฏิเสธการจอง
+ */
+function apiRejectBooking(bookingId) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == bookingId) {
+        sheet.getRange(i + 1, 11).setValue("rejected");
+        return { success: true, message: "ปฏิเสธคำขอจองห้องเรียบร้อยแล้ว" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสการจอง: " + bookingId };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
 }
