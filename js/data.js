@@ -4,7 +4,7 @@
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v9_add_intanin_sopa_meeting_room";
+const DATA_VERSION = "v10_update_pruksa_capacity_20";
 
 const DEFAULT_ROOMS = [
     {
@@ -419,7 +419,7 @@ const DEFAULT_ROOMS = [
         "categoryName": "ห้องประชุม / สัมมนา",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 1",
-        "capacity": 80,
+        "capacity": 20,
         "status": "available",
         "currentClass": null,
         "facilities": [
@@ -429,7 +429,7 @@ const DEFAULT_ROOMS = [
             "ระบบถ่ายทอดสด Live Streaming",
             "เครื่องปรับอากาศ x4"
         ],
-        "description": "ห้องประชุมพฤกษาพรรณชมพู คณะวิทยาการจัดการ รองรับการบรรยาย สัมมนา และการประชุมวิชาการ",
+        "description": "ห้องประชุมพฤกษาพรรณชมพู ชั้น 1 อาคารคณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ ความจุ 20 ที่นั่ง รองรับการประชุม สัมมนา และการเรียนการสอนกลุ่มย่อย",
         "image": "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600"
     },
     {
