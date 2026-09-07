@@ -758,6 +758,37 @@ function renderBookings() {
     const approvedCount = AppState.bookings.filter(b => b.status === 'approved').length;
     const pendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
 
+    
+    // Update Cloud Sync Banner in Bookings View
+    const cloudBanner = document.getElementById('bookings-cloud-sync-banner');
+    if (cloudBanner) {
+        if (AppState.isGoogleConnected || AppState.googleScriptUrl) {
+            cloudBanner.innerHTML = `
+                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span><b>ระบบเชื่อมต่อ Google Sheets ส่วนกลางแล้ว:</b> ข้อมูลการจองจากทุกคนจะซิงก์เข้าสู่ระบบเรียลไทม์ และ Admin จะเห็นข้อมูลทันที</span>
+                    </div>
+                    <button onclick="fetchDataFromGoogleSheets(false)" class="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 rounded font-semibold text-emerald-700 transition">
+                        ดึงข้อมูลล่าสุด
+                    </button>
+                </div>
+            `;
+        } else {
+            cloudBanner.innerHTML = `
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                        <span><b>เหตุผลที่ Admin ยังไม่เห็นข้อมูลจากเครื่องอื่น:</b> ระบบยังไม่ได้ใส่ URL เว็บแอป Google Sheets ทำให้ข้อมูลการจองถูกบันทึกค้างไว้เฉพาะในเครื่องของคนจอง (LocalStorage)</span>
+                    </div>
+                    <button onclick="switchTab('settings')" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition shrink-0">
+                        ใส่ URL เชื่อมต่อคลาวด์
+                    </button>
+                </div>
+            `;
+        }
+    }
+
     const totalElem = document.getElementById('bookings-stat-total');
     if (totalElem) totalElem.textContent = totalCount;
     const appElem = document.getElementById('bookings-stat-approved');

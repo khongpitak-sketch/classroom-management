@@ -1,10 +1,13 @@
+// Google Apps Script Web App URL for central synchronization
+const DEFAULT_GAS_URL = "";
+
 /**
  * Classroom Management System - Real University Timetable (v3)
  * คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v12_public_booking_and_admin_portal";
+const DATA_VERSION = "v13_cloud_sync_indicator";
 
 const DEFAULT_ROOMS = [
     {
