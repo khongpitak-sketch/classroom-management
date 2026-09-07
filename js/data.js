@@ -1,5 +1,5 @@
 // Google Apps Script Web App URL for central synchronization
-const DEFAULT_GAS_URL = "";
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3uHg9nILdOmuHqTpWgRHk7JoW27_1R5A7hl8HSxzIBRE1hspfhNbLxA/exec";
 
 /**
  * Classroom Management System - Real University Timetable (v3)
@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "";
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v13_cloud_sync_indicator";
+const DATA_VERSION = "v14_gas_cloud_connected";
 
 const DEFAULT_ROOMS = [
     {

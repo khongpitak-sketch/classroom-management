@@ -62,6 +62,8 @@ function loadSettings() {
         const savedUrl = localStorage.getItem('CMS_GAS_URL');
         if (savedUrl) {
             AppState.googleScriptUrl = savedUrl;
+        } else if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
+            AppState.googleScriptUrl = DEFAULT_GAS_URL;
         }
     } catch (e) {
         console.error("Error loading settings:", e);
@@ -1285,14 +1287,46 @@ async function fetchDataFromGoogleSheets(silent = false) {
 
     try {
         if (!silent) showToast('กำลังดึงข้อมูลจาก Google Sheets...', 'info');
-        const url = AppState.googleScriptUrl + (AppState.googleScriptUrl.includes('?') ? '&' : '?') + 'action=getData';
+        const url = AppState.googleScriptUrl + (AppState.googleScriptUrl.includes('?') ? '&' : '?') + 'action=getAll';
         const res = await fetch(url);
         const json = await res.json();
 
         if (json.success && json.data) {
             if (json.data.rooms && json.data.rooms.length > 0) AppState.rooms = json.data.rooms;
             if (json.data.timetable) AppState.timetable = json.data.timetable;
-            if (json.data.bookings) AppState.bookings = json.data.bookings;
+            if (json.data.bookings && Array.isArray(json.data.bookings)) {
+                AppState.bookings = json.data.bookings.map(b => {
+                    // Normalize date format
+                    let dateStr = b.date || '';
+                    if (dateStr && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+                    // Normalize time format if it came from sheet date object
+                    let sTime = b.startTime || b.starttime || '';
+                    if (sTime && sTime.includes('T')) {
+                        const d = new Date(sTime);
+                        sTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+                    }
+                    let eTime = b.endTime || b.endtime || '';
+                    if (eTime && eTime.includes('T')) {
+                        const d = new Date(eTime);
+                        eTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+                    }
+                    return {
+                        id: b.id || b.ID || ('BK-' + Math.floor(1000 + Math.random() * 9000)),
+                        roomId: b.roomId || b.roomid || '',
+                        roomName: b.roomName || b.roomname || '',
+                        date: dateStr,
+                        startTime: sTime,
+                        endTime: eTime,
+                        subject: b.subject || b.purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ',
+                        purpose: b.purpose || b.subject || '',
+                        bookerName: b.bookerName || b.reservedBy || b.reservedby || 'ไม่ระบุชื่อ',
+                        department: b.department || '',
+                        phone: b.phone ? String(b.phone) : '',
+                        status: (b.status || 'pending').toLowerCase(),
+                        createdAt: b.createdAt || b.createdat || ''
+                    };
+                });
+            }
             if (json.data.maintenance) AppState.maintenance = json.data.maintenance;
 
             AppState.isGoogleConnected = true;
