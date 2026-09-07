@@ -5117,22 +5117,23 @@ function renderMaintenance() {
     if (AppState.maintenance.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-10 text-slate-400">
+                <td colspan="7" class="text-center py-10 text-slate-400">
                     <i data-lucide="check-check" class="w-12 h-12 mx-auto mb-2 opacity-50 text-emerald-500"></i>
                     ไม่มีรายการแจ้งซ่อม ทุกห้องอยู่ในสภาพพร้อมใช้งาน 100%
                 </td>
             </tr>
         `;
+        lucide.createIcons();
         return;
     }
 
     tableBody.innerHTML = AppState.maintenance.map(m => `
-        <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs">
+        <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs transition">
             <td class="p-3 font-semibold text-slate-500">${m.id}</td>
             <td class="p-3 font-bold text-slate-800">${m.roomName}</td>
             <td class="p-3">
                 <div class="font-bold text-slate-800">${m.title}</div>
-                <div class="text-slate-500 text-[11px]">${m.details}</div>
+                <div class="text-slate-500 text-[11px]">${m.details || '-'}</div>
             </td>
             <td class="p-3 text-slate-600">
                 <div>${m.reporter}</div>
@@ -5145,18 +5146,40 @@ function renderMaintenance() {
                 ${getMaintenanceStatusBadge(m.status)}
             </td>
             <td class="p-3 text-right">
-                ${m.status !== 'completed' ? `
-                    <button onclick="resolveMaintenance('${m.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs transition">
-                        ซ่อมเสร็จแล้ว
-                    </button>
-                ` : `
-                    <span class="text-emerald-600 font-semibold flex items-center justify-end gap-1">
-                        <i data-lucide="check" class="w-4 h-4"></i> เรียบร้อย
-                    </span>
-                `}
+                <div class="flex items-center justify-end gap-1.5">
+                    ${m.status !== 'completed' ? `
+                        <button onclick="resolveMaintenance('${m.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1 shadow-2xs" title="บันทึกว่าซ่อมเสร็จแล้ว">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i> ซ่อมเสร็จ
+                        </button>
+                    ` : `
+                        <span class="text-emerald-600 font-semibold flex items-center gap-1 text-[11px] bg-emerald-50 px-2 py-0.5 rounded">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i> เรียบร้อย
+                        </span>
+                    `}
+                    ${AppState.isAdmin ? `
+                        <button onclick="deleteMaintenance('${m.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="ลบรายการแจ้งซ่อม (เฉพาะ Admin)">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    ` : ''}
+                </div>
             </td>
         </tr>
     `).join('');
+    lucide.createIcons();
+}
+
+function deleteMaintenance(ticketId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    if (confirm(`คุณต้องการลบรายการแจ้งซ่อม ${ticketId} หรือไม่?`)) {
+        AppState.maintenance = AppState.maintenance.filter(m => m.id !== ticketId);
+        saveData();
+        renderMaintenance();
+        showToast(`ลบรายการแจ้งซ่อม ${ticketId} เรียบร้อยแล้ว`, 'success');
+        sendActionToGoogleBackend('deleteMaintenance', { id: ticketId });
+    }
 }
 
 function handleMaintenanceSubmit(event) {
@@ -5318,10 +5341,17 @@ function sendActionToGoogleBackend(action, payload) {
             .then(r => r.json())
             .then(res => {
                 console.log('Google Sheets Sync (GET):', res);
-                if (res.success && res.data && res.data.bookings) {
-                    AppState.bookings = res.data.bookings;
-                    saveData();
-                    renderBookings();
+                if (res.success && res.data) {
+                    if (res.data.bookings) {
+                        AppState.bookings = res.data.bookings;
+                        saveData();
+                        renderBookings();
+                    }
+                    if (res.data.maintenance && res.data.maintenance.length > 0) {
+                        AppState.maintenance = res.data.maintenance;
+                        saveData();
+                        renderMaintenance();
+                    }
                 }
             })
             .catch(err => {
@@ -5412,7 +5442,26 @@ async function fetchDataFromGoogleSheets(silent = false) {
                     };
                 });
             }
-            if (json.data.maintenance) AppState.maintenance = json.data.maintenance;
+            if (json.data.maintenance && Array.isArray(json.data.maintenance)) {
+                if (json.data.maintenance.length > 0) {
+                    AppState.maintenance = json.data.maintenance.map(m => {
+                        let repDate = m.reportedDate || m.reporteddate || m.date || '';
+                        if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
+                        return {
+                            id: m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900)),
+                            roomId: m.roomId || m.roomid || '',
+                            roomName: m.roomName || m.roomname || '',
+                            reportedDate: repDate || new Date().toISOString().slice(0, 10),
+                            title: m.title || m.item || 'แจ้งปัญหาอุปกรณ์',
+                            details: m.details || m.description || '',
+                            reporter: m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน',
+                            status: (m.status || 'open').toLowerCase(),
+                            priority: (m.priority || 'medium').toLowerCase()
+                        };
+                    });
+                }
+                // If cloud sheet maintenance is empty, keep existing local maintenance so user reports are not erased
+            }
 
             AppState.isGoogleConnected = true;
             saveData();
