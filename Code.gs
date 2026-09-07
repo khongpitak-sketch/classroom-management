@@ -96,11 +96,14 @@ function handleApiGet(params) {
     const action = params.action;
     let responseData = {};
 
-    if (action === 'getData') {
+    if (action === 'getData' || action === 'getAll') {
       responseData = {
         success: true,
         data: apiGetData()
       };
+    } else if (action === 'init' || action === 'setupDatabase' || action === 'initDatabase') {
+      responseData = setupDatabase();
+      responseData.data = apiGetData();
     } else if (action === 'addBooking') {
       let booking = {};
       if (params.booking) {
@@ -182,8 +185,10 @@ function getDb() {
 function apiGetData() {
   const ss = getDb();
   
-  // ตรวจสอบว่ามีชีทครบหรือไม่ หากยังไม่มีให้สร้างอัตโนมัติ
-  if (!ss.getSheetByName(SHEET_ROOMS)) {
+  // ตรวจสอบว่ามีชีทครบหรือไม่ หรือตารางเรียนว่างเปล่าหรือไม่ หากยังไม่มีให้สร้างอัตโนมัติ
+  let roomsSheet = ss.getSheetByName(SHEET_ROOMS);
+  let ttSheet = ss.getSheetByName(SHEET_TIMETABLE);
+  if (!roomsSheet || !ttSheet || ttSheet.getLastRow() <= 1) {
     setupDatabase();
   }
 

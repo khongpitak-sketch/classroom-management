@@ -88,7 +88,7 @@ function loadData() {
         const savedBookings = localStorage.getItem('CMS_BOOKINGS');
         const savedMaintenance = localStorage.getItem('CMS_MAINTENANCE');
 
-        // Check if version changed -> auto migrate to new room names
+        // Check if version changed -> auto migrate to new room names and reset timetable
         if (savedVersion !== DATA_VERSION || !savedRooms) {
             AppState.rooms = DEFAULT_ROOMS;
             AppState.timetable = DEFAULT_TIMETABLE;
@@ -98,9 +98,17 @@ function loadData() {
             localStorage.setItem('CMS_VERSION', DATA_VERSION);
         } else {
             AppState.rooms = JSON.parse(savedRooms);
-            AppState.timetable = savedTimetable ? JSON.parse(savedTimetable) : DEFAULT_TIMETABLE;
+            let parsedTt = null;
+            try { parsedTt = savedTimetable ? JSON.parse(savedTimetable) : null; } catch(e) {}
+            AppState.timetable = (parsedTt && Array.isArray(parsedTt) && parsedTt.length > 0) ? parsedTt : DEFAULT_TIMETABLE;
             AppState.bookings = savedBookings ? JSON.parse(savedBookings) : DEFAULT_BOOKINGS;
             AppState.maintenance = savedMaintenance ? JSON.parse(savedMaintenance) : DEFAULT_MAINTENANCE;
+        }
+
+        // Safety guarantee: Timetable must always contain the 184 semester classes
+        if (!AppState.timetable || !Array.isArray(AppState.timetable) || AppState.timetable.length === 0) {
+            AppState.timetable = DEFAULT_TIMETABLE;
+            saveData();
         }
     } catch (e) {
         console.error("Error loading data from localStorage:", e);
@@ -1301,7 +1309,11 @@ function syncFromGoogleAppsScript() {
         .withSuccessHandler(response => {
             if (response && response.rooms && response.rooms.length > 0) {
                 AppState.rooms = response.rooms;
-                if (response.timetable) AppState.timetable = response.timetable;
+                if (response.timetable && Array.isArray(response.timetable) && response.timetable.length > 0) {
+                    AppState.timetable = response.timetable;
+                } else if (!AppState.timetable || AppState.timetable.length === 0) {
+                    AppState.timetable = DEFAULT_TIMETABLE;
+                }
                 if (response.bookings) AppState.bookings = response.bookings;
                 if (response.maintenance) AppState.maintenance = response.maintenance;
                 AppState.isGoogleConnected = true;
@@ -1332,8 +1344,17 @@ async function fetchDataFromGoogleSheets(silent = false) {
         const json = await res.json();
 
         if (json.success && json.data) {
-            if (json.data.rooms && json.data.rooms.length > 0) AppState.rooms = json.data.rooms;
-            if (json.data.timetable) AppState.timetable = json.data.timetable;
+            if (json.data.rooms && Array.isArray(json.data.rooms) && json.data.rooms.length > 0) {
+                AppState.rooms = json.data.rooms;
+            }
+            if (json.data.timetable && Array.isArray(json.data.timetable) && json.data.timetable.length > 0) {
+                AppState.timetable = json.data.timetable;
+            } else {
+                // If cloud sheet has no timetable entries yet, NEVER wipe out the 184 timetable classes!
+                if (!AppState.timetable || AppState.timetable.length === 0) {
+                    AppState.timetable = DEFAULT_TIMETABLE;
+                }
+            }
             if (json.data.bookings && Array.isArray(json.data.bookings)) {
                 AppState.bookings = json.data.bookings.map(b => {
                     // Normalize date format
@@ -2362,4 +2383,14 @@ function filterBookingsByStatus(status) {
         }
     });
     renderBookings();
+}
+
+function forceReloadMasterTimetable() {
+    AppState.timetable = DEFAULT_TIMETABLE;
+    AppState.rooms = DEFAULT_ROOMS;
+    saveData();
+    renderCurrentTab();
+    if (typeof showToast === 'function') {
+        showToast('โหลดตารางเรียน 184 คาบเรียนเรียบร้อยแล้ว!', 'success');
+    }
 }
