@@ -908,25 +908,51 @@ body {
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">เวลาเริ่ม <span class="text-rose-500">*</span></label>
-                        <select name="startTime" id="booking-start-time" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select name="startTime" id="booking-start-time" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm">
+                            <option value="08:00">08:00 น.</option>
+                            <option value="08:20">08:20 น. (คาบเช้า)</option>
                             <option value="08:30">08:30 น.</option>
                             <option value="09:00" selected>09:00 น.</option>
+                            <option value="09:20">09:20 น.</option>
                             <option value="10:00">10:00 น.</option>
                             <option value="11:00">11:00 น.</option>
+                            <option value="12:00">12:00 น.</option>
+                            <option value="12:20">12:20 น.</option>
                             <option value="13:00">13:00 น.</option>
+                            <option value="13:20">13:20 น. (คาบบ่าย)</option>
                             <option value="14:00">14:00 น.</option>
                             <option value="15:00">15:00 น.</option>
+                            <option value="16:00">16:00 น.</option>
+                            <option value="17:00">17:00 น.</option>
+                            <option value="17:20">17:20 น. (คาบเย็น)</option>
+                            <option value="18:00">18:00 น.</option>
+                            <option value="19:00">19:00 น.</option>
+                            <option value="20:00">20:00 น.</option>
                         </select>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">เวลาสิ้นสุด <span class="text-rose-500">*</span></label>
-                        <select name="endTime" id="booking-end-time" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select name="endTime" id="booking-end-time" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm">
+                            <option value="09:20">09:20 น.</option>
+                            <option value="10:00">10:00 น.</option>
                             <option value="10:30">10:30 น.</option>
+                            <option value="11:00">11:00 น.</option>
+                            <option value="11:20">11:20 น.</option>
                             <option value="12:00" selected>12:00 น.</option>
+                            <option value="12:20">12:20 น. (หมดคาบเช้า)</option>
                             <option value="13:00">13:00 น.</option>
+                            <option value="13:20">13:20 น.</option>
+                            <option value="14:00">14:00 น.</option>
                             <option value="15:00">15:00 น.</option>
+                            <option value="15:20">15:20 น.</option>
                             <option value="16:00">16:00 น.</option>
+                            <option value="16:20">16:20 น.</option>
                             <option value="17:00">17:00 น.</option>
+                            <option value="17:20">17:20 น. (หมดคาบบ่าย)</option>
+                            <option value="18:00">18:00 น.</option>
+                            <option value="19:00">19:00 น.</option>
+                            <option value="20:00">20:00 น. (หมดคาบเย็น)</option>
+                            <option value="21:00">21:00 น.</option>
                         </select>
                     </div>
                 </div>
@@ -4082,7 +4108,6 @@ const DEFAULT_MAINTENANCE = [
     }
 ];
 
-
 /**
  * Classroom Management System - Core Application Logic
  * Supports: 302, 303, 305, 306, 307, 308, 401, 402, 403, 404, 405, 406
@@ -4368,12 +4393,15 @@ function renderDashboard() {
                     `}
                 </div>
 
-                <div class="flex gap-2 mt-2">
-                    <button onclick="openRoomDetailModal('${lab.id}')" class="flex-1 text-xs py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-center transition">
-                        ดูรายละเอียด
+                <div class="flex gap-1.5 mt-2">
+                    <button onclick="openRoomDetailModal('${lab.id}')" class="flex-1 text-xs py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-center transition">
+                        รายละเอียด
                     </button>
-                    <button onclick="openBookingModalForRoom('${lab.id}')" class="text-xs py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
-                        จองห้อง
+                    <button onclick="viewRoomTimetable('${lab.id}')" class="text-xs py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-lg transition" title="ดูตารางการใช้ห้อง">
+                        ตารางห้อง
+                    </button>
+                    <button onclick="openBookingModalForRoom('${lab.id}')" class="text-xs py-1.5 px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                        จอง
                     </button>
                 </div>
             </div>
@@ -4415,8 +4443,8 @@ function renderTodayActivity() {
                     <i data-lucide="user" class="w-3.5 h-3.5"></i> ${room.currentClass.instructor}
                 </p>
                 <div class="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-200/60">
-                    <span class="flex items-center gap-1 font-medium text-slate-700">
-                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-500"></i> ${room.name} (${room.floor || room.building})
+                    <span onclick="viewRoomTimetable('${room.id}')" class="flex items-center gap-1 font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition" title="คลิกเพื่อดูตารางห้องนี้">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-500"></i> ${room.name} (${room.floor || room.building}) ↗
                     </span>
                     <span class="flex items-center gap-1 text-blue-600 font-semibold bg-white px-2 py-0.5 rounded border border-slate-200">
                         <i data-lucide="clock" class="w-3.5 h-3.5"></i> ${room.currentClass.time}
@@ -4525,10 +4553,10 @@ function renderRooms() {
                         </div>
 
                         ${room.currentClass ? `
-                            <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 text-xs">
-                                <div class="font-semibold text-amber-900 flex items-center gap-1">
-                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i>
-                                    <span>${room.currentClass.time}</span>
+                            <div onclick="viewRoomTimetable('${room.id}')" class="p-2.5 rounded-xl bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200/70 text-xs cursor-pointer transition" title="คลิกเพื่อดูตารางห้องนี้">
+                                <div class="font-semibold text-amber-900 flex items-center justify-between">
+                                    <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i> ${room.currentClass.time}</span>
+                                    <span class="text-[10px] bg-amber-200/80 text-amber-900 font-bold px-1.5 py-0.5 rounded">กำลังเรียน (ดูตาราง ↗)</span>
                                 </div>
                                 <div class="font-medium text-slate-800 mt-1 truncate">${room.currentClass.subject}</div>
                                 <div class="text-slate-500 text-[11px] mt-0.5">${room.currentClass.instructor}</div>
@@ -4572,12 +4600,15 @@ function renderRooms() {
                     </div>
                 </div>
 
-                <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex gap-2">
-                    <button onclick="openRoomDetailModal('${room.id}')" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex gap-1.5">
+                    <button onclick="openRoomDetailModal('${room.id}')" class="flex-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 transition">
                         <i data-lucide="info" class="w-3.5 h-3.5"></i> รายละเอียด
                     </button>
-                    <button onclick="openBookingModalForRoom('${room.id}')" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-blue-200 transition">
-                        <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i> จองห้อง
+                    <button onclick="viewRoomTimetable('${room.id}')" class="py-2 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 border border-indigo-200 transition" title="ดูตารางเรียน / การใช้ห้อง">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ตารางห้อง
+                    </button>
+                    <button onclick="openBookingModalForRoom('${room.id}')" class="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm shadow-blue-200 transition">
+                        <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i> จอง
                     </button>
                 </div>
             </div>
@@ -4665,6 +4696,9 @@ function renderTimetable() {
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <button onclick="openRoomDetailModal('${room.id}')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="info" class="w-4 h-4"></i> รายละเอียดห้อง
+                        </button>
                         <button onclick="window.print()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
                             <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์ตารางเรียน
                         </button>
@@ -4805,9 +4839,9 @@ function renderScheduleListForDay(dayIndex) {
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold ${isLab ? 'text-indigo-600' : 'text-blue-600'} bg-slate-100 px-2 py-0.5 rounded">
-                                    ${room.name}
-                                </span>
+                                <button onclick="viewRoomTimetable('${room.id}')" class="text-xs font-bold ${isLab ? 'text-indigo-600 hover:text-indigo-800' : 'text-blue-600 hover:text-blue-800'} bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-0.5" title="ดูตารางสัปดาห์ของห้องนี้">
+                                    ${room.name} ↗
+                                </button>
                                 <span class="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
                                     ${item.startTime} - ${item.endTime} น.
                                 </span>
@@ -4982,7 +5016,8 @@ function checkBookingConflict(roomId, dateStr, startTime, endTime, excludeBookin
         };
     }
 
-    const bookingDate = new Date(dateStr);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const bookingDate = new Date(year, month - 1, day);
     const dayIndex = bookingDate.getDay();
 
     const conflictingTimetable = AppState.timetable.find(s => {
@@ -5597,12 +5632,15 @@ function openRoomDetailModal(roomId) {
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-200 flex flex-wrap gap-3">
-                <button onclick="closeModal('modal-room-detail'); openBookingModalForRoom('${room.id}');" class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+            <div class="pt-4 border-t border-slate-200 flex flex-wrap gap-2">
+                <button onclick="viewRoomTimetable('${room.id}');" class="flex-1 py-2.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-indigo-200 transition">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> ดูตารางการใช้ห้องนี้
+                </button>
+                <button onclick="closeModal('modal-room-detail'); openBookingModalForRoom('${room.id}');" class="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
                     <i data-lucide="calendar-plus" class="w-4 h-4"></i> จองห้องนี้
                 </button>
-                <button onclick="closeModal('modal-room-detail'); openMaintenanceModalForRoom('${room.id}');" class="py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 border border-rose-200 transition">
-                    <i data-lucide="wrench" class="w-4 h-4"></i> แจ้งซ่อมอุปกรณ์
+                <button onclick="closeModal('modal-room-detail'); openMaintenanceModalForRoom('${room.id}');" class="py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-rose-200 transition">
+                    <i data-lucide="wrench" class="w-4 h-4"></i> แจ้งซ่อม
                 </button>
             </div>
         </div>
@@ -5610,6 +5648,56 @@ function openRoomDetailModal(roomId) {
 
     openModal('modal-room-detail');
     lucide.createIcons();
+}
+
+function getNextDateForDayName(dayName) {
+    const daysMap = { 'อาทิตย์': 0, 'จันทร์': 1, 'อังคาร': 2, 'พุธ': 3, 'พฤหัสบดี': 4, 'ศุกร์': 5, 'เสาร์': 6 };
+    const targetDay = daysMap[dayName];
+    const d = new Date();
+    if (targetDay === undefined) return d.toISOString().slice(0, 10);
+    const currentDay = d.getDay();
+    let diff = targetDay - currentDay;
+    if (diff < 0) diff += 7;
+    d.setDate(d.getDate() + diff);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function setSelectValueOrAdd(selectElem, val) {
+    if (!selectElem || !val) return;
+    let found = false;
+    for (let i = 0; i < selectElem.options.length; i++) {
+        if (selectElem.options[i].value === val) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = `${val} น.`;
+        selectElem.appendChild(opt);
+    }
+    selectElem.value = val;
+}
+
+function viewRoomTimetable(roomId) {
+    AppState.selectedRoomForSchedule = roomId;
+    AppState.selectedInstructorForSchedule = 'ALL';
+    closeModal('modal-room-detail');
+    switchTab('timetable');
+    const roomSelect = document.getElementById('timetable-room-selector');
+    if (roomSelect) {
+        roomSelect.value = roomId;
+    }
+    const instSelect = document.getElementById('timetable-instructor-selector');
+    if (instSelect) {
+        instSelect.value = 'ALL';
+    }
+    renderTimetable();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function openBookingModalForRoom(roomId) {
@@ -5629,10 +5717,20 @@ function openBookingModalForRoom(roomId) {
 
 function openBookingModalWithPrefill(roomId, dayName, startTime, endTime) {
     openBookingModalForRoom(roomId);
+    const dateInput = document.getElementById('booking-date-input');
+    if (dateInput && dayName) {
+        dateInput.value = getNextDateForDayName(dayName);
+    }
     const startSelect = document.getElementById('booking-start-time');
     const endSelect = document.getElementById('booking-end-time');
-    if (startSelect) startSelect.value = startTime;
-    if (endSelect) endSelect.value = endTime;
+    if (startSelect && startTime) setSelectValueOrAdd(startSelect, startTime);
+    if (endSelect && endTime) setSelectValueOrAdd(endSelect, endTime);
+    
+    if (typeof showToast === 'function') {
+        const dayLabel = dayName ? `วัน${dayName}` : '';
+        const timeLabel = (startTime && endTime) ? ` เวลา ${startTime} - ${endTime} น.` : '';
+        showToast(`เลือก ${dayLabel}${timeLabel} สำหรับการจองแล้ว`, 'info');
+    }
 }
 
 function openMaintenanceModalForRoom(roomId) {
@@ -6125,7 +6223,7 @@ function renderInstructorSchedule(instructorName) {
                                         return `
                                             <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 transition">
                                                 <div class="flex items-center justify-between text-xs mb-1">
-                                                    <span class="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">${room.name}</span>
+                                                    <button onclick="viewRoomTimetable('${room.id}')" class="font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded transition flex items-center gap-0.5" title="คลิกเพื่อดูตารางห้องนี้">${room.name} ↗</button>
                                                     <span class="font-semibold text-slate-600 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${c.startTime} - ${c.endTime}</span>
                                                 </div>
                                                 <div class="font-bold text-xs text-slate-800">${c.subject}</div>
@@ -6375,7 +6473,6 @@ function filterBookingsByStatus(status) {
     });
     renderBookings();
 }
-
 </script>
 </body>
 </html>
