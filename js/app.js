@@ -148,6 +148,11 @@ function resetData() {
 
 // Navigation & Tab Switching
 function switchTab(tabId) {
+    if (tabId === 'settings' && !AppState.isAdmin) {
+        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึง', 'warning');
+        switchTab('dashboard');
+        return;
+    }
     AppState.currentTab = tabId;
     
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -1085,6 +1090,10 @@ async function handleBookingSubmit(event) {
 }
 
 function approveBooking(bookingId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
     const booking = AppState.bookings.find(b => b.id === bookingId);
     if (booking) {
         booking.status = 'approved';
@@ -1098,7 +1107,11 @@ function approveBooking(bookingId) {
 }
 
 function cancelBooking(bookingId) {
-    if (confirm(`คุณต้องการยกเลิกรายการจอง ${bookingId} ใช่หรือไม่?`)) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    if (confirm(`คุณต้องการลบรายการจอง ${bookingId} ใช่หรือไม่?`)) {
         AppState.bookings = AppState.bookings.filter(b => b.id !== bookingId);
         saveData();
         renderBookings();
@@ -1149,20 +1162,24 @@ function renderMaintenance() {
             </td>
             <td class="p-3 text-right">
                 <div class="flex items-center justify-end gap-1.5">
-                    ${m.status !== 'completed' ? `
-                        <button onclick="resolveMaintenance('${m.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1 shadow-2xs" title="บันทึกว่าซ่อมเสร็จแล้ว">
-                            <i data-lucide="check" class="w-3.5 h-3.5"></i> ซ่อมเสร็จ
-                        </button>
-                    ` : `
-                        <span class="text-emerald-600 font-semibold flex items-center gap-1 text-[11px] bg-emerald-50 px-2 py-0.5 rounded">
-                            <i data-lucide="check" class="w-3.5 h-3.5"></i> เรียบร้อย
-                        </span>
-                    `}
                     ${AppState.isAdmin ? `
+                        ${m.status !== 'completed' ? `
+                            <button onclick="resolveMaintenance('${m.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1 shadow-2xs" title="บันทึกว่าซ่อมเสร็จแล้ว">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i> ซ่อมเสร็จ
+                            </button>
+                        ` : `
+                            <span class="text-emerald-600 font-semibold flex items-center gap-1 text-[11px] bg-emerald-50 px-2 py-0.5 rounded">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i> เรียบร้อย
+                            </span>
+                        `}
                         <button onclick="deleteMaintenance('${m.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="ลบรายการแจ้งซ่อม (เฉพาะ Admin)">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
-                    ` : ''}
+                    ` : `
+                        <span class="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                            ${m.status === 'completed' ? 'ซ่อมเสร็จสิ้น' : 'รอดำเนินการ'}
+                        </span>
+                    `}
                 </div>
             </td>
         </tr>
@@ -1229,6 +1246,10 @@ function handleMaintenanceSubmit(event) {
 }
 
 function resolveMaintenance(ticketId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
     const ticket = AppState.maintenance.find(m => m.id === ticketId);
     if (ticket) {
         ticket.status = 'completed';
@@ -1256,6 +1277,10 @@ function resolveMaintenance(ticketId) {
 // ----------------------------------------------------
 function handleAddRoomSubmit(event) {
     event.preventDefault();
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
     const form = event.target;
 
     const roomName = form.roomName.value.trim();
@@ -1790,6 +1815,16 @@ function openBookingModalForRoom(roomId) {
     const dateInput = document.getElementById('booking-date-input');
     if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().slice(0, 10);
+    }
+
+    // Control admin-only auto-approve toggle box
+    const adminToggleBox = document.getElementById('booking-admin-toggle-box');
+    if (adminToggleBox) {
+        adminToggleBox.classList.toggle('hidden', !AppState.isAdmin);
+    }
+    const autoApproveToggle = document.getElementById('booking-auto-approve-toggle');
+    if (autoApproveToggle) {
+        autoApproveToggle.checked = false;
     }
 
     openModal('modal-booking');
@@ -2497,36 +2532,50 @@ function logoutAdmin() {
     AppState.isAdmin = false;
     sessionStorage.removeItem('CMS_IS_ADMIN');
     updateAdminHeaderUI();
-    renderCurrentTab();
+    if (AppState.currentTab === 'settings') {
+        switchTab('dashboard');
+    } else {
+        renderCurrentTab();
+    }
     showToast('ออกจากระบบผู้ดูแลแล้ว (กลับสู่โหมดผู้ใช้งานทั่วไป)', 'info');
 }
 
 function updateAdminHeaderUI() {
     const adminContainer = document.getElementById('admin-header-status');
-    if (!adminContainer) return;
-
-    if (AppState.isAdmin) {
-        adminContainer.innerHTML = `
-            <div class="flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 rounded-xl shadow-xs">
-                <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
-                    <span>Admin Mode</span>
-                </span>
-                <span id="admin-pending-count-badge" class="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
-                <button onclick="logoutAdmin()" class="text-[11px] text-slate-300 hover:text-white underline ml-1">
-                    ออก
+    if (adminContainer) {
+        if (AppState.isAdmin) {
+            adminContainer.innerHTML = `
+                <div class="flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 rounded-xl shadow-xs">
+                    <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
+                        <span>Admin Mode</span>
+                    </span>
+                    <span id="admin-pending-count-badge" class="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
+                    <button onclick="logoutAdmin()" class="text-[11px] text-slate-300 hover:text-white underline ml-1">
+                        ออก
+                    </button>
+                </div>
+            `;
+        } else {
+            adminContainer.innerHTML = `
+                <button onclick="openAdminLoginModal()" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-400"></i>
+                    <span>สำหรับ Admin</span>
                 </button>
-            </div>
-        `;
-    } else {
-        adminContainer.innerHTML = `
-            <button onclick="openAdminLoginModal()" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
-                <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-400"></i>
-                <span>สำหรับ Admin</span>
-            </button>
-        `;
+            `;
+        }
     }
+
+    // Toggle visibility for all admin-only elements across navbar and views
+    document.querySelectorAll('.admin-only-nav').forEach(el => {
+        el.classList.toggle('hidden', !AppState.isAdmin);
+    });
+    document.querySelectorAll('.admin-only-action').forEach(el => {
+        el.classList.toggle('hidden', !AppState.isAdmin);
+    });
+
     updateAdminPendingBadge();
+    updateAdminMaintenanceBadge();
     lucide.createIcons();
 }
 
@@ -2797,5 +2846,274 @@ function updateDashboardMaintenanceAlert(openCount) {
         lucide.createIcons();
     } else {
         container.innerHTML = '';
+    }
+}
+
+
+// ====================================================
+// ROOMS & TIMETABLE CRUD CONTROLLER FUNCTIONS (ADMIN ONLY)
+// ====================================================
+
+function openEditRoomModal(roomId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const room = AppState.rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    closeModal('modal-room-detail');
+
+    const form = document.getElementById('form-edit-room');
+    if (!form) return;
+
+    form.roomId.value = room.id;
+    form.roomName.value = room.name || '';
+    form.roomType.value = room.type || 'general';
+    form.categoryName.value = room.categoryName || '';
+    form.floor.value = room.floor || '';
+    form.building.value = room.building || '';
+    form.capacity.value = room.capacity || 40;
+    form.pcCount.value = room.pcCount || 0;
+    form.status.value = room.status || 'available';
+    form.description.value = room.description || '';
+    form.image.value = room.image || '';
+    form.facilities.value = Array.isArray(room.facilities) ? room.facilities.join(', ') : (room.facilities || '');
+
+    if (form.cpu) form.cpu.value = (room.specs && room.specs.cpu) ? room.specs.cpu : '';
+    if (form.ram) form.ram.value = (room.specs && room.specs.ram) ? room.specs.ram : '';
+    if (form.gpu) form.gpu.value = (room.specs && room.specs.gpu) ? room.specs.gpu : '';
+    if (form.storage) form.storage.value = (room.specs && room.specs.storage) ? room.specs.storage : '';
+    if (form.software) form.software.value = Array.isArray(room.software) ? room.software.join(', ') : (room.software || '');
+
+    toggleEditLabFieldsVisibility(room.type);
+    openModal('modal-edit-room');
+}
+
+function toggleEditLabFieldsVisibility(type) {
+    const labSec = document.getElementById('edit-room-lab-specs');
+    if (labSec) {
+        if (type === 'computer_lab') {
+            labSec.classList.remove('hidden');
+        } else {
+            labSec.classList.add('hidden');
+        }
+    }
+}
+
+function handleEditRoomSubmit(event) {
+    event.preventDefault();
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const form = event.target;
+    const roomId = form.roomId.value;
+    const room = AppState.rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    const facilitiesArr = form.facilities.value.split(',').map(s => s.trim()).filter(Boolean);
+    const softwareArr = form.software ? form.software.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    room.name = form.roomName.value.trim();
+    room.type = form.roomType.value;
+    room.categoryName = form.categoryName.value.trim() || (room.type === 'computer_lab' ? 'ห้องปฏิบัติการคอมพิวเตอร์' : (room.type === 'meeting_room' ? 'ห้องประชุม / สัมมนา' : 'ห้องเรียนทฤษฎี'));
+    room.floor = form.floor.value.trim();
+    room.building = form.building.value.trim();
+    room.capacity = parseInt(form.capacity.value) || 40;
+    room.pcCount = parseInt(form.pcCount.value) || 0;
+    room.status = form.status.value;
+    room.description = form.description.value.trim();
+    room.image = form.image.value.trim() || room.image;
+    room.facilities = facilitiesArr;
+
+    if (room.type === 'computer_lab') {
+        room.specs = {
+            cpu: form.cpu ? form.cpu.value.trim() : (room.specs?.cpu || ''),
+            ram: form.ram ? form.ram.value.trim() : (room.specs?.ram || ''),
+            gpu: form.gpu ? form.gpu.value.trim() : (room.specs?.gpu || ''),
+            storage: form.storage ? form.storage.value.trim() : (room.specs?.storage || '')
+        };
+        room.software = softwareArr;
+    }
+
+    saveData();
+    closeModal('modal-edit-room');
+    renderRooms();
+    showToast(`อัปเดตข้อมูล ${room.name} สำเร็จ!`, 'success');
+    sendActionToGoogleBackend('updateRoom', { room: room });
+}
+
+function deleteRoom(roomId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const room = AppState.rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    if (confirm(`⚠️ ยืนยันการลบห้อง "${room.name}" (${roomId}) ออกจากระบบหรือไม่?\n\nการลบห้องจะส่งผลต่อการจองและตารางเรียนที่เกี่ยวข้องกับห้องนี้`)) {
+        AppState.rooms = AppState.rooms.filter(r => r.id !== roomId);
+        saveData();
+        closeModal('modal-room-detail');
+        renderRooms();
+        showToast(`ลบห้อง ${room.name} ออกจากระบบเรียบร้อยแล้ว`, 'success');
+        sendActionToGoogleBackend('deleteRoom', { id: roomId });
+    }
+}
+
+// ----------------------------------------------------
+// TIMETABLE CRUD FUNCTIONS (ADMIN ONLY)
+// ----------------------------------------------------
+
+function openAddTimetableModal(prefillRoomId = '', prefillDayName = '', prefillStartTime = '08:20', prefillEndTime = '12:20') {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const form = document.getElementById('form-timetable');
+    if (!form) return;
+
+    form.reset();
+    form.timetableId.value = '';
+    const titleElem = document.getElementById('modal-timetable-title');
+    if (titleElem) titleElem.innerText = 'เพิ่มคาบเรียนประจำสัปดาห์';
+
+    const roomSelect = form.roomId;
+    if (roomSelect) {
+        populateRoomOptions(roomSelect, false);
+        if (prefillRoomId && prefillRoomId !== 'ALL') {
+            roomSelect.value = prefillRoomId;
+        }
+    }
+
+    if (prefillDayName) {
+        const daysMap = { 'จันทร์': 1, 'อังคาร': 2, 'พุธ': 3, 'พฤหัสบดี': 4, 'ศุกร์': 5, 'เสาร์': 6, 'อาทิตย์': 0 };
+        if (daysMap[prefillDayName] !== undefined) form.dayIndex.value = daysMap[prefillDayName];
+    }
+
+    if (prefillStartTime) setSelectValueOrAdd(form.startTime, prefillStartTime);
+    if (prefillEndTime) setSelectValueOrAdd(form.endTime, prefillEndTime);
+
+    openModal('modal-timetable-form');
+}
+
+function openEditTimetableModal(timetableId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const item = AppState.timetable.find(s => s.id === timetableId);
+    if (!item) return;
+
+    const form = document.getElementById('form-timetable');
+    if (!form) return;
+
+    form.timetableId.value = item.id;
+    const titleElem = document.getElementById('modal-timetable-title');
+    if (titleElem) titleElem.innerText = `แก้ไขคาบเรียน: ${item.code || item.subject.split(' ')[0]}`;
+
+    const roomSelect = form.roomId;
+    if (roomSelect) {
+        populateRoomOptions(roomSelect, false);
+        roomSelect.value = item.roomId;
+    }
+
+    form.dayIndex.value = item.dayIndex;
+    setSelectValueOrAdd(form.startTime, item.startTime);
+    setSelectValueOrAdd(form.endTime, item.endTime);
+    form.code.value = item.code || '';
+    form.subject.value = item.subject || '';
+    form.instructor.value = item.instructor || '';
+    form.group.value = item.group || '';
+    form.color.value = item.color || 'blue';
+
+    openModal('modal-timetable-form');
+}
+
+function handleTimetableFormSubmit(event) {
+    event.preventDefault();
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const form = event.target;
+    const timetableId = form.timetableId.value;
+    const roomId = form.roomId.value;
+    const dayIndex = parseInt(form.dayIndex.value);
+    const daysNames = { 1: 'จันทร์', 2: 'อังคาร', 3: 'พุธ', 4: 'พฤหัสบดี', 5: 'ศุกร์', 6: 'เสาร์', 0: 'อาทิตย์' };
+    const dayName = daysNames[dayIndex] || 'จันทร์';
+    const startTime = form.startTime.value;
+    const endTime = form.endTime.value;
+    const code = form.code.value.trim();
+    const subject = form.subject.value.trim();
+    const instructor = form.instructor.value.trim();
+    const group = form.group.value.trim();
+    const color = form.color.value;
+
+    if (startTime >= endTime) {
+        showToast('เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด', 'error');
+        return;
+    }
+
+    if (timetableId) {
+        // Edit existing
+        const item = AppState.timetable.find(s => s.id === timetableId);
+        if (!item) return;
+        item.roomId = roomId;
+        item.day = dayName;
+        item.dayIndex = dayIndex;
+        item.startTime = startTime;
+        item.endTime = endTime;
+        item.code = code;
+        item.subject = subject;
+        item.instructor = instructor;
+        item.group = group;
+        item.color = color;
+
+        saveData();
+        closeModal('modal-timetable-form');
+        renderTimetable();
+        showToast(`แก้ไขคาบเรียน ${code || subject} สำเร็จ!`, 'success');
+        sendActionToGoogleBackend('updateTimetable', { item: item });
+    } else {
+        // Create new
+        const newId = 'TT-' + Date.now().toString().slice(-4);
+        const newItem = {
+            id: newId,
+            roomId: roomId,
+            day: dayName,
+            dayIndex: dayIndex,
+            startTime: startTime,
+            endTime: endTime,
+            code: code,
+            subject: subject,
+            instructor: instructor,
+            group: group,
+            color: color
+        };
+        AppState.timetable.push(newItem);
+        saveData();
+        closeModal('modal-timetable-form');
+        renderTimetable();
+        showToast(`เพิ่มคาบเรียน ${code || subject} สำเร็จ!`, 'success');
+        sendActionToGoogleBackend('addTimetable', { item: newItem });
+    }
+}
+
+function deleteTimetable(timetableId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const item = AppState.timetable.find(s => s.id === timetableId);
+    if (!item) return;
+
+    if (confirm(`🗑️ ยืนยันการลบคาบเรียน "${item.subject}" (วัน${item.day} ${item.startTime}-${item.endTime} น.) ออกจากตารางเรียนใช่หรือไม่?`)) {
+        AppState.timetable = AppState.timetable.filter(s => s.id !== timetableId);
+        saveData();
+        renderTimetable();
+        showToast(`ลบคาบเรียน ${item.subject.split(' ')[0]} เรียบร้อยแล้ว`, 'success');
+        sendActionToGoogleBackend('deleteTimetable', { id: timetableId });
     }
 }

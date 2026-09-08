@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v22_maintenance_user_link";
+const DATA_VERSION = "v23_strict_role_access";
 
 const DEFAULT_ROOMS = [
     {
