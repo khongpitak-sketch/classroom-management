@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "name": "classroom-management-system",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
