@@ -498,16 +498,24 @@ function renderRooms() {
                     </div>
                 </div>
 
-                <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex gap-1.5">
+                <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex flex-wrap gap-1.5">
                     <button onclick="openRoomDetailModal('${room.id}')" class="flex-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 transition">
                         <i data-lucide="info" class="w-3.5 h-3.5"></i> รายละเอียด
                     </button>
-                    <button onclick="viewRoomTimetable('${room.id}')" class="py-2 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 border border-indigo-200 transition" title="ดูตารางเรียน / การใช้ห้อง">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ตารางห้อง
+                    <button onclick="viewRoomTimetable('${room.id}')" class="py-2 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 border border-indigo-200 transition" title="ดูตารางเรียน / การใช้ห้อง">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ตาราง
                     </button>
-                    <button onclick="openBookingModalForRoom('${room.id}')" class="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm shadow-blue-200 transition">
+                    <button onclick="openBookingModalForRoom('${room.id}')" class="py-2 px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm shadow-blue-200 transition">
                         <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i> จอง
                     </button>
+                    ${AppState.isAdmin ? `
+                        <button onclick="openEditRoomModal('${room.id}')" class="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-xl text-xs flex items-center justify-center border border-amber-200 transition" title="แก้ไขสเปกและข้อมูลห้อง (Admin)">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="deleteRoom('${room.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium rounded-xl text-xs flex items-center justify-center border border-rose-200 transition" title="ลบห้องนี้ (Admin)">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -593,7 +601,12 @@ function renderTimetable() {
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        ${AppState.isAdmin ? `
+                            <button onclick="openAddTimetableModal('${room.id}', '', '08:20', '12:20')" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มคาบเรียน
+                            </button>
+                        ` : ''}
                         <button onclick="openRoomDetailModal('${room.id}')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
                             <i data-lucide="info" class="w-4 h-4"></i> รายละเอียดห้อง
                         </button>
@@ -642,14 +655,26 @@ function renderTimetable() {
                                             ${morningItems.length > 0 ? `
                                                 <div class="space-y-2">
                                                     ${morningItems.map(item => `
-                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm">
-                                                            <div class="font-bold text-xs">${item.subject}</div>
-                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
-                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
-                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
-                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
-                                                            </div>
-                                                        </div>
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm relative group transition hover:shadow-md">
+    <div class="flex items-start justify-between gap-1">
+        <div class="font-bold text-xs flex-1">${item.subject}</div>
+        ${AppState.isAdmin ? `
+            <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition shrink-0">
+                <button onclick="event.stopPropagation(); openEditTimetableModal('${item.id}')" class="p-1 hover:bg-white/60 rounded text-slate-700 transition" title="แก้ไขคาบเรียน">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                </button>
+                <button onclick="event.stopPropagation(); deleteTimetable('${item.id}')" class="p-1 hover:bg-rose-100 rounded text-rose-600 transition" title="ลบคาบเรียน">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        ` : ''}
+    </div>
+    <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+    <div class="text-[10px] opacity-75">${item.group || ''}</div>
+    <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+        <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+    </div>
+</div>
                                                     `).join('')}
                                                 </div>
                                             ` : `
@@ -665,14 +690,26 @@ function renderTimetable() {
                                             ${afternoonItems.length > 0 ? `
                                                 <div class="space-y-2">
                                                     ${afternoonItems.map(item => `
-                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'indigo'} shadow-sm">
-                                                            <div class="font-bold text-xs">${item.subject}</div>
-                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
-                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
-                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
-                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
-                                                            </div>
-                                                        </div>
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm relative group transition hover:shadow-md">
+    <div class="flex items-start justify-between gap-1">
+        <div class="font-bold text-xs flex-1">${item.subject}</div>
+        ${AppState.isAdmin ? `
+            <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition shrink-0">
+                <button onclick="event.stopPropagation(); openEditTimetableModal('${item.id}')" class="p-1 hover:bg-white/60 rounded text-slate-700 transition" title="แก้ไขคาบเรียน">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                </button>
+                <button onclick="event.stopPropagation(); deleteTimetable('${item.id}')" class="p-1 hover:bg-rose-100 rounded text-rose-600 transition" title="ลบคาบเรียน">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        ` : ''}
+    </div>
+    <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+    <div class="text-[10px] opacity-75">${item.group || ''}</div>
+    <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+        <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+    </div>
+</div>
                                                     `).join('')}
                                                 </div>
                                             ` : `
@@ -685,14 +722,26 @@ function renderTimetable() {
                                             ${eveningItems.length > 0 ? `
                                                 <div class="space-y-2">
                                                     ${eveningItems.map(item => `
-                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'purple'} shadow-sm">
-                                                            <div class="font-bold text-xs">${item.subject}</div>
-                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
-                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
-                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
-                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
-                                                            </div>
-                                                        </div>
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm relative group transition hover:shadow-md">
+    <div class="flex items-start justify-between gap-1">
+        <div class="font-bold text-xs flex-1">${item.subject}</div>
+        ${AppState.isAdmin ? `
+            <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition shrink-0">
+                <button onclick="event.stopPropagation(); openEditTimetableModal('${item.id}')" class="p-1 hover:bg-white/60 rounded text-slate-700 transition" title="แก้ไขคาบเรียน">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                </button>
+                <button onclick="event.stopPropagation(); deleteTimetable('${item.id}')" class="p-1 hover:bg-rose-100 rounded text-rose-600 transition" title="ลบคาบเรียน">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        ` : ''}
+    </div>
+    <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+    <div class="text-[10px] opacity-75">${item.group || ''}</div>
+    <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+        <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+    </div>
+</div>
                                                     `).join('')}
                                                 </div>
                                             ` : `
@@ -1241,17 +1290,38 @@ function sendActionToGoogleBackend(action, payload) {
                 case 'approveBooking':
                     google.script.run.withSuccessHandler(res => console.log('GAS Approve Booking:', res)).apiApproveBooking(payload.id);
                     break;
+                case 'rejectBooking':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Reject Booking:', res)).apiRejectBooking(payload.id);
+                    break;
                 case 'addMaintenance':
                     google.script.run.withSuccessHandler(res => console.log('GAS Add MNT:', res)).apiAddMaintenance(payload.ticket);
                     break;
                 case 'resolveMaintenance':
                     google.script.run.withSuccessHandler(res => console.log('GAS Resolve MNT:', res)).apiResolveMaintenance(payload.id);
                     break;
+                case 'deleteMaintenance':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete MNT:', res)).apiDeleteMaintenance(payload.id);
+                    break;
                 case 'addRoom':
                     google.script.run.withSuccessHandler(res => console.log('GAS Add Room:', res)).apiAddRoom(payload.room);
                     break;
+                case 'updateRoom':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Update Room:', res)).apiUpdateRoom(payload.room);
+                    break;
+                case 'deleteRoom':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete Room:', res)).apiDeleteRoom(payload.id);
+                    break;
                 case 'updateRoomStatus':
                     google.script.run.withSuccessHandler(res => console.log('GAS Update Room:', res)).apiUpdateRoomStatus(payload.id, payload.status, payload.currentClass);
+                    break;
+                case 'addTimetable':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Add Timetable:', res)).apiAddTimetable(payload.item);
+                    break;
+                case 'updateTimetable':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Update Timetable:', res)).apiUpdateTimetable(payload.item);
+                    break;
+                case 'deleteTimetable':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete Timetable:', res)).apiDeleteTimetable(payload.id);
                     break;
             }
         } catch(e) {
@@ -1269,6 +1339,9 @@ function sendActionToGoogleBackend(action, payload) {
         if (payload.booking) urlObj.searchParams.set('booking', JSON.stringify(payload.booking));
         if (payload.id) urlObj.searchParams.set('id', payload.id);
         if (payload.ticket) urlObj.searchParams.set('ticket', JSON.stringify(payload.ticket));
+        if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
+        if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
+        if (payload.timetable) urlObj.searchParams.set('timetable', JSON.stringify(payload.timetable));
 
         fetch(urlObj.toString(), { method: 'GET', mode: 'cors' })
             .then(r => r.json())
@@ -1553,6 +1626,16 @@ function openRoomDetailModal(roomId) {
                 <button onclick="closeModal('modal-room-detail'); openMaintenanceModalForRoom('${room.id}');" class="py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-rose-200 transition">
                     <i data-lucide="wrench" class="w-4 h-4"></i> แจ้งซ่อม
                 </button>
+                ${AppState.isAdmin ? `
+                    <div class="w-full pt-2 mt-1 border-t border-slate-100 flex gap-2">
+                        <button onclick="openEditRoomModal('${room.id}');" class="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> แก้ไขสเปกห้องนี้ (Admin)
+                        </button>
+                        <button onclick="deleteRoom('${room.id}');" class="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> ลบห้อง
+                        </button>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;

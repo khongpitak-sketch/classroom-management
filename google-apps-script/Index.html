@@ -1169,6 +1169,259 @@ body {
     </div>
 
     <!-- Floating Toast Notification Container -->
+    
+    <!-- Modal: แก้ไขข้อมูลห้องเรียน (Edit Room Modal - Admin) -->
+    <div id="modal-edit-room" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto p-6 shadow-2xl modal-enter border border-slate-100">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+                <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-amber-500"></i> แก้ไขข้อมูลและสเปกห้องเรียน
+                </h4>
+                <button onclick="closeModal('modal-edit-room')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-edit-room" onsubmit="handleEditRoomSubmit(event)" class="space-y-4 text-xs">
+                <input type="hidden" name="roomId">
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">ชื่อห้องเรียน <span class="text-rose-500">*</span></label>
+                    <input type="text" name="roomName" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">ประเภทห้อง <span class="text-rose-500">*</span></label>
+                        <select name="roomType" onchange="toggleEditLabFieldsVisibility(this.value)" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                            <option value="general">📖 ห้องเรียนทั่วไป (Lecture)</option>
+                            <option value="computer_lab">💻 ห้องปฏิบัติการคอมพิวเตอร์ (Lab)</option>
+                            <option value="meeting_room">🏛️ ห้องประชุม / สัมมนา (Meeting)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">หมวดหมู่ / ประเภทแสดงผล</label>
+                        <input type="text" name="categoryName" placeholder="เช่น ห้องเรียนทฤษฎี หรือ ห้องปฏิบัติการคอมพิวเตอร์" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">ชั้นที่ตั้ง</label>
+                        <input type="text" name="floor" placeholder="เช่น ชั้น 3 หรือ ชั้น 4" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">อาคาร</label>
+                        <input type="text" name="building" placeholder="เช่น อาคารคณะวิทยาการจัดการ" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">ความจุที่นั่ง (คน)</label>
+                        <input type="number" name="capacity" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">จำนวน PC</label>
+                        <input type="number" name="pcCount" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">สถานะห้อง</label>
+                        <select name="status" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                            <option value="available">🟢 ห้องว่าง (Available)</option>
+                            <option value="occupied">🟡 กำลังใช้งาน (Occupied)</option>
+                            <option value="maintenance">🔴 ซ่อมบำรุง (Maintenance)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- สเปกคอมพิวเตอร์และโปรแกรมสำหรับแล็บ -->
+                <div id="edit-room-lab-specs" class="space-y-3 p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                    <h5 class="font-bold text-indigo-950 text-xs flex items-center gap-1.5">
+                        <i data-lucide="cpu" class="w-4 h-4 text-indigo-600"></i> สเปกคอมพิวเตอร์ (สำหรับห้องแล็บ)
+                    </h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] text-slate-600 mb-0.5">CPU</label>
+                            <input type="text" name="cpu" placeholder="เช่น Intel Core i7-13700" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-600 mb-0.5">RAM</label>
+                            <input type="text" name="ram" placeholder="เช่น 32 GB DDR5" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-600 mb-0.5">GPU (การ์ดจอ)</label>
+                            <input type="text" name="gpu" placeholder="เช่น RTX 4060 8GB" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-600 mb-0.5">พื้นที่จัดเก็บ (Storage)</label>
+                            <input type="text" name="storage" placeholder="เช่น 1 TB NVMe SSD" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-600 mb-0.5">โปรแกรมที่ติดตั้ง (คั่นด้วยจุลภาค ,)</label>
+                        <input type="text" name="software" placeholder="เช่น Adobe CC, SPSS, Power BI, VS Code" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">อุปกรณ์และสิ่งอำนวยความสะดวก (คั่นด้วยจุลภาค ,)</label>
+                    <input type="text" name="facilities" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">คำอธิบายห้องเรียน</label>
+                    <textarea name="description" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white"></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">ลิงก์รูปภาพ (Image URL)</label>
+                    <input type="url" name="image" placeholder="https://..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex gap-2 justify-end">
+                    <button type="button" onclick="closeModal('modal-edit-room')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i> บันทึกการแก้ไขห้อง
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: จัดการคาบเรียนในตารางเรียน (Timetable CRUD Form Modal - Admin) -->
+    <div id="modal-timetable-form" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 shadow-2xl modal-enter border border-slate-100">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+                <h4 id="modal-timetable-title" class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-5 h-5 text-indigo-600"></i> จัดการคาบเรียนประจำสัปดาห์
+                </h4>
+                <button onclick="closeModal('modal-timetable-form')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-timetable" onsubmit="handleTimetableFormSubmit(event)" class="space-y-4 text-xs">
+                <input type="hidden" name="timetableId">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">ห้องเรียน <span class="text-rose-500">*</span></label>
+                        <select name="roomId" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white"></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">วันประจำสัปดาห์ <span class="text-rose-500">*</span></label>
+                        <select name="dayIndex" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                            <option value="1">วันจันทร์</option>
+                            <option value="2">วันอังคาร</option>
+                            <option value="3">วันพุธ</option>
+                            <option value="4">วันพฤหัสบดี</option>
+                            <option value="5">วันศุกร์</option>
+                            <option value="6">วันเสาร์</option>
+                            <option value="0">วันอาทิตย์</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">เวลาเริ่ม <span class="text-rose-500">*</span></label>
+                        <select name="startTime" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                            <option value="08:00">08:00 น.</option>
+                            <option value="08:20" selected>08:20 น. (คาบเช้า)</option>
+                            <option value="08:30">08:30 น.</option>
+                            <option value="09:00">09:00 น.</option>
+                            <option value="09:20">09:20 น.</option>
+                            <option value="10:00">10:00 น.</option>
+                            <option value="10:20">10:20 น.</option>
+                            <option value="11:00">11:00 น.</option>
+                            <option value="12:00">12:00 น.</option>
+                            <option value="13:00">13:00 น.</option>
+                            <option value="13:20">13:20 น. (คาบบ่าย)</option>
+                            <option value="14:00">14:00 น.</option>
+                            <option value="15:00">15:00 น.</option>
+                            <option value="15:20">15:20 น.</option>
+                            <option value="16:00">16:00 น.</option>
+                            <option value="17:00">17:00 น.</option>
+                            <option value="17:20">17:20 น. (คาบเย็น)</option>
+                            <option value="18:00">18:00 น.</option>
+                            <option value="19:00">19:00 น.</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">เวลาสิ้นสุด <span class="text-rose-500">*</span></label>
+                        <select name="endTime" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                            <option value="10:20">10:20 น.</option>
+                            <option value="11:20">11:20 น.</option>
+                            <option value="12:00">12:00 น.</option>
+                            <option value="12:20" selected>12:20 น. (หมดคาบเช้า)</option>
+                            <option value="13:20">13:20 น.</option>
+                            <option value="14:00">14:00 น.</option>
+                            <option value="15:00">15:00 น.</option>
+                            <option value="15:20">15:20 น.</option>
+                            <option value="16:00">16:00 น.</option>
+                            <option value="16:20">16:20 น.</option>
+                            <option value="17:00">17:00 น.</option>
+                            <option value="17:20">17:20 น. (หมดคาบบ่าย)</option>
+                            <option value="18:00">18:00 น.</option>
+                            <option value="19:00">19:00 น.</option>
+                            <option value="20:00">20:00 น. (หมดคาบเย็น)</option>
+                            <option value="21:00">21:00 น.</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">รหัสวิชา</label>
+                        <input type="text" name="code" placeholder="เช่น 07-064-261" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">ชื่อรายวิชา <span class="text-rose-500">*</span></label>
+                        <input type="text" name="subject" required placeholder="เช่น 07-064-261 โปรแกรมสำเร็จรูปในงานอาชีพ (ทฤษฎี)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">อาจารย์ผู้สอน <span class="text-rose-500">*</span></label>
+                        <input type="text" name="instructor" required placeholder="เช่น อ.พระรักษ์ อมรศักดิ์" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">กลุ่มเรียน / ชั้นปี</label>
+                        <input type="text" name="group" placeholder="เช่น กลุ่ม 01 (ชั้นปี 2 บัญชี)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">สีแถบวิชาในตาราง</label>
+                    <select name="color" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white">
+                        <option value="blue">🔵 ฟ้า / น้ำเงิน (Blue)</option>
+                        <option value="indigo">🟣 คราม (Indigo)</option>
+                        <option value="purple">🔮 ม่วง (Purple)</option>
+                        <option value="emerald">🟢 เขียวมรกต (Emerald)</option>
+                        <option value="teal">🌊 เขียวน้ำทะเล (Teal)</option>
+                        <option value="amber">🟡 ส้มอำพัน (Amber)</option>
+                        <option value="orange">🟠 ส้ม (Orange)</option>
+                        <option value="rose">🔴 แดงกุหลาบ (Rose)</option>
+                        <option value="cyan">❄️ ฟ้าสว่าง (Cyan)</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex gap-2 justify-end">
+                    <button type="button" onclick="closeModal('modal-timetable-form')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md shadow-indigo-500/20 transition flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i> บันทึกคาบเรียน
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 max-w-sm w-full pointer-events-none">
     </div>
 
@@ -1183,7 +1436,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v15_timetable_184_active";
+const DATA_VERSION = "v16_full_crud_complete";
 
 const DEFAULT_ROOMS = [
     {
@@ -4608,16 +4861,24 @@ function renderRooms() {
                     </div>
                 </div>
 
-                <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex gap-1.5">
+                <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex flex-wrap gap-1.5">
                     <button onclick="openRoomDetailModal('${room.id}')" class="flex-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 transition">
                         <i data-lucide="info" class="w-3.5 h-3.5"></i> รายละเอียด
                     </button>
-                    <button onclick="viewRoomTimetable('${room.id}')" class="py-2 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 border border-indigo-200 transition" title="ดูตารางเรียน / การใช้ห้อง">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ตารางห้อง
+                    <button onclick="viewRoomTimetable('${room.id}')" class="py-2 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl text-xs flex items-center justify-center gap-1 border border-indigo-200 transition" title="ดูตารางเรียน / การใช้ห้อง">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ตาราง
                     </button>
-                    <button onclick="openBookingModalForRoom('${room.id}')" class="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm shadow-blue-200 transition">
+                    <button onclick="openBookingModalForRoom('${room.id}')" class="py-2 px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm shadow-blue-200 transition">
                         <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i> จอง
                     </button>
+                    ${AppState.isAdmin ? `
+                        <button onclick="openEditRoomModal('${room.id}')" class="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-xl text-xs flex items-center justify-center border border-amber-200 transition" title="แก้ไขสเปกและข้อมูลห้อง (Admin)">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="deleteRoom('${room.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium rounded-xl text-xs flex items-center justify-center border border-rose-200 transition" title="ลบห้องนี้ (Admin)">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -4703,7 +4964,12 @@ function renderTimetable() {
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        ${AppState.isAdmin ? `
+                            <button onclick="openAddTimetableModal('${room.id}', '', '08:20', '12:20')" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> เพิ่มคาบเรียน
+                            </button>
+                        ` : ''}
                         <button onclick="openRoomDetailModal('${room.id}')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
                             <i data-lucide="info" class="w-4 h-4"></i> รายละเอียดห้อง
                         </button>
@@ -4752,14 +5018,26 @@ function renderTimetable() {
                                             ${morningItems.length > 0 ? `
                                                 <div class="space-y-2">
                                                     ${morningItems.map(item => `
-                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm">
-                                                            <div class="font-bold text-xs">${item.subject}</div>
-                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
-                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
-                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
-                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
-                                                            </div>
-                                                        </div>
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm relative group transition hover:shadow-md">
+    <div class="flex items-start justify-between gap-1">
+        <div class="font-bold text-xs flex-1">${item.subject}</div>
+        ${AppState.isAdmin ? `
+            <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition shrink-0">
+                <button onclick="event.stopPropagation(); openEditTimetableModal('${item.id}')" class="p-1 hover:bg-white/60 rounded text-slate-700 transition" title="แก้ไขคาบเรียน">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                </button>
+                <button onclick="event.stopPropagation(); deleteTimetable('${item.id}')" class="p-1 hover:bg-rose-100 rounded text-rose-600 transition" title="ลบคาบเรียน">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        ` : ''}
+    </div>
+    <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+    <div class="text-[10px] opacity-75">${item.group || ''}</div>
+    <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+        <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+    </div>
+</div>
                                                     `).join('')}
                                                 </div>
                                             ` : `
@@ -4775,14 +5053,26 @@ function renderTimetable() {
                                             ${afternoonItems.length > 0 ? `
                                                 <div class="space-y-2">
                                                     ${afternoonItems.map(item => `
-                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'indigo'} shadow-sm">
-                                                            <div class="font-bold text-xs">${item.subject}</div>
-                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
-                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
-                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
-                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
-                                                            </div>
-                                                        </div>
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm relative group transition hover:shadow-md">
+    <div class="flex items-start justify-between gap-1">
+        <div class="font-bold text-xs flex-1">${item.subject}</div>
+        ${AppState.isAdmin ? `
+            <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition shrink-0">
+                <button onclick="event.stopPropagation(); openEditTimetableModal('${item.id}')" class="p-1 hover:bg-white/60 rounded text-slate-700 transition" title="แก้ไขคาบเรียน">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                </button>
+                <button onclick="event.stopPropagation(); deleteTimetable('${item.id}')" class="p-1 hover:bg-rose-100 rounded text-rose-600 transition" title="ลบคาบเรียน">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        ` : ''}
+    </div>
+    <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+    <div class="text-[10px] opacity-75">${item.group || ''}</div>
+    <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+        <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+    </div>
+</div>
                                                     `).join('')}
                                                 </div>
                                             ` : `
@@ -4795,14 +5085,26 @@ function renderTimetable() {
                                             ${eveningItems.length > 0 ? `
                                                 <div class="space-y-2">
                                                     ${eveningItems.map(item => `
-                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'purple'} shadow-sm">
-                                                            <div class="font-bold text-xs">${item.subject}</div>
-                                                            <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
-                                                            <div class="text-[10px] opacity-75">${item.group || ''}</div>
-                                                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
-                                                                <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
-                                                            </div>
-                                                        </div>
+                                                        <div class="p-2.5 rounded-xl tag-${item.color || 'blue'} shadow-sm relative group transition hover:shadow-md">
+    <div class="flex items-start justify-between gap-1">
+        <div class="font-bold text-xs flex-1">${item.subject}</div>
+        ${AppState.isAdmin ? `
+            <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition shrink-0">
+                <button onclick="event.stopPropagation(); openEditTimetableModal('${item.id}')" class="p-1 hover:bg-white/60 rounded text-slate-700 transition" title="แก้ไขคาบเรียน">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                </button>
+                <button onclick="event.stopPropagation(); deleteTimetable('${item.id}')" class="p-1 hover:bg-rose-100 rounded text-rose-600 transition" title="ลบคาบเรียน">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        ` : ''}
+    </div>
+    <div class="text-[11px] opacity-90 mt-1">${item.instructor}</div>
+    <div class="text-[10px] opacity-75">${item.group || ''}</div>
+    <div class="text-[10px] font-semibold mt-1 flex items-center gap-1">
+        <i data-lucide="clock" class="w-3 h-3"></i> ${item.startTime} - ${item.endTime} น.
+    </div>
+</div>
                                                     `).join('')}
                                                 </div>
                                             ` : `
@@ -5351,17 +5653,38 @@ function sendActionToGoogleBackend(action, payload) {
                 case 'approveBooking':
                     google.script.run.withSuccessHandler(res => console.log('GAS Approve Booking:', res)).apiApproveBooking(payload.id);
                     break;
+                case 'rejectBooking':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Reject Booking:', res)).apiRejectBooking(payload.id);
+                    break;
                 case 'addMaintenance':
                     google.script.run.withSuccessHandler(res => console.log('GAS Add MNT:', res)).apiAddMaintenance(payload.ticket);
                     break;
                 case 'resolveMaintenance':
                     google.script.run.withSuccessHandler(res => console.log('GAS Resolve MNT:', res)).apiResolveMaintenance(payload.id);
                     break;
+                case 'deleteMaintenance':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete MNT:', res)).apiDeleteMaintenance(payload.id);
+                    break;
                 case 'addRoom':
                     google.script.run.withSuccessHandler(res => console.log('GAS Add Room:', res)).apiAddRoom(payload.room);
                     break;
+                case 'updateRoom':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Update Room:', res)).apiUpdateRoom(payload.room);
+                    break;
+                case 'deleteRoom':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete Room:', res)).apiDeleteRoom(payload.id);
+                    break;
                 case 'updateRoomStatus':
                     google.script.run.withSuccessHandler(res => console.log('GAS Update Room:', res)).apiUpdateRoomStatus(payload.id, payload.status, payload.currentClass);
+                    break;
+                case 'addTimetable':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Add Timetable:', res)).apiAddTimetable(payload.item);
+                    break;
+                case 'updateTimetable':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Update Timetable:', res)).apiUpdateTimetable(payload.item);
+                    break;
+                case 'deleteTimetable':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete Timetable:', res)).apiDeleteTimetable(payload.id);
                     break;
             }
         } catch(e) {
@@ -5379,6 +5702,9 @@ function sendActionToGoogleBackend(action, payload) {
         if (payload.booking) urlObj.searchParams.set('booking', JSON.stringify(payload.booking));
         if (payload.id) urlObj.searchParams.set('id', payload.id);
         if (payload.ticket) urlObj.searchParams.set('ticket', JSON.stringify(payload.ticket));
+        if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
+        if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
+        if (payload.timetable) urlObj.searchParams.set('timetable', JSON.stringify(payload.timetable));
 
         fetch(urlObj.toString(), { method: 'GET', mode: 'cors' })
             .then(r => r.json())
@@ -5663,6 +5989,16 @@ function openRoomDetailModal(roomId) {
                 <button onclick="closeModal('modal-room-detail'); openMaintenanceModalForRoom('${room.id}');" class="py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-rose-200 transition">
                     <i data-lucide="wrench" class="w-4 h-4"></i> แจ้งซ่อม
                 </button>
+                ${AppState.isAdmin ? `
+                    <div class="w-full pt-2 mt-1 border-t border-slate-100 flex gap-2">
+                        <button onclick="openEditRoomModal('${room.id}');" class="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> แก้ไขสเปกห้องนี้ (Admin)
+                        </button>
+                        <button onclick="deleteRoom('${room.id}');" class="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> ลบห้อง
+                        </button>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;

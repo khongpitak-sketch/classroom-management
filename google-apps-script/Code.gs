@@ -65,11 +65,29 @@ function doPost(e) {
       case 'resolveMaintenance':
         result = apiResolveMaintenance(requestData.id);
         break;
+      case 'deleteMaintenance':
+        result = apiDeleteMaintenance(requestData.id);
+        break;
       case 'addRoom':
         result = apiAddRoom(requestData.room);
         break;
+      case 'updateRoom':
+        result = apiUpdateRoom(requestData.room);
+        break;
+      case 'deleteRoom':
+        result = apiDeleteRoom(requestData.id);
+        break;
       case 'updateRoomStatus':
         result = apiUpdateRoomStatus(requestData.id, requestData.status, requestData.currentClass);
+        break;
+      case 'addTimetable':
+        result = apiAddTimetable(requestData.item || requestData.timetable);
+        break;
+      case 'updateTimetable':
+        result = apiUpdateTimetable(requestData.item || requestData.timetable);
+        break;
+      case 'deleteTimetable':
+        result = apiDeleteTimetable(requestData.id);
         break;
       case 'initDatabase':
         result = setupDatabase();
@@ -145,6 +163,52 @@ function handleApiGet(params) {
       if (responseData.success) {
         responseData.data = apiGetData();
       }
+    } else if (action === 'resolveMaintenance') {
+      responseData = apiResolveMaintenance(params.id);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'deleteMaintenance') {
+      responseData = apiDeleteMaintenance(params.id);
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'addRoom') {
+      let room = {};
+      if (params.room) room = typeof params.room === 'string' ? JSON.parse(params.room) : params.room;
+      else if (params.data) room = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      else room = params;
+      responseData = apiAddRoom(room);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'updateRoom') {
+      let room = {};
+      if (params.room) room = typeof params.room === 'string' ? JSON.parse(params.room) : params.room;
+      else if (params.data) room = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      else room = params;
+      responseData = apiUpdateRoom(room);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'deleteRoom') {
+      responseData = apiDeleteRoom(params.id);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'addTimetable') {
+      let item = {};
+      if (params.item) item = typeof params.item === 'string' ? JSON.parse(params.item) : params.item;
+      else if (params.timetable) item = typeof params.timetable === 'string' ? JSON.parse(params.timetable) : params.timetable;
+      else if (params.data) item = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      else item = params;
+      responseData = apiAddTimetable(item);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'updateTimetable') {
+      let item = {};
+      if (params.item) item = typeof params.item === 'string' ? JSON.parse(params.item) : params.item;
+      else if (params.timetable) item = typeof params.timetable === 'string' ? JSON.parse(params.timetable) : params.timetable;
+      else if (params.data) item = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      else item = params;
+      responseData = apiUpdateTimetable(item);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'deleteTimetable') {
+      responseData = apiDeleteTimetable(params.id);
+      if (responseData.success) responseData.data = apiGetData();
     } else if (action === 'init') {
       responseData = setupDatabase();
     } else {
@@ -417,6 +481,174 @@ function apiUpdateRoomStatus(roomId, status, currentClass) {
  * Database Setup & Initialization (สร้างฐานข้อมูลเริ่มต้นใน Google Sheets)
  * =========================================================================
  */
+
+/**
+ * ลบรายการแจ้งซ่อม
+ */
+function apiDeleteMaintenance(ticketId) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_MAINTENANCE);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == ticketId) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: "ลบรายการแจ้งซ่อมเรียบร้อยแล้ว" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสแจ้งซ่อม: " + ticketId };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * แก้ไขข้อมูลและสเปกห้องเรียน
+ */
+function apiUpdateRoom(room) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_ROOMS);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == room.id) {
+        const rowIdx = i + 1;
+        if (room.name !== undefined) sheet.getRange(rowIdx, 2).setValue(room.name);
+        if (room.type !== undefined) sheet.getRange(rowIdx, 3).setValue(room.type);
+        if (room.categoryName !== undefined) sheet.getRange(rowIdx, 4).setValue(room.categoryName);
+        if (room.building !== undefined) sheet.getRange(rowIdx, 5).setValue(room.building);
+        if (room.floor !== undefined) sheet.getRange(rowIdx, 6).setValue(room.floor);
+        if (room.capacity !== undefined) sheet.getRange(rowIdx, 7).setValue(room.capacity);
+        if (room.pcCount !== undefined) sheet.getRange(rowIdx, 8).setValue(room.pcCount || 0);
+        if (room.status !== undefined) sheet.getRange(rowIdx, 9).setValue(room.status);
+        if (room.facilities !== undefined) sheet.getRange(rowIdx, 10).setValue(typeof room.facilities === 'string' ? room.facilities : JSON.stringify(room.facilities));
+        if (room.description !== undefined) sheet.getRange(rowIdx, 11).setValue(room.description);
+        if (room.image !== undefined) sheet.getRange(rowIdx, 12).setValue(room.image);
+        if (room.specs !== undefined) sheet.getRange(rowIdx, 13).setValue(typeof room.specs === 'string' ? room.specs : JSON.stringify(room.specs));
+        if (room.software !== undefined) sheet.getRange(rowIdx, 14).setValue(typeof room.software === 'string' ? room.software : JSON.stringify(room.software));
+        if (room.currentClass !== undefined) sheet.getRange(rowIdx, 15).setValue(room.currentClass ? JSON.stringify(room.currentClass) : "");
+        return { success: true, room: room, message: "แก้ไขข้อมูลห้องสำเร็จ" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสห้อง: " + room.id };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * ลบห้องเรียน
+ */
+function apiDeleteRoom(roomId) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_ROOMS);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == roomId) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: "ลบห้องเรียนเรียบร้อยแล้ว" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสห้อง: " + roomId };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * เพิ่มคาบเรียนในตารางเรียน
+ */
+function apiAddTimetable(item) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_TIMETABLE);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+
+    if (!item.id) {
+      item.id = "TT-" + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    sheet.appendRow([
+      item.id,
+      item.roomId,
+      item.day || "",
+      item.dayIndex !== undefined ? item.dayIndex : 1,
+      item.startTime || "08:20",
+      item.endTime || "12:20",
+      item.subject || "",
+      item.code || "",
+      item.instructor || "",
+      item.group || "",
+      item.color || "blue"
+    ]);
+
+    return { success: true, item: item, message: "เพิ่มคาบเรียนสำเร็จ" };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * แก้ไขคาบเรียนในตารางเรียน
+ */
+function apiUpdateTimetable(item) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_TIMETABLE);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == item.id) {
+        const rowIdx = i + 1;
+        if (item.roomId !== undefined) sheet.getRange(rowIdx, 2).setValue(item.roomId);
+        if (item.day !== undefined) sheet.getRange(rowIdx, 3).setValue(item.day);
+        if (item.dayIndex !== undefined) sheet.getRange(rowIdx, 4).setValue(item.dayIndex);
+        if (item.startTime !== undefined) sheet.getRange(rowIdx, 5).setValue(item.startTime);
+        if (item.endTime !== undefined) sheet.getRange(rowIdx, 6).setValue(item.endTime);
+        if (item.subject !== undefined) sheet.getRange(rowIdx, 7).setValue(item.subject);
+        if (item.code !== undefined) sheet.getRange(rowIdx, 8).setValue(item.code);
+        if (item.instructor !== undefined) sheet.getRange(rowIdx, 9).setValue(item.instructor);
+        if (item.group !== undefined) sheet.getRange(rowIdx, 10).setValue(item.group);
+        if (item.color !== undefined) sheet.getRange(rowIdx, 11).setValue(item.color);
+        return { success: true, item: item, message: "แก้ไขคาบเรียนสำเร็จ" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสคาบเรียน: " + item.id };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * ลบคาบเรียนในตารางเรียน
+ */
+function apiDeleteTimetable(id) {
+  try {
+    const ss = getDb();
+    const sheet = ss.getSheetByName(SHEET_TIMETABLE);
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == id) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: "ลบคาบเรียนเรียบร้อยแล้ว" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสคาบเรียน: " + id };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
 function setupDatabase() {
   const ss = getDb();
   
