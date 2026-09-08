@@ -179,7 +179,7 @@ function switchTab(tabId) {
         targetSection.classList.remove('hidden');
     }
 
-    if (tabId === 'bookings' || tabId === 'dashboard' || AppState.isAdmin) {
+    if (tabId === 'bookings' || tabId === 'maintenance' || tabId === 'dashboard' || AppState.isAdmin) {
         if (AppState.googleScriptUrl) {
             fetchDataFromGoogleSheets(true);
         }
@@ -191,6 +191,7 @@ function switchTab(tabId) {
 
 function renderCurrentTab() {
     updateAdminPendingBadge();
+    updateAdminMaintenanceBadge();
     lucide.createIcons();
     switch (AppState.currentTab) {
         case 'dashboard':
@@ -901,12 +902,15 @@ function renderBookings() {
         return;
     }
 
-    listContainer.innerHTML = displayedBookings.map(bk => `
+    listContainer.innerHTML = displayedBookings.map(bk => {
+        const strRoomId = String(bk.roomId || '');
+        const dotColor = strRoomId.startsWith('LAB') ? 'bg-indigo-500' : strRoomId.startsWith('CONF') ? 'bg-amber-500' : 'bg-blue-500';
+        return `
         <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs transition">
             <td class="p-3 font-semibold text-slate-500">${bk.id}</td>
             <td class="p-3 font-bold text-slate-800">
                 <div class="flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full ${bk.roomId.startsWith('LAB') ? 'bg-indigo-500' : bk.roomId.startsWith('CONF') ? 'bg-amber-500' : 'bg-blue-500'}"></span>
+                    <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
                     <span>${bk.roomName}</span>
                 </div>
             </td>
@@ -951,7 +955,8 @@ function renderBookings() {
                 </div>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
     lucide.createIcons();
 }
 
@@ -1023,8 +1028,12 @@ async function handleBookingSubmit(event) {
     }
 
     const room = AppState.rooms.find(r => r.id === roomId);
-    // If Admin is submitting, auto-approve; if general visitor, set to 'pending'
-    const initialStatus = AppState.isAdmin ? 'approved' : 'pending';
+    // Booking Status: Defaults to 'pending' so Admin always sees incoming requests to review.
+    // If Admin explicitly checked 'autoApprove' in modal, then set to 'approved'.
+    let initialStatus = 'pending';
+    if (AppState.isAdmin && event.target.autoApprove && event.target.autoApprove.checked) {
+        initialStatus = 'approved';
+    }
 
     const fullDept = department + (phone ? ` (โทร. ${phone})` : '');
     const cleanSubject = (subject || purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ').trim();
@@ -1065,10 +1074,10 @@ async function handleBookingSubmit(event) {
     renderCurrentTab();
 
     // Show popup
-    if (AppState.isAdmin) {
+    if (initialStatus === 'approved') {
         showToast(`บันทึกการจองห้อง ${room ? room.name : ''} (อนุมัติทันที) เรียบร้อยแล้ว!`, 'success');
     } else {
-        alert(`✅ ส่งคำขอจองห้องเรียบร้อยแล้ว!\n\nรหัสการจอง: ${newBooking.id}\nห้องเรียน: ${room ? room.name : roomId}\nวันที่: ${dateStr} (${startTime} - ${endTime} น.)\nผู้ขอจอง: ${bookerName} ${phone ? 'โทร: ' + phone : ''}\n\nสถานะ: 🟡 รอผู้ดูแลระบบ (Admin) ตรวจสอบและอนุมัติ\n(ข้อมูลนี้ถูกบันทึกขึ้นระบบส่วนกลาง เพื่อให้ทุกคนที่เข้าเว็บเห็นตารางจองนี้เรียบร้อยแล้วครับ)`);
+        alert(`✅ ส่งคำขอจองห้องเรียบร้อยแล้ว!\n\nรหัสการจอง: ${newBooking.id}\nห้องเรียน: ${room ? room.name : roomId}\nวันที่: ${dateStr} (${startTime} - ${endTime} น.)\nผู้ขอจอง: ${bookerName} ${phone ? 'โทร: ' + phone : ''}\n\nสถานะ: 🟡 รอผู้ดูแลระบบ (Admin) ตรวจสอบและอนุมัติ\n(ข้อมูลนี้ส่งไปยังระบบส่วนกลางของ Admin เรียบร้อยแล้วครับ)`);
     }
 
     // Sync to Google Sheets central backend
@@ -1209,8 +1218,10 @@ function handleMaintenanceSubmit(event) {
 
     saveData();
     closeModal('modal-maintenance');
+    updateAdminMaintenanceBadge();
     renderCurrentTab();
-    showToast(`บันทึกแจ้งซ่อม ${room ? room.name : ''} เรียบร้อยแล้ว`, 'success');
+    
+    alert(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!\n\nรหัสแจ้งซ่อม: ${newTicket.id}\nห้อง: ${room ? room.name : roomId}\nหัวข้อปัญหา: ${title}\nผู้แจ้ง: ${reporter}\nระดับความด่วน: ${priority === 'high' ? 'ด่วนมาก' : priority === 'low' ? 'ทั่วไป' : 'ปานกลาง'}\n\nสถานะ: 🔴 รอดำเนินการซ่อม (ข้อมูลถูกส่งไปยังระบบส่วนกลางของ Admin เรียบร้อยแล้วครับ)`);
 
     // Sync to Google Sheets
     sendActionToGoogleBackend('addMaintenance', { ticket: newTicket });
@@ -1230,6 +1241,7 @@ function resolveMaintenance(ticketId) {
         }
 
         saveData();
+        updateAdminMaintenanceBadge();
         renderMaintenance();
         showToast('อัปเดตสถานะการซ่อมเป็น "เสร็จสิ้น" เรียบร้อยแล้ว', 'success');
 
@@ -1366,6 +1378,50 @@ function sendActionToGoogleBackend(action, payload) {
             urlObj.searchParams.set('status', bk.status || 'pending');
         }
         if (payload.ticket) urlObj.searchParams.set('ticket', JSON.stringify(payload.ticket));
+
+        // Dual-channel fallback for maintenance: ensure ticket is stored in Bookings sheet if backend lacks maintenance sheet
+        if (action === 'addMaintenance' && payload.ticket) {
+            const tk = payload.ticket;
+            const mntBooking = {
+                id: tk.id,
+                roomId: tk.roomId,
+                roomName: tk.roomName,
+                date: tk.reportedDate,
+                startTime: tk.priority || 'medium',
+                endTime: tk.status || 'open',
+                subject: `[MNT] ${tk.title}`,
+                purpose: tk.details || tk.title,
+                bookerName: tk.reporter || 'ผู้แจ้งซ่อม',
+                reservedBy: tk.reporter || 'ผู้แจ้งซ่อม',
+                department: `แจ้งซ่อม (${tk.priority || 'medium'})`,
+                phone: '',
+                status: tk.status || 'open'
+            };
+            const mntUrl = new URL(AppState.googleScriptUrl);
+            mntUrl.searchParams.set('action', 'addBooking');
+            mntUrl.searchParams.set('booking', JSON.stringify(mntBooking));
+            mntUrl.searchParams.set('id', mntBooking.id);
+            mntUrl.searchParams.set('roomId', mntBooking.roomId);
+            mntUrl.searchParams.set('roomName', mntBooking.roomName);
+            mntUrl.searchParams.set('date', mntBooking.date);
+            mntUrl.searchParams.set('subject', mntBooking.subject);
+            mntUrl.searchParams.set('purpose', mntBooking.purpose);
+            mntUrl.searchParams.set('bookerName', mntBooking.bookerName);
+            mntUrl.searchParams.set('reservedBy', mntBooking.reservedBy);
+            mntUrl.searchParams.set('department', mntBooking.department);
+            mntUrl.searchParams.set('status', mntBooking.status);
+            fetch(mntUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        } else if (action === 'resolveMaintenance' && payload.id) {
+            const appUrl = new URL(AppState.googleScriptUrl);
+            appUrl.searchParams.set('action', 'approveBooking');
+            appUrl.searchParams.set('id', payload.id);
+            fetch(appUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        } else if (action === 'deleteMaintenance' && payload.id) {
+            const delUrl = new URL(AppState.googleScriptUrl);
+            delUrl.searchParams.set('action', 'cancelBooking');
+            delUrl.searchParams.set('id', payload.id);
+            fetch(delUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        }
         if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
         if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
         if (payload.timetable) urlObj.searchParams.set('timetable', JSON.stringify(payload.timetable));
@@ -2491,8 +2547,56 @@ function forceReloadMasterTimetable() {
 function mapAndApplyCloudBookings(rawBookings) {
     if (!Array.isArray(rawBookings)) return;
     const prevPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
+    const prevOpenMnt = AppState.maintenance.filter(m => m.status === 'open' || m.status === 'in_progress').length;
 
-    AppState.bookings = rawBookings.map(b => {
+    // 1. Separate maintenance records that were synced through the cloud bookings channel
+    const mntRows = rawBookings.filter(b => {
+        const strId = String(b.id || '');
+        const strSubj = String(b.subject || b.purpose || '');
+        return strId.startsWith('MNT-') || strSubj.startsWith('[MNT]');
+    });
+
+    if (mntRows.length > 0) {
+        const extractedMnt = mntRows.filter(b => String(b.status || '').toLowerCase() !== 'cancelled').map(b => {
+            let repDate = b.date || '';
+            if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
+            const rawSubj = String(b.subject || b.purpose || 'แจ้งปัญหาอุปกรณ์');
+            const cleanTitle = rawSubj.replace(/^\[MNT\]\s*/, '');
+            const rawStatus = String(b.status || 'open').toLowerCase();
+            const mStatus = (rawStatus === 'approved' || rawStatus === 'completed') ? 'completed' : 'open';
+            const mPriority = String(b.department || b.startTime || 'medium').toLowerCase().includes('high') ? 'high' : 'medium';
+            return {
+                id: String(b.id),
+                roomId: String(b.roomId || b.roomid || ''),
+                roomName: String(b.roomName || b.roomname || ''),
+                reportedDate: repDate || new Date().toISOString().slice(0, 10),
+                title: cleanTitle,
+                details: String(b.purpose || ''),
+                reporter: String(b.bookerName || b.reservedBy || b.reservedby || 'ผู้ใช้งาน'),
+                status: mStatus,
+                priority: mPriority
+            };
+        });
+
+        // Merge with existing maintenance items by ID
+        const mntMap = new Map();
+        AppState.maintenance.forEach(m => mntMap.set(m.id, m));
+        extractedMnt.forEach(m => mntMap.set(m.id, m));
+        AppState.maintenance = Array.from(mntMap.values());
+        updateAdminMaintenanceBadge();
+        if (AppState.currentTab === 'maintenance') {
+            renderMaintenance();
+        }
+    }
+
+    // 2. Pure classroom bookings (excluding MNT records)
+    const pureBookings = rawBookings.filter(b => {
+        const strId = String(b.id || '');
+        const strSubj = String(b.subject || b.purpose || '');
+        return !strId.startsWith('MNT-') && !strSubj.startsWith('[MNT]');
+    });
+
+    AppState.bookings = pureBookings.map(b => {
         let dateStr = b.date || '';
         if (dateStr && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
         
@@ -2515,9 +2619,9 @@ function mapAndApplyCloudBookings(rawBookings) {
         const bStatus = (b.status || 'pending').toLowerCase().trim();
 
         return {
-            id: b.id || b.ID || ('BK-' + Math.floor(1000 + Math.random() * 9000)),
-            roomId: b.roomId || b.roomid || '',
-            roomName: b.roomName || b.roomname || '',
+            id: String(b.id || b.ID || ('BK-' + Math.floor(1000 + Math.random() * 9000))),
+            roomId: String(b.roomId || b.roomid || ''),
+            roomName: String(b.roomName || b.roomname || ''),
             date: dateStr,
             startTime: sTime,
             endTime: eTime,
@@ -2529,7 +2633,7 @@ function mapAndApplyCloudBookings(rawBookings) {
             department: bDept,
             phone: bPhone,
             status: bStatus,
-            createdAt: b.createdAt || b.createdat || ''
+            createdAt: String(b.createdAt || b.createdat || '')
         };
     });
 
@@ -2597,6 +2701,57 @@ function updateDashboardPendingAlert(pendingCount) {
                 </div>
                 <button onclick="switchTab('bookings')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
                     <i data-lucide="calendar-check" class="w-4 h-4"></i> ตรวจสอบคำขอจองห้อง (${pendingCount})
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+    } else {
+        container.innerHTML = '';
+    }
+}
+
+/**
+ * อัปเดตป้ายแจ้งเตือนงานแจ้งซ่อมที่รอดำเนินการ (Maintenance Badge)
+ */
+function updateAdminMaintenanceBadge() {
+    const openCount = AppState.maintenance.filter(m => m.status === 'open' || m.status === 'in_progress').length;
+
+    document.querySelectorAll('.maintenance-pending-badge').forEach(badge => {
+        if (openCount > 0) {
+            badge.textContent = openCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    });
+
+    updateDashboardMaintenanceAlert(openCount);
+}
+
+/**
+ * แสดงกล่องแจ้งเตือนรายการแจ้งซ่อมที่รอดำเนินการบนหน้า Dashboard สำหรับ Admin
+ */
+function updateDashboardMaintenanceAlert(openCount) {
+    const container = document.getElementById('dash-maintenance-alert-container');
+    if (!container) return;
+
+    if (AppState.isAdmin && openCount > 0) {
+        container.innerHTML = `
+            <div class="mb-4 p-4 bg-gradient-to-r from-rose-500/15 via-rose-400/10 to-amber-500/15 border-2 border-rose-400/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
+                        <i data-lucide="wrench" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-rose-950 text-sm flex items-center gap-2">
+                            <span>มีรายการแจ้งซ่อมอุปกรณ์ที่รอดำเนินการ</span>
+                            <span class="px-2 py-0.5 bg-rose-600 text-white rounded-full text-[11px] font-extrabold">${openCount} รายการ</span>
+                        </h4>
+                        <p class="text-xs text-rose-900 mt-0.5">มีผู้ใช้งานรายงานอุปกรณ์ชำรุดเข้ามาในระบบ กรุณาตรวจสอบเพื่อประสานงานช่างเข้าแก้ไข</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('maintenance')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
+                    <i data-lucide="wrench" class="w-4 h-4"></i> จัดการรายการแจ้งซ่อม (${openCount})
                 </button>
             </div>
         `;
