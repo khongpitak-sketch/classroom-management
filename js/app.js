@@ -1243,11 +1243,11 @@ function resolveMaintenance(ticketId) {
 
         saveData();
         updateAdminMaintenanceBadge();
-        renderMaintenance();
-        showToast('อัปเดตสถานะการซ่อมเป็น "เสร็จสิ้น" เรียบร้อยแล้ว', 'success');
+        renderCurrentTab();
+        showToast(`✅ ยืนยันการซ่อมรหัส ${ticketId} เสร็จสิ้นเรียบร้อย (อัปเดตสถานะห้องพร้อมใช้งานและแจ้งผู้ใช้ทันที)`, 'success', 5000);
 
-        // Sync to Google Sheets
-        sendActionToGoogleBackend('resolveMaintenance', { id: ticketId });
+        // Sync to Google Sheets (Central Cloud Database)
+        sendActionToGoogleBackend('resolveMaintenance', { id: ticketId, status: 'completed' });
     }
 }
 
@@ -1416,6 +1416,7 @@ function sendActionToGoogleBackend(action, payload) {
             const appUrl = new URL(AppState.googleScriptUrl);
             appUrl.searchParams.set('action', 'approveBooking');
             appUrl.searchParams.set('id', payload.id);
+            appUrl.searchParams.set('status', 'completed');
             fetch(appUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
         } else if (action === 'deleteMaintenance' && payload.id) {
             const delUrl = new URL(AppState.googleScriptUrl);
@@ -1443,7 +1444,7 @@ function sendActionToGoogleBackend(action, payload) {
                         AppState.maintenance = Array.from(mntMap.values());
                         saveData();
                         updateAdminMaintenanceBadge();
-                        renderMaintenance();
+                        renderCurrentTab();
                     }
                 }
             })
@@ -1526,7 +1527,7 @@ async function fetchDataFromGoogleSheets(silent = false) {
             }
             if (json.data.maintenance && Array.isArray(json.data.maintenance)) {
                 if (json.data.maintenance.length > 0) {
-                    AppState.maintenance = json.data.maintenance.map(m => {
+                    const incomingMnt = json.data.maintenance.map(m => {
                         let repDate = m.reportedDate || m.reporteddate || m.date || '';
                         if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
                         return {
@@ -1541,8 +1542,30 @@ async function fetchDataFromGoogleSheets(silent = false) {
                             priority: (m.priority || 'medium').toLowerCase()
                         };
                     });
+
+                    // Check if any ticket transitioned to completed to notify user
+                    incomingMnt.forEach(inTicket => {
+                        const existing = AppState.maintenance.find(cur => cur.id === inTicket.id);
+                        if (existing && existing.status !== 'completed' && inTicket.status === 'completed') {
+                            showToast(`🔧 รายการแจ้งซ่อม ${inTicket.id} (${inTicket.roomName}) ได้รับการซ่อมเสร็จสิ้นแล้ว!`, 'success', 6000);
+                        }
+                    });
+
+                    const mntMap = new Map();
+                    AppState.maintenance.forEach(m => mntMap.set(m.id, m));
+                    incomingMnt.forEach(m => mntMap.set(m.id, m));
+                    AppState.maintenance = Array.from(mntMap.values());
+
+                    // Sync room status
+                    AppState.rooms.forEach(r => {
+                        if (r.status === 'maintenance') {
+                            const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
+                            if (!hasOpen) {
+                                r.status = 'available';
+                            }
+                        }
+                    });
                 }
-                // If cloud sheet maintenance is empty, keep existing local maintenance so user reports are not erased
             }
 
             AppState.isGoogleConnected = true;
@@ -2589,9 +2612,17 @@ function mapAndApplyCloudBookings(rawBookings) {
         extractedMnt.forEach(m => mntMap.set(m.id, m));
         AppState.maintenance = Array.from(mntMap.values());
         updateAdminMaintenanceBadge();
-        if (AppState.currentTab === 'maintenance') {
-            renderMaintenance();
-        }
+        // Check if any rooms were in maintenance but all tickets are now completed
+        AppState.rooms.forEach(r => {
+            if (r.status === 'maintenance') {
+                const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
+                if (!hasOpen) {
+                    r.status = 'available';
+                }
+            }
+        });
+        saveData();
+        renderCurrentTab();
     }
 
     // 2. Pure classroom bookings (excluding MNT records)
