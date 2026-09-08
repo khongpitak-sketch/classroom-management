@@ -2447,21 +2447,21 @@ function openAdminLoginModal() {
 function handleAdminLogin(event) {
     event.preventDefault();
     const pin = event.target.adminPin.value;
-    // Default PIN: 1234
-    if (pin === '1234') {
+    if (pin === 'Khong2739') {
         AppState.isAdmin = true;
         sessionStorage.setItem('CMS_IS_ADMIN', 'true');
         closeModal('modal-admin-login');
         event.target.reset();
         updateAdminHeaderUI();
         updateAdminPendingBadge();
+        updateAdminMaintenanceBadge();
         renderCurrentTab();
         showToast('เข้าสู่ระบบผู้ดูแล (Admin Mode) สำเร็จ!', 'success');
         if (AppState.googleScriptUrl) {
             fetchDataFromGoogleSheets(false);
         }
     } else {
-        showToast('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง (รหัสเริ่มต้น: 1234)', 'error');
+        showToast('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง', 'error');
     }
 }
 
