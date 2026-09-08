@@ -206,7 +206,8 @@ body {
                         <i data-lucide="calendar" class="w-4 h-4"></i> ตารางการใช้ห้อง
                     </button>
                     <button onclick="switchTab('bookings')" data-tab="bookings" class="nav-link px-3.5 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition flex items-center gap-2">
-                        <i data-lucide="calendar-check" class="w-4 h-4"></i> การจองห้อง
+                        <i data-lucide="calendar-check" class="w-4 h-4"></i> <span>การจองห้อง</span>
+                        <span class="booking-pending-badge ml-auto px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
                     </button>
                     <button onclick="switchTab('maintenance')" data-tab="maintenance" class="nav-link px-3.5 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition flex items-center gap-2">
                         <i data-lucide="wrench" class="w-4 h-4"></i> แจ้งซ่อมอุปกรณ์
@@ -249,8 +250,9 @@ body {
             <button onclick="switchTab('timetable')" data-tab="timetable" class="mobile-nav-link p-2 text-slate-400 flex flex-col items-center gap-1">
                 <i data-lucide="calendar" class="w-4 h-4"></i> <span>ตารางเรียน</span>
             </button>
-            <button onclick="switchTab('bookings')" data-tab="bookings" class="mobile-nav-link p-2 text-slate-400 flex flex-col items-center gap-1">
+            <button onclick="switchTab('bookings')" data-tab="bookings" class="mobile-nav-link relative p-2 text-slate-400 flex flex-col items-center gap-1">
                 <i data-lucide="calendar-check" class="w-4 h-4"></i> <span>การจอง</span>
+                <span class="booking-pending-badge absolute top-1 right-2 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] font-extrabold hidden">0</span>
             </button>
             <button onclick="switchTab('maintenance')" data-tab="maintenance" class="mobile-nav-link p-2 text-slate-400 flex flex-col items-center gap-1">
                 <i data-lucide="wrench" class="w-4 h-4"></i> <span>แจ้งซ่อม</span>
@@ -344,6 +346,9 @@ body {
                 </div>
             </div>
 
+
+            <!-- Admin Pending Bookings Alert Banner -->
+            <div id="dash-pending-alert-container"></div>
 
             <!-- Quick Status Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1436,7 +1441,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v16_full_crud_complete";
+const DATA_VERSION = "v17_booking_sync_fixed";
 
 const DEFAULT_ROOMS = [
     {
@@ -4398,12 +4403,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateClock();
     setInterval(updateClock, 1000);
-    // Background auto-sync with Google Sheets every 25 seconds
+    // Background real-time auto-sync with Google Sheets every 15 seconds
     setInterval(() => {
         if (AppState.googleScriptUrl) {
             fetchDataFromGoogleSheets(true);
         }
-    }, 25000);
+    }, 15000);
     renderCurrentTab();
 
     // Auto-sync with Google Apps Script if configured
@@ -4542,11 +4547,18 @@ function switchTab(tabId) {
         targetSection.classList.remove('hidden');
     }
 
+    if (tabId === 'bookings' || tabId === 'dashboard' || AppState.isAdmin) {
+        if (AppState.googleScriptUrl) {
+            fetchDataFromGoogleSheets(true);
+        }
+    }
+
     renderCurrentTab();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function renderCurrentTab() {
+    updateAdminPendingBadge();
     lucide.createIcons();
     switch (AppState.currentTab) {
         case 'dashboard':
@@ -5383,6 +5395,8 @@ async function handleBookingSubmit(event) {
     const initialStatus = AppState.isAdmin ? 'approved' : 'pending';
 
     const fullDept = department + (phone ? ` (โทร. ${phone})` : '');
+    const cleanSubject = (subject || purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ').trim();
+    const cleanPurpose = (purpose || subject || '').trim();
     const newBooking = {
         id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
         roomId: roomId,
@@ -5390,11 +5404,13 @@ async function handleBookingSubmit(event) {
         date: dateStr,
         startTime: startTime,
         endTime: endTime,
-        subject: subject,
+        subject: cleanSubject,
+        purpose: cleanPurpose,
         bookerName: bookerName,
+        reservedBy: bookerName,
+        reservedby: bookerName,
         department: fullDept,
         phone: phone,
-        purpose: purpose,
         status: initialStatus,
         createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
     };
@@ -5695,28 +5711,43 @@ function sendActionToGoogleBackend(action, payload) {
 
     if (!AppState.googleScriptUrl) return;
 
-    // Send via GET parameter (immune to CORS preflight on mobile & desktop)
     try {
         const urlObj = new URL(AppState.googleScriptUrl);
         urlObj.searchParams.set('action', action);
-        if (payload.booking) urlObj.searchParams.set('booking', JSON.stringify(payload.booking));
         if (payload.id) urlObj.searchParams.set('id', payload.id);
+        if (payload.status) urlObj.searchParams.set('status', payload.status);
+
+        if (payload.booking) {
+            urlObj.searchParams.set('booking', JSON.stringify(payload.booking));
+            const bk = payload.booking;
+            urlObj.searchParams.set('roomId', bk.roomId || bk.roomid || '');
+            urlObj.searchParams.set('roomName', bk.roomName || bk.roomname || '');
+            urlObj.searchParams.set('date', bk.date || '');
+            urlObj.searchParams.set('startTime', bk.startTime || bk.starttime || '');
+            urlObj.searchParams.set('endTime', bk.endTime || bk.endtime || '');
+            urlObj.searchParams.set('subject', bk.subject || bk.purpose || '');
+            urlObj.searchParams.set('purpose', bk.purpose || bk.subject || '');
+            urlObj.searchParams.set('bookerName', bk.bookerName || bk.reservedBy || '');
+            urlObj.searchParams.set('reservedBy', bk.reservedBy || bk.bookerName || '');
+            urlObj.searchParams.set('department', bk.department || '');
+            urlObj.searchParams.set('phone', bk.phone || '');
+            urlObj.searchParams.set('status', bk.status || 'pending');
+        }
         if (payload.ticket) urlObj.searchParams.set('ticket', JSON.stringify(payload.ticket));
         if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
         if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
         if (payload.timetable) urlObj.searchParams.set('timetable', JSON.stringify(payload.timetable));
 
+        // Send via GET request
         fetch(urlObj.toString(), { method: 'GET', mode: 'cors' })
             .then(r => r.json())
             .then(res => {
                 console.log('Google Sheets Sync (GET):', res);
                 if (res.success && res.data) {
-                    if (res.data.bookings) {
-                        AppState.bookings = res.data.bookings;
-                        saveData();
-                        renderBookings();
+                    if (res.data.bookings && Array.isArray(res.data.bookings)) {
+                        mapAndApplyCloudBookings(res.data.bookings);
                     }
-                    if (res.data.maintenance && res.data.maintenance.length > 0) {
+                    if (res.data.maintenance && Array.isArray(res.data.maintenance) && res.data.maintenance.length > 0) {
                         AppState.maintenance = res.data.maintenance;
                         saveData();
                         renderMaintenance();
@@ -5724,13 +5755,19 @@ function sendActionToGoogleBackend(action, payload) {
                 }
             })
             .catch(err => {
-                console.warn('GET sync fallback to POST:', err);
+                console.warn('GET sync failed, trying POST:', err);
                 fetch(AppState.googleScriptUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: action, ...payload })
                 }).then(r => r.json()).catch(e => console.warn('POST sync:', e));
             });
+
+        // Trigger delayed background pull to ensure cloud state consistency
+        setTimeout(() => {
+            fetchDataFromGoogleSheets(true);
+        }, 1500);
+
     } catch(e) {
         console.warn('Sync URL error:', e);
     }
@@ -5792,37 +5829,7 @@ async function fetchDataFromGoogleSheets(silent = false) {
                 }
             }
             if (json.data.bookings && Array.isArray(json.data.bookings)) {
-                AppState.bookings = json.data.bookings.map(b => {
-                    // Normalize date format
-                    let dateStr = b.date || '';
-                    if (dateStr && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
-                    // Normalize time format if it came from sheet date object
-                    let sTime = b.startTime || b.starttime || '';
-                    if (sTime && sTime.includes('T')) {
-                        const d = new Date(sTime);
-                        sTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-                    }
-                    let eTime = b.endTime || b.endtime || '';
-                    if (eTime && eTime.includes('T')) {
-                        const d = new Date(eTime);
-                        eTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-                    }
-                    return {
-                        id: b.id || b.ID || ('BK-' + Math.floor(1000 + Math.random() * 9000)),
-                        roomId: b.roomId || b.roomid || '',
-                        roomName: b.roomName || b.roomname || '',
-                        date: dateStr,
-                        startTime: sTime,
-                        endTime: eTime,
-                        subject: b.subject || b.purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ',
-                        purpose: b.purpose || b.subject || '',
-                        bookerName: b.bookerName || b.reservedBy || b.reservedby || 'ไม่ระบุชื่อ',
-                        department: b.department || '',
-                        phone: b.phone ? String(b.phone) : '',
-                        status: (b.status || 'pending').toLowerCase(),
-                        createdAt: b.createdAt || b.createdat || ''
-                    };
-                });
+                mapAndApplyCloudBookings(json.data.bookings);
             }
             if (json.data.maintenance && Array.isArray(json.data.maintenance)) {
                 if (json.data.maintenance.length > 0) {
@@ -6759,8 +6766,12 @@ function handleAdminLogin(event) {
         closeModal('modal-admin-login');
         event.target.reset();
         updateAdminHeaderUI();
+        updateAdminPendingBadge();
         renderCurrentTab();
         showToast('เข้าสู่ระบบผู้ดูแล (Admin Mode) สำเร็จ!', 'success');
+        if (AppState.googleScriptUrl) {
+            fetchDataFromGoogleSheets(false);
+        }
     } else {
         showToast('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง (รหัสเริ่มต้น: 1234)', 'error');
     }
@@ -6799,6 +6810,7 @@ function updateAdminHeaderUI() {
             </button>
         `;
     }
+    updateAdminPendingBadge();
     lucide.createIcons();
 }
 
@@ -6838,6 +6850,127 @@ function forceReloadMasterTimetable() {
     renderCurrentTab();
     if (typeof showToast === 'function') {
         showToast('โหลดตารางเรียน 184 คาบเรียนเรียบร้อยแล้ว!', 'success');
+    }
+}
+
+/**
+ * แปลงและปรับปรุงข้อมูลการจองที่ได้รับจากคลาวด์ Google Sheets
+ */
+function mapAndApplyCloudBookings(rawBookings) {
+    if (!Array.isArray(rawBookings)) return;
+    const prevPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
+
+    AppState.bookings = rawBookings.map(b => {
+        let dateStr = b.date || '';
+        if (dateStr && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        
+        let sTime = b.startTime || b.starttime || '';
+        if (sTime && sTime.includes('T')) {
+            const d = new Date(sTime);
+            sTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+        }
+        let eTime = b.endTime || b.endtime || '';
+        if (eTime && eTime.includes('T')) {
+            const d = new Date(eTime);
+            eTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+        }
+
+        const bName = (b.bookerName || b.bookername || b.reservedBy || b.reservedby || '').trim();
+        const bSubject = (b.subject || b.purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ').trim();
+        const bPurpose = (b.purpose || b.subject || '').trim();
+        const bDept = (b.department || '').trim();
+        const bPhone = (b.phone ? String(b.phone) : '').trim();
+        const bStatus = (b.status || 'pending').toLowerCase().trim();
+
+        return {
+            id: b.id || b.ID || ('BK-' + Math.floor(1000 + Math.random() * 9000)),
+            roomId: b.roomId || b.roomid || '',
+            roomName: b.roomName || b.roomname || '',
+            date: dateStr,
+            startTime: sTime,
+            endTime: eTime,
+            subject: bSubject,
+            purpose: bPurpose,
+            bookerName: bName || 'ผู้ขอจองทั่วไป',
+            reservedBy: bName || 'ผู้ขอจองทั่วไป',
+            reservedby: bName || 'ผู้ขอจองทั่วไป',
+            department: bDept,
+            phone: bPhone,
+            status: bStatus,
+            createdAt: b.createdAt || b.createdat || ''
+        };
+    });
+
+    saveData();
+    updateAdminPendingBadge();
+
+    const newPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
+    if (AppState.isAdmin && newPendingCount > prevPendingCount) {
+        showToast(`🔔 มีคำขอจองห้องเรียนใหม่เข้ามา (${newPendingCount} รายการรออนุมัติ)`, 'info');
+    }
+}
+
+/**
+ * อัปเดตป้ายแจ้งเตือนคำขอจองห้องที่รอการอนุมัติ (Pending Badge) ทุกจุดในระบบ
+ */
+function updateAdminPendingBadge() {
+    const pendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
+
+    // Header badge
+    const adminPendingBadge = document.getElementById('admin-pending-count-badge');
+    if (adminPendingBadge) {
+        if (pendingCount > 0) {
+            adminPendingBadge.textContent = pendingCount;
+            adminPendingBadge.classList.remove('hidden');
+        } else {
+            adminPendingBadge.classList.add('hidden');
+        }
+    }
+
+    // Sidebar & Mobile Nav badges
+    document.querySelectorAll('.booking-pending-badge').forEach(badge => {
+        if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    });
+
+    // Dashboard Pending Alert
+    updateDashboardPendingAlert(pendingCount);
+}
+
+/**
+ * แสดงกล่องแจ้งเตือนคำขอจองห้องเรียนที่รออนุมัติในหน้า Dashboard
+ */
+function updateDashboardPendingAlert(pendingCount) {
+    const container = document.getElementById('dash-pending-alert-container');
+    if (!container) return;
+
+    if (AppState.isAdmin && pendingCount > 0) {
+        container.innerHTML = `
+            <div class="mb-5 p-4 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-orange-500/15 border-2 border-amber-400/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
+                        <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-amber-950 text-sm flex items-center gap-2">
+                            <span>มีคำขอจองห้องเรียนใหม่รอการตรวจสอบและอนุมัติ</span>
+                            <span class="px-2 py-0.5 bg-rose-500 text-white rounded-full text-[11px] font-extrabold">${pendingCount} รายการ</span>
+                        </h4>
+                        <p class="text-xs text-amber-800 mt-0.5">มีผู้ใช้งานส่งคำขอจองห้องเข้ามา กรุณาตรวจสอบและอนุมัติเพื่อให้ห้องขึ้นสถานะจองในระบบ</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('bookings')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i> ตรวจสอบคำขอจองห้อง (${pendingCount})
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+    } else {
+        container.innerHTML = '';
     }
 }
 </script>

@@ -301,20 +301,49 @@ function apiAddBooking(booking) {
       booking.createdAt = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm");
     }
 
-    sheet.appendRow([
-      booking.id,
-      booking.roomId,
-      booking.roomName,
-      booking.date,
-      booking.startTime,
-      booking.endTime,
-      booking.subject,
-      booking.bookerName,
-      booking.department || "",
-      booking.purpose || "",
-      booking.status || "approved",
-      booking.createdAt
-    ]);
+    const bName = booking.bookerName || booking.reservedBy || booking.reservedby || "";
+    const bSubject = booking.subject || booking.purpose || "";
+    const bPurpose = booking.purpose || booking.subject || "";
+    const bStatus = booking.status || "pending";
+    const bPhone = booking.phone ? String(booking.phone) : "";
+
+    const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    if (headers && headers.length > 1) {
+      const row = [];
+      for (let j = 0; j < headers.length; j++) {
+        const h = String(headers[j]).trim().toLowerCase();
+        if (h === 'id') row.push(booking.id);
+        else if (h === 'roomid') row.push(booking.roomId || booking.roomid || "");
+        else if (h === 'roomname') row.push(booking.roomName || booking.roomname || "");
+        else if (h === 'date') row.push(booking.date || "");
+        else if (h === 'starttime') row.push(booking.startTime || booking.starttime || "");
+        else if (h === 'endtime') row.push(booking.endTime || booking.endtime || "");
+        else if (h === 'subject') row.push(bSubject);
+        else if (h === 'purpose') row.push(bPurpose);
+        else if (h === 'bookername' || h === 'reservedby') row.push(bName);
+        else if (h === 'department') row.push(booking.department || "");
+        else if (h === 'phone') row.push(bPhone);
+        else if (h === 'status') row.push(bStatus);
+        else if (h === 'createdat') row.push(booking.createdAt);
+        else row.push(booking[headers[j]] || "");
+      }
+      sheet.appendRow(row);
+    } else {
+      sheet.appendRow([
+        booking.id,
+        booking.roomId || booking.roomid || "",
+        booking.roomName || booking.roomname || "",
+        booking.date || "",
+        booking.startTime || booking.starttime || "",
+        booking.endTime || booking.endtime || "",
+        bSubject,
+        bName,
+        booking.department || "",
+        bPurpose,
+        bStatus,
+        booking.createdAt
+      ]);
+    }
 
     return { success: true, booking: booking, message: "บันทึกการจองห้องสำเร็จ" };
   } catch (e) {
@@ -350,11 +379,21 @@ function apiApproveBooking(bookingId) {
   try {
     const ss = getDb();
     const sheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (!sheet) return { success: false, message: "Sheet not found" };
     const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { success: false, message: "No data" };
+
+    let statusCol = 11;
+    for (let c = 0; c < data[0].length; c++) {
+      if (String(data[0][c]).trim().toLowerCase() === 'status') {
+        statusCol = c + 1;
+        break;
+      }
+    }
 
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] == bookingId) {
-        sheet.getRange(i + 1, 11).setValue("approved");
+        sheet.getRange(i + 1, statusCol).setValue("approved");
         return { success: true, message: "อนุมัติการจองเรียบร้อยแล้ว" };
       }
     }
@@ -768,10 +807,19 @@ function apiRejectBooking(bookingId) {
     const sheet = ss.getSheetByName(SHEET_BOOKINGS);
     if (!sheet) return { success: false, message: "Sheet not found" };
     const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { success: false, message: "No data" };
+
+    let statusCol = 11;
+    for (let c = 0; c < data[0].length; c++) {
+      if (String(data[0][c]).trim().toLowerCase() === 'status') {
+        statusCol = c + 1;
+        break;
+      }
+    }
 
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] == bookingId) {
-        sheet.getRange(i + 1, 11).setValue("rejected");
+        sheet.getRange(i + 1, statusCol).setValue("rejected");
         return { success: true, message: "ปฏิเสธคำขอจองห้องเรียบร้อยแล้ว" };
       }
     }
