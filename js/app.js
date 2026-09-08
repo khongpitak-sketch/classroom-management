@@ -1023,7 +1023,7 @@ async function handleBookingSubmit(event) {
 
     const conflictResult = checkBookingConflict(roomId, dateStr, startTime, endTime);
     if (conflictResult.hasConflict) {
-        alert(`❌ ไม่สามารถจองห้องได้เนื่องจากเวลาชนกัน:\n\n${conflictResult.reason}`);
+        showToast(`❌ ไม่สามารถจองห้องได้เนื่องจากเวลาชนกัน: ${conflictResult.reason}`, 'error', 6000);
         return;
     }
 
@@ -1073,11 +1073,11 @@ async function handleBookingSubmit(event) {
     closeModal('modal-booking');
     renderCurrentTab();
 
-    // Show popup
+    // Instant on-screen confirmation for user
     if (initialStatus === 'approved') {
-        showToast(`บันทึกการจองห้อง ${room ? room.name : ''} (อนุมัติทันที) เรียบร้อยแล้ว!`, 'success');
+        showToast(`✅ บันทึกการจองห้อง ${room ? room.name : ''} (อนุมัติทันที) เรียบร้อยแล้ว!`, 'success', 5000);
     } else {
-        alert(`✅ ส่งคำขอจองห้องเรียบร้อยแล้ว!\n\nรหัสการจอง: ${newBooking.id}\nห้องเรียน: ${room ? room.name : roomId}\nวันที่: ${dateStr} (${startTime} - ${endTime} น.)\nผู้ขอจอง: ${bookerName} ${phone ? 'โทร: ' + phone : ''}\n\nสถานะ: 🟡 รอผู้ดูแลระบบ (Admin) ตรวจสอบและอนุมัติ\n(ข้อมูลนี้ส่งไปยังระบบส่วนกลางของ Admin เรียบร้อยแล้วครับ)`);
+        showToast(`✅ ส่งคำขอจองห้องเรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">รหัสจอง: <b>${newBooking.id}</b> • ห้อง: <b>${room ? room.name : roomId}</b> (${startTime}-${endTime} น.)<br>สถานะ: 🟡 รอ Admin ตรวจสอบอนุมัติ (บันทึกเข้าระบบทันทีแล้ว)</span>`, 'success', 5500);
     }
 
     // Sync to Google Sheets central backend
@@ -1221,7 +1221,8 @@ function handleMaintenanceSubmit(event) {
     updateAdminMaintenanceBadge();
     renderCurrentTab();
     
-    alert(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!\n\nรหัสแจ้งซ่อม: ${newTicket.id}\nห้อง: ${room ? room.name : roomId}\nหัวข้อปัญหา: ${title}\nผู้แจ้ง: ${reporter}\nระดับความด่วน: ${priority === 'high' ? 'ด่วนมาก' : priority === 'low' ? 'ทั่วไป' : 'ปานกลาง'}\n\nสถานะ: 🔴 รอดำเนินการซ่อม (ข้อมูลถูกส่งไปยังระบบส่วนกลางของ Admin เรียบร้อยแล้วครับ)`);
+    // Instant on-screen confirmation for user (no blocking alert/OK button)
+    showToast(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">รหัสแจ้งซ่อม: <b>${newTicket.id}</b> • ห้อง: <b>${room ? room.name : roomId}</b><br>ปัญหา: <b>${title}</b> • สถานะ: 🔴 รอดำเนินการ (ส่งข้อมูลถึง Admin ทันทีแล้ว)</span>`, 'success', 5500);
 
     // Sync to Google Sheets
     sendActionToGoogleBackend('addMaintenance', { ticket: newTicket });
@@ -1436,8 +1437,12 @@ function sendActionToGoogleBackend(action, payload) {
                         mapAndApplyCloudBookings(res.data.bookings);
                     }
                     if (res.data.maintenance && Array.isArray(res.data.maintenance) && res.data.maintenance.length > 0) {
-                        AppState.maintenance = res.data.maintenance;
+                        const mntMap = new Map();
+                        AppState.maintenance.forEach(m => mntMap.set(m.id, m));
+                        res.data.maintenance.forEach(m => mntMap.set(m.id, m));
+                        AppState.maintenance = Array.from(mntMap.values());
                         saveData();
+                        updateAdminMaintenanceBadge();
                         renderMaintenance();
                     }
                 }
@@ -2120,33 +2125,33 @@ function getMaintenanceStatusBadge(status) {
 }
 
 // Toast Notification
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', durationMs = 4500) {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
     const toast = document.createElement('div');
-    toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-xs font-semibold transition-all transform duration-300 translate-y-2 opacity-0 text-white ${
-        type === 'success' ? 'bg-slate-900 border-l-4 border-emerald-500' :
-        type === 'error' ? 'bg-slate-900 border-l-4 border-rose-500' :
-        type === 'warning' ? 'bg-slate-900 border-l-4 border-amber-500' :
-        'bg-slate-900 border-l-4 border-blue-500'
-    }`;
+    toast.className = `flex items-start gap-3 px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold transition-all transform duration-300 translate-y-2 opacity-0 text-white ${
+        type === 'success' ? 'bg-slate-900/95 border-l-4 border-emerald-500 shadow-emerald-500/20' :
+        type === 'error' ? 'bg-slate-900/95 border-l-4 border-rose-500 shadow-rose-500/20' :
+        type === 'warning' ? 'bg-slate-900/95 border-l-4 border-amber-500 shadow-amber-500/20' :
+        'bg-slate-900/95 border-l-4 border-blue-500 shadow-blue-500/20'
+    } backdrop-blur-md`;
 
     const icon = type === 'success' ? 'check-circle' :
                  type === 'error' ? 'alert-circle' :
                  type === 'warning' ? 'alert-triangle' : 'info';
 
     toast.innerHTML = `
-        <i data-lucide="${icon}" class="w-4 h-4 ${
+        <i data-lucide="${icon}" class="w-5 h-5 mt-0.5 shrink-0 ${
             type === 'success' ? 'text-emerald-400' :
             type === 'error' ? 'text-rose-400' :
             type === 'warning' ? 'text-amber-400' : 'text-blue-400'
         }"></i>
-        <span class="flex-1">${message}</span>
+        <div class="flex-1 leading-relaxed">${message}</div>
     `;
 
     container.appendChild(toast);
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 
     setTimeout(() => {
         toast.classList.remove('translate-y-2', 'opacity-0');
@@ -2155,7 +2160,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    }, durationMs);
 }
 
 function populateInstructorOptions(selectElem) {
@@ -2639,6 +2644,9 @@ function mapAndApplyCloudBookings(rawBookings) {
 
     saveData();
     updateAdminPendingBadge();
+    if (AppState.currentTab === 'bookings' || AppState.currentTab === 'dashboard') {
+        renderCurrentTab();
+    }
 
     const newPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
     if (AppState.isAdmin && newPendingCount > prevPendingCount) {
