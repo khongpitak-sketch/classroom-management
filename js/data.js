@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v23_strict_role_access";
+const DATA_VERSION = "v24_clean_data_thai_date";
 
 const DEFAULT_ROOMS = [
     {
@@ -2887,47 +2887,6 @@ const DEFAULT_TIMETABLE = [
     }
 ];
 
-const DEFAULT_BOOKINGS = [
-    {
-        id: "BK-1001",
-        roomId: "CONF-1",
-        roomName: "ห้องประชุมพฤกษาพรรณชมพู",
-        date: "2026-09-05",
-        startTime: "09:00",
-        endTime: "16:30",
-        subject: "ประชุมสัมมนาวิชาการระดับชาติ คณะวิทยาการจัดการ",
-        bookerName: "ผศ.มัณฑนา กระโหมวงศ์",
-        department: "คณะวิทยาการจัดการ",
-        purpose: "การนำเสนอผลงานวิจัยและการบรรยายพิเศษ",
-        status: "approved",
-        createdAt: "2026-08-30 10:00"
-    },
-    {
-        id: "BK-1002",
-        roomId: "MIL-1",
-        roomName: "ห้องปฏิบัติการนวัตกรรมการจัดการ",
-        date: "2026-09-04",
-        startTime: "13:00",
-        endTime: "16:00",
-        subject: "Workshop: การประยุกต์ใช้ AI ในการวิจัยภาครัฐ",
-        bookerName: "อาจารย์ ดร.อิบรอฮิม สารีมาแซ",
-        department: "สาขาวิชารัฐประศาสนศาสตร์",
-        purpose: "อบรมเชิงปฏิบัติการเครื่องมือวิจัยสำหรับคณาจารย์",
-        status: "approved",
-        createdAt: "2026-08-31 14:20"
-    }
-];
+const DEFAULT_BOOKINGS = [];
 
-const DEFAULT_MAINTENANCE = [
-    {
-        id: "MNT-001",
-        roomId: "LAB-1",
-        roomName: "FMS201 - ห้องปฏิบัติการคอมพิวเตอร์ 1",
-        reportedDate: "2026-09-01",
-        title: "PC เครื่องที่ 15 เปิดไม่ติด / พัดลมมีเสียงดัง",
-        details: "พาวเวอร์ซัพพลายไม่จ่ายไฟ ต้องการเปลี่ยนอะไหล่",
-        reporter: "อ.พระรักษ์ อมรศักดิ์",
-        status: "in_progress",
-        priority: "medium"
-    }
-];
+const DEFAULT_MAINTENANCE = [];

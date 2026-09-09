@@ -732,12 +732,10 @@ function setupDatabase() {
   bkSheet.appendRow(bkHeaders);
   formatHeaderRow(bkSheet, "#059669");
 
-  const defaultBookings = [
-    ["BK-1001", "R-306", "ห้อง 306", "2026-09-01", "13:00", "16:00", "ประชุมวิชาการประจำสาขา", "ผศ.ดร.สมชาย ใจดี", "ภาควิชาวิทยาการคอมพิวเตอร์", "การประชุมเตรียมความพร้อมหลักสูตร", "approved", "2026-08-28 09:30"],
-    ["BK-1002", "LAB-3", "ห้องปฏิบัติการคอม 3", "2026-09-01", "13:00", "17:00", "AI & Deep Learning Workshop", "ดร.กิตติคุณ ศิริวงศ์", "ศูนย์นวัตกรรม AI", "อบรม Generative AI และ PyTorch", "approved", "2026-08-29 14:15"],
-    ["BK-1003", "R-405", "ห้อง 405", "2026-09-01", "13:30", "16:30", "สัมมนาเทคโนโลยีสารสนเทศ", "ผศ.วิภาดา ลิขิตธรรม", "คณะวิทยาการจัดการ", "บรรยายพิเศษจากผู้เชี่ยวชาญภายนอก", "approved", "2026-08-30 11:00"]
-  ];
-  bkSheet.getRange(2, 1, defaultBookings.length, defaultBookings[0].length).setValues(defaultBookings);
+  const defaultBookings = [];
+  if (defaultBookings.length > 0) {
+    bkSheet.getRange(2, 1, defaultBookings.length, defaultBookings[0].length).setValues(defaultBookings);
+  }
 
   // 4. สร้าง Sheet "Maintenance"
   let mntSheet = ss.getSheetByName(SHEET_MAINTENANCE);
@@ -750,11 +748,10 @@ function setupDatabase() {
   mntSheet.appendRow(mntHeaders);
   formatHeaderRow(mntSheet, "#dc2626");
 
-  const defaultMnt = [
-    ["MNT-001", "R-305", "ห้อง 305", "2026-08-31", "แอร์มีน้ำหยด / รีโมทไม่ตอบสนอง", "ต้องการให้ช่างเข้าตรวจสอบและล้างแอร์", "อ.ดร.พรพิมล รัตนโชติ", "medium", "in_progress"],
-    ["MNT-002", "LAB-1", "ห้องปฏิบัติการคอม 1", "2026-08-30", "PC เครื่องที่ 12 เมาส์คลิกซ้ายไม่ตอบสนอง", "เปลี่ยนเมาส์ตัวใหม่", "ผศ.ดร.ธีรภัทร ชาญวิทย์", "low", "completed"]
-  ];
-  mntSheet.getRange(2, 1, defaultMnt.length, defaultMnt[0].length).setValues(defaultMnt);
+  const defaultMnt = [];
+  if (defaultMnt.length > 0) {
+    mntSheet.getRange(2, 1, defaultMnt.length, defaultMnt[0].length).setValues(defaultMnt);
+  }
 
   return { success: true, message: "สร้างฐานข้อมูล Google Sheets 4 แผ่นงานเรียบร้อยแล้ว!" };
 }

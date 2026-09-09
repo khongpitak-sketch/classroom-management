@@ -105,6 +105,26 @@ function loadData() {
             AppState.maintenance = savedMaintenance ? JSON.parse(savedMaintenance) : DEFAULT_MAINTENANCE;
         }
 
+        // ล้างข้อมูล mock / รายการจำลองเก่าที่อาจค้างอยู่ใน LocalStorage
+        if (Array.isArray(AppState.bookings)) {
+            AppState.bookings = AppState.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003');
+        }
+        if (Array.isArray(AppState.maintenance)) {
+            AppState.maintenance = AppState.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
+        }
+
+        // รีเซ็ตสถานะห้องที่อาจติดสถานะ maintenance จากข้อมูลจำลอง
+        if (AppState.rooms && Array.isArray(AppState.rooms)) {
+            AppState.rooms.forEach(r => {
+                if (r.status === 'maintenance') {
+                    const hasActiveMnt = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
+                    if (!hasActiveMnt) {
+                        r.status = 'available';
+                    }
+                }
+            });
+        }
+
         // Safety guarantee: Timetable must always contain the 184 semester classes
         if (!AppState.timetable || !Array.isArray(AppState.timetable) || AppState.timetable.length === 0) {
             AppState.timetable = DEFAULT_TIMETABLE;
@@ -219,6 +239,53 @@ function renderCurrentTab() {
             break;
     }
     lucide.createIcons();
+}
+
+/**
+ * แปลงวันที่เป็นรูปแบบ วัน เดือน ปี (พ.ศ.)
+ * @param {string|Date} dateInput วันที่ เช่น "2026-09-09"
+ * @param {boolean} includeDayName ใส่ชื่อวันด้วยหรือไม่ เช่น "วันพุธที่ 9 ก.ย. 2569"
+ * @returns {string} เช่น "9 ก.ย. 2569" หรือ "วันพุธที่ 9 ก.ย. 2569"
+ */
+function formatThaiDate(dateInput, includeDayName = false) {
+    if (!dateInput) return '-';
+    try {
+        let dateStr = String(dateInput).slice(0, 10);
+        let year, month, day;
+        if (dateStr.includes('-')) {
+            const parts = dateStr.split('-');
+            year = parseInt(parts[0]);
+            month = parseInt(parts[1]) - 1;
+            day = parseInt(parts[2]);
+        } else if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            day = parseInt(parts[0]);
+            month = parseInt(parts[1]) - 1;
+            year = parseInt(parts[2]);
+        } else {
+            return dateStr;
+        }
+
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return dateStr;
+
+        const d = new Date(year, month, day);
+        const thaiYear = year > 2400 ? year : year + 543;
+        const thaiMonthsShort = [
+            'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+            'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+        ];
+        const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+
+        const monthName = thaiMonthsShort[month] || '';
+        const baseFormatted = `${day} ${monthName} ${thaiYear}`;
+
+        if (includeDayName && !isNaN(d.getDay())) {
+            return `วัน${thaiDays[d.getDay()]}ที่ ${baseFormatted}`;
+        }
+        return baseFormatted;
+    } catch(e) {
+        return String(dateInput);
+    }
 }
 
 // Digital Clock & Date
@@ -920,8 +987,11 @@ function renderBookings() {
                 </div>
             </td>
             <td class="p-3">
-                <div class="font-bold text-slate-800">${bk.date}</div>
-                <div class="text-blue-600 font-semibold text-[11px] flex items-center gap-1 mt-0.5">
+                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-500"></i>
+                    <span>${formatThaiDate(bk.date, true)}</span>
+                </div>
+                <div class="text-blue-600 font-semibold text-[11px] flex items-center gap-1 mt-0.5 ml-5">
                     <i data-lucide="clock" class="w-3 h-3"></i> ${bk.startTime} - ${bk.endTime} น.
                 </div>
             </td>
@@ -976,7 +1046,7 @@ function checkBookingConflict(roomId, dateStr, startTime, endTime, excludeBookin
     if (conflictingBooking) {
         return {
             hasConflict: true,
-            reason: `ห้องนี้ถูกจองแล้วในวันที่ ${dateStr} เวลา ${conflictingBooking.startTime} - ${conflictingBooking.endTime} น. โดย ${conflictingBooking.bookerName} (${conflictingBooking.subject})`
+            reason: `ห้องนี้ถูกจองแล้วในวันที่ ${formatThaiDate(dateStr, true)} เวลา ${conflictingBooking.startTime} - ${conflictingBooking.endTime} น. โดย ${conflictingBooking.bookerName} (${conflictingBooking.subject})`
         };
     }
 
@@ -1082,7 +1152,7 @@ async function handleBookingSubmit(event) {
     if (initialStatus === 'approved') {
         showToast(`✅ บันทึกการจองห้อง ${room ? room.name : ''} (อนุมัติทันที) เรียบร้อยแล้ว!`, 'success', 5000);
     } else {
-        showToast(`✅ ส่งคำขอจองห้องเรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">รหัสจอง: <b>${newBooking.id}</b> • ห้อง: <b>${room ? room.name : roomId}</b> (${startTime}-${endTime} น.)<br>สถานะ: 🟡 รอ Admin ตรวจสอบอนุมัติ (บันทึกเข้าระบบทันทีแล้ว)</span>`, 'success', 5500);
+        showToast(`✅ ส่งคำขอจองห้องเรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">รหัสจอง: <b>${newBooking.id}</b> • ห้อง: <b>${room ? room.name : roomId}</b> (${formatThaiDate(dateStr, true)} เวลา ${startTime}-${endTime} น.)<br>สถานะ: 🟡 รอ Admin ตรวจสอบอนุมัติ (บันทึกเข้าระบบทันทีแล้ว)</span>`, 'success', 5500);
     }
 
     // Sync to Google Sheets central backend
@@ -1151,8 +1221,11 @@ function renderMaintenance() {
                 <div class="text-slate-500 text-[11px]">${m.details || '-'}</div>
             </td>
             <td class="p-3 text-slate-600">
-                <div>${m.reporter}</div>
-                <div class="text-slate-400 text-[11px]">${m.reportedDate}</div>
+                <div class="font-medium text-slate-800">${m.reporter}</div>
+                <div class="text-slate-500 text-[11px] flex items-center gap-1 mt-0.5">
+                    <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
+                    <span>${formatThaiDate(m.reportedDate)}</span>
+                </div>
             </td>
             <td class="p-3">
                 ${getMaintenancePriorityBadge(m.priority)}
@@ -1548,11 +1621,13 @@ async function fetchDataFromGoogleSheets(silent = false) {
                 }
             }
             if (json.data.bookings && Array.isArray(json.data.bookings)) {
-                mapAndApplyCloudBookings(json.data.bookings);
+                const cleanCloudBk = json.data.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003');
+                mapAndApplyCloudBookings(cleanCloudBk);
             }
             if (json.data.maintenance && Array.isArray(json.data.maintenance)) {
                 if (json.data.maintenance.length > 0) {
-                    const incomingMnt = json.data.maintenance.map(m => {
+                    const filteredCloudMnt = json.data.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
+                    const incomingMnt = filteredCloudMnt.map(m => {
                         let repDate = m.reportedDate || m.reporteddate || m.date || '';
                         if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
                         return {
