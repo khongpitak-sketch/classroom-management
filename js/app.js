@@ -1,3 +1,136 @@
+// ----------------------------------------------------
+// REAL-TIME INTER-TAB & MULTI-DEVICE SYNC ENGINE
+// ----------------------------------------------------
+const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('CMS_REALTIME_SYNC') : null;
+
+function broadcastDataChange(type, data = {}) {
+    if (syncChannel) {
+        try {
+            syncChannel.postMessage({ type, data, timestamp: Date.now() });
+        } catch(e) {}
+    }
+}
+
+if (syncChannel) {
+    syncChannel.onmessage = (event) => {
+        const { type, data } = event.data || {};
+        if (!type) return;
+
+        switch (type) {
+            case 'DELETE_BOOKING':
+                AppState.bookings = AppState.bookings.filter(b => b.id !== data.id);
+                saveData();
+                updateAdminPendingBadge();
+                renderCurrentTab();
+                break;
+            case 'APPROVE_BOOKING':
+                const ab = AppState.bookings.find(b => b.id === data.id);
+                if (ab) {
+                    ab.status = 'approved';
+                    saveData();
+                    updateAdminPendingBadge();
+                    renderCurrentTab();
+                }
+                break;
+            case 'REJECT_BOOKING':
+                const rb = AppState.bookings.find(b => b.id === data.id);
+                if (rb) {
+                    rb.status = 'rejected';
+                    saveData();
+                    updateAdminPendingBadge();
+                    renderCurrentTab();
+                }
+                break;
+            case 'ADD_BOOKING':
+                if (data.booking && !AppState.bookings.some(b => b.id === data.booking.id)) {
+                    AppState.bookings.unshift(data.booking);
+                    saveData();
+                    updateAdminPendingBadge();
+                    renderCurrentTab();
+                }
+                break;
+            case 'DELETE_MAINTENANCE':
+                AppState.maintenance = AppState.maintenance.filter(m => m.id !== data.id);
+                if (data.roomId) {
+                    const room = AppState.rooms.find(r => r.id === data.roomId);
+                    if (room && room.status === 'maintenance') {
+                        const hasOther = AppState.maintenance.some(m => m.roomId === data.roomId && m.status !== 'completed');
+                        if (!hasOther) room.status = 'available';
+                    }
+                }
+                saveData();
+                updateAdminMaintenanceBadge();
+                renderCurrentTab();
+                break;
+            case 'RESOLVE_MAINTENANCE':
+                const rm = AppState.maintenance.find(m => m.id === data.id);
+                if (rm) {
+                    rm.status = 'completed';
+                    if (data.roomId) {
+                        const room = AppState.rooms.find(r => r.id === data.roomId);
+                        if (room && room.status === 'maintenance') {
+                            const hasOther = AppState.maintenance.some(m => m.roomId === data.roomId && m.status !== 'completed');
+                            if (!hasOther) room.status = 'available';
+                        }
+                    }
+                    saveData();
+                    updateAdminMaintenanceBadge();
+                    renderCurrentTab();
+                }
+                break;
+            case 'ADD_MAINTENANCE':
+                if (data.ticket && !AppState.maintenance.some(m => m.id === data.ticket.id)) {
+                    AppState.maintenance.unshift(data.ticket);
+                    saveData();
+                    updateAdminMaintenanceBadge();
+                    renderCurrentTab();
+                }
+                break;
+            case 'DELETE_ROOM':
+                AppState.rooms = AppState.rooms.filter(r => r.id !== data.id);
+                saveData();
+                renderCurrentTab();
+                break;
+            case 'UPDATE_ROOM':
+                if (data.room) {
+                    const uidx = AppState.rooms.findIndex(r => r.id === data.room.id);
+                    if (uidx !== -1) AppState.rooms[uidx] = data.room;
+                    else AppState.rooms.push(data.room);
+                    saveData();
+                    renderCurrentTab();
+                }
+                break;
+            case 'DELETE_TIMETABLE':
+                AppState.timetable = AppState.timetable.filter(t => t.id !== data.id);
+                saveData();
+                renderCurrentTab();
+                break;
+        }
+    };
+}
+
+// Storage event listener: sync changes instantly across browser tabs
+window.addEventListener('storage', (e) => {
+    try {
+        if (e.key === 'CMS_BOOKINGS' && e.newValue) {
+            AppState.bookings = JSON.parse(e.newValue);
+            updateAdminPendingBadge();
+            renderCurrentTab();
+        } else if (e.key === 'CMS_MAINTENANCE' && e.newValue) {
+            AppState.maintenance = JSON.parse(e.newValue);
+            updateAdminMaintenanceBadge();
+            renderCurrentTab();
+        } else if (e.key === 'CMS_ROOMS' && e.newValue) {
+            AppState.rooms = JSON.parse(e.newValue);
+            renderCurrentTab();
+        } else if (e.key === 'CMS_TIMETABLE' && e.newValue) {
+            AppState.timetable = JSON.parse(e.newValue);
+            renderCurrentTab();
+        }
+    } catch(err) {}
+});
+
+
 /**
  * Classroom Management System - Core Application Logic
  * Supports: 302, 303, 305, 306, 307, 308, 401, 402, 403, 404, 405, 406
@@ -1147,6 +1280,7 @@ async function handleBookingSubmit(event) {
     saveData();
     closeModal('modal-booking');
     renderCurrentTab();
+    broadcastDataChange('ADD_BOOKING', { booking: newBooking });
 
     // Instant on-screen confirmation for user
     if (initialStatus === 'approved') {
@@ -1168,10 +1302,10 @@ function approveBooking(bookingId) {
     if (booking) {
         booking.status = 'approved';
         saveData();
+        updateAdminPendingBadge();
         renderBookings();
         showToast(`อนุมัติคำขอจอง ${bookingId} เรียบร้อยแล้ว`, 'success');
-
-        // Sync to Google Sheets
+        broadcastDataChange('APPROVE_BOOKING', { id: bookingId });
         sendActionToGoogleBackend('approveBooking', { id: bookingId });
     }
 }
@@ -1181,13 +1315,13 @@ function cancelBooking(bookingId) {
         showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
         return;
     }
-    if (confirm(`คุณต้องการลบรายการจอง ${bookingId} ใช่หรือไม่?`)) {
+    if (confirm(`คุณต้องการลบรายการจอง ${bookingId} ใช่หรือไม่?\n(ข้อมูลจะถูกลบออกจากทั้งฝั่ง Admin และฝั่งผู้ใช้งานทันที)`)) {
         AppState.bookings = AppState.bookings.filter(b => b.id !== bookingId);
         saveData();
+        updateAdminPendingBadge();
         renderBookings();
-        showToast('ยกเลิกรายการจองสำเร็จ', 'success');
-
-        // Sync to Google Sheets
+        showToast('ลบรายการจองสำเร็จ (ข้อมูลฝั่งผู้ใช้ถูกอัปเดตแล้ว)', 'success');
+        broadcastDataChange('DELETE_BOOKING', { id: bookingId });
         sendActionToGoogleBackend('cancelBooking', { id: bookingId });
     }
 }
@@ -1265,11 +1399,23 @@ function deleteMaintenance(ticketId) {
         showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
         return;
     }
-    if (confirm(`คุณต้องการลบรายการแจ้งซ่อม ${ticketId} หรือไม่?`)) {
+    if (confirm(`คุณต้องการลบรายการแจ้งซ่อม ${ticketId} หรือไม่?\n(ข้อมูลจะถูกลบออกจากทั้งฝั่ง Admin และฝั่งผู้ใช้งานทันที)`)) {
+        const ticket = AppState.maintenance.find(m => m.id === ticketId);
+        const roomId = ticket ? ticket.roomId : null;
         AppState.maintenance = AppState.maintenance.filter(m => m.id !== ticketId);
+        if (roomId) {
+            const room = AppState.rooms.find(r => r.id === roomId);
+            if (room && room.status === 'maintenance') {
+                const hasOther = AppState.maintenance.some(m => m.roomId === roomId && m.status !== 'completed');
+                if (!hasOther) room.status = 'available';
+            }
+        }
         saveData();
         renderMaintenance();
-        showToast(`ลบรายการแจ้งซ่อม ${ticketId} เรียบร้อยแล้ว`, 'success');
+        renderRooms();
+        updateAdminMaintenanceBadge();
+        showToast(`ลบรายการแจ้งซ่อม ${ticketId} เรียบร้อยแล้ว (ข้อมูลฝั่งผู้ใช้ถูกอัปเดตแล้ว)`, 'success');
+        broadcastDataChange('DELETE_MAINTENANCE', { id: ticketId, roomId: roomId });
         sendActionToGoogleBackend('deleteMaintenance', { id: ticketId });
     }
 }
@@ -1310,6 +1456,7 @@ function handleMaintenanceSubmit(event) {
     closeModal('modal-maintenance');
     updateAdminMaintenanceBadge();
     renderCurrentTab();
+    broadcastDataChange('ADD_MAINTENANCE', { ticket: newTicket });
     
     // Instant on-screen confirmation for user (no blocking alert/OK button)
     showToast(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">รหัสแจ้งซ่อม: <b>${newTicket.id}</b> • ห้อง: <b>${room ? room.name : roomId}</b><br>ปัญหา: <b>${title}</b> • สถานะ: 🔴 รอดำเนินการ (ส่งข้อมูลถึง Admin ทันทีแล้ว)</span>`, 'success', 5500);
@@ -1339,6 +1486,7 @@ function resolveMaintenance(ticketId) {
         updateAdminMaintenanceBadge();
         renderCurrentTab();
         showToast(`✅ ยืนยันการซ่อมรหัส ${ticketId} เสร็จสิ้นเรียบร้อย (อัปเดตสถานะห้องพร้อมใช้งานและแจ้งผู้ใช้ทันที)`, 'success', 5000);
+        broadcastDataChange('RESOLVE_MAINTENANCE', { id: ticketId, roomId: ticket ? ticket.roomId : null });
 
         // Sync to Google Sheets (Central Cloud Database)
         sendActionToGoogleBackend('resolveMaintenance', { id: ticketId, status: 'completed' });
@@ -1625,47 +1773,43 @@ async function fetchDataFromGoogleSheets(silent = false) {
                 mapAndApplyCloudBookings(cleanCloudBk);
             }
             if (json.data.maintenance && Array.isArray(json.data.maintenance)) {
-                if (json.data.maintenance.length > 0) {
-                    const filteredCloudMnt = json.data.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
-                    const incomingMnt = filteredCloudMnt.map(m => {
-                        let repDate = m.reportedDate || m.reporteddate || m.date || '';
-                        if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
-                        return {
-                            id: m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900)),
-                            roomId: m.roomId || m.roomid || '',
-                            roomName: m.roomName || m.roomname || '',
-                            reportedDate: repDate || new Date().toISOString().slice(0, 10),
-                            title: m.title || m.item || 'แจ้งปัญหาอุปกรณ์',
-                            details: m.details || m.description || '',
-                            reporter: m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน',
-                            status: (m.status || 'open').toLowerCase(),
-                            priority: (m.priority || 'medium').toLowerCase()
-                        };
-                    });
+                const filteredCloudMnt = json.data.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
+                const incomingMnt = filteredCloudMnt.map(m => {
+                    let repDate = m.reportedDate || m.reporteddate || m.date || '';
+                    if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
+                    return {
+                        id: m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900)),
+                        roomId: m.roomId || m.roomid || '',
+                        roomName: m.roomName || m.roomname || '',
+                        reportedDate: repDate || new Date().toISOString().slice(0, 10),
+                        title: m.title || m.item || 'แจ้งปัญหาอุปกรณ์',
+                        details: m.details || m.description || '',
+                        reporter: m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน',
+                        status: (m.status || 'open').toLowerCase(),
+                        priority: (m.priority || 'medium').toLowerCase()
+                    };
+                });
 
-                    // Check if any ticket transitioned to completed to notify user
-                    incomingMnt.forEach(inTicket => {
-                        const existing = AppState.maintenance.find(cur => cur.id === inTicket.id);
-                        if (existing && existing.status !== 'completed' && inTicket.status === 'completed') {
-                            showToast(`🔧 รายการแจ้งซ่อม ${inTicket.id} (${inTicket.roomName}) ได้รับการซ่อมเสร็จสิ้นแล้ว!`, 'success', 6000);
+                // Check if any ticket transitioned to completed to notify user
+                incomingMnt.forEach(inTicket => {
+                    const existing = AppState.maintenance.find(cur => cur.id === inTicket.id);
+                    if (existing && existing.status !== 'completed' && inTicket.status === 'completed') {
+                        showToast(`🔧 รายการแจ้งซ่อม ${inTicket.id} (${inTicket.roomName}) ได้รับการซ่อมเสร็จสิ้นแล้ว!`, 'success', 6000);
+                    }
+                });
+
+                // ซิงก์ลบข้อมูลตามคลาวด์แบบ Authoritative: ข้อมูลที่ Admin ลบบนคลาวด์จะถูกลบออกจากฝั่งผู้ใช้ทันที
+                AppState.maintenance = incomingMnt;
+
+                // Sync room status
+                AppState.rooms.forEach(r => {
+                    if (r.status === 'maintenance') {
+                        const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
+                        if (!hasOpen) {
+                            r.status = 'available';
                         }
-                    });
-
-                    const mntMap = new Map();
-                    AppState.maintenance.forEach(m => mntMap.set(m.id, m));
-                    incomingMnt.forEach(m => mntMap.set(m.id, m));
-                    AppState.maintenance = Array.from(mntMap.values());
-
-                    // Sync room status
-                    AppState.rooms.forEach(r => {
-                        if (r.status === 'maintenance') {
-                            const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
-                            if (!hasOpen) {
-                                r.status = 'available';
-                            }
-                        }
-                    });
-                }
+                    }
+                });
             }
 
             AppState.isGoogleConnected = true;
@@ -2663,8 +2807,10 @@ function rejectBooking(bookingId) {
     if (booking) {
         booking.status = 'rejected';
         saveData();
+        updateAdminPendingBadge();
         renderBookings();
         showToast(`ปฏิเสธคำขอจอง ${bookingId} เรียบร้อยแล้ว`, 'info');
+        broadcastDataChange('REJECT_BOOKING', { id: bookingId });
         sendActionToGoogleBackend('rejectBooking', { id: bookingId });
     }
 }
@@ -3033,6 +3179,7 @@ function deleteRoom(roomId) {
         closeModal('modal-room-detail');
         renderRooms();
         showToast(`ลบห้อง ${room.name} ออกจากระบบเรียบร้อยแล้ว`, 'success');
+        broadcastDataChange('DELETE_ROOM', { id: roomId });
         sendActionToGoogleBackend('deleteRoom', { id: roomId });
     }
 }
@@ -3189,6 +3336,7 @@ function deleteTimetable(timetableId) {
         saveData();
         renderTimetable();
         showToast(`ลบคาบเรียน ${item.subject.split(' ')[0]} เรียบร้อยแล้ว`, 'success');
+        broadcastDataChange('DELETE_TIMETABLE', { id: timetableId });
         sendActionToGoogleBackend('deleteTimetable', { id: timetableId });
     }
 }

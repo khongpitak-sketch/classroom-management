@@ -357,16 +357,35 @@ function apiAddBooking(booking) {
 function apiCancelBooking(bookingId) {
   try {
     const ss = getDb();
-    const sheet = ss.getSheetByName(SHEET_BOOKINGS);
-    const data = sheet.getDataRange().getValues();
+    let deleted = false;
 
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == bookingId) {
-        sheet.deleteRow(i + 1);
-        return { success: true, message: "ยกเลิกการจองสำเร็จ" };
+    // Delete from Bookings sheet
+    const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (bkSheet) {
+      const data = bkSheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] == bookingId) {
+          bkSheet.deleteRow(i + 1);
+          deleted = true;
+          break;
+        }
       }
     }
-    return { success: false, message: "ไม่พบรหัสการจอง: " + bookingId };
+
+    // Also delete from Maintenance sheet if this was a dual-synced ticket
+    const mntSheet = ss.getSheetByName(SHEET_MAINTENANCE);
+    if (mntSheet) {
+      const mntData = mntSheet.getDataRange().getValues();
+      for (let j = 1; j < mntData.length; j++) {
+        if (mntData[j][0] == bookingId) {
+          mntSheet.deleteRow(j + 1);
+          deleted = true;
+          break;
+        }
+      }
+    }
+
+    return { success: true, deleted: deleted, message: "ลบรายการจองสำเร็จ" };
   } catch (e) {
     return { success: false, message: e.toString() };
   }
@@ -527,17 +546,35 @@ function apiUpdateRoomStatus(roomId, status, currentClass) {
 function apiDeleteMaintenance(ticketId) {
   try {
     const ss = getDb();
-    const sheet = ss.getSheetByName(SHEET_MAINTENANCE);
-    if (!sheet) return { success: false, message: "Sheet not found" };
-    const data = sheet.getDataRange().getValues();
+    let deleted = false;
 
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == ticketId) {
-        sheet.deleteRow(i + 1);
-        return { success: true, message: "ลบรายการแจ้งซ่อมเรียบร้อยแล้ว" };
+    // Delete from Maintenance sheet
+    const mntSheet = ss.getSheetByName(SHEET_MAINTENANCE);
+    if (mntSheet) {
+      const data = mntSheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] == ticketId) {
+          mntSheet.deleteRow(i + 1);
+          deleted = true;
+          break;
+        }
       }
     }
-    return { success: false, message: "ไม่พบรหัสแจ้งซ่อม: " + ticketId };
+
+    // Also delete from Bookings sheet if it was dual-synced under [MNT]
+    const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (bkSheet) {
+      const bkData = bkSheet.getDataRange().getValues();
+      for (let j = 1; j < bkData.length; j++) {
+        if (bkData[j][0] == ticketId) {
+          bkSheet.deleteRow(j + 1);
+          deleted = true;
+          break;
+        }
+      }
+    }
+
+    return { success: true, deleted: deleted, message: "ลบรายการแจ้งซ่อมเรียบร้อยแล้ว" };
   } catch (e) {
     return { success: false, message: e.toString() };
   }
