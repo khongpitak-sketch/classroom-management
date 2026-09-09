@@ -277,10 +277,12 @@ function isGoogleAppsScriptEnvironment() {
 function loadSettings() {
     try {
         const savedUrl = localStorage.getItem('CMS_GAS_URL');
-        if (savedUrl) {
+        // ต้องเป็น URL ของ Google Apps Script Web App เท่านั้น (ไม่ใช่ลิงก์ GitHub Pages หรือ Vercel)
+        if (savedUrl && savedUrl.includes('script.google.com/macros/s/')) {
             AppState.googleScriptUrl = savedUrl;
         } else if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
             AppState.googleScriptUrl = DEFAULT_GAS_URL;
+            localStorage.setItem('CMS_GAS_URL', DEFAULT_GAS_URL);
         }
     } catch (e) {
         console.error("Error loading settings:", e);
@@ -1947,9 +1949,30 @@ async function testGoogleSheetsConnection() {
         return;
     }
 
-    AppState.googleScriptUrl = urlInput.value.trim();
+    const enteredUrl = urlInput.value.trim();
+    if (!enteredUrl.includes('script.google.com/macros/s/')) {
+        showToast('❌ URL ไม่ถูกต้อง! ช่องนี้ต้องใส่ Google Apps Script Web App URL (ขึ้นต้นด้วย https://script.google.com/macros/s/...)<br><span class="text-[11px] text-amber-200">ไม่ใช่ลิงก์เว็บไซต์ GitHub Pages หรือ Vercel</span>', 'error', 9000);
+        return;
+    }
+
+    AppState.googleScriptUrl = enteredUrl;
     saveSettings();
     await fetchDataFromGoogleSheets(false);
+}
+
+/**
+ * รีเซ็ต URL กลับเป็น URL กลางของ Google Apps Script ทันที
+ */
+function resetToDefaultGasUrl() {
+    if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
+        AppState.googleScriptUrl = DEFAULT_GAS_URL;
+        saveSettings();
+        const gasInput = document.getElementById('gas-url-input');
+        if (gasInput) gasInput.value = DEFAULT_GAS_URL;
+        updateGoogleStatusUI();
+        fetchDataFromGoogleSheets(false);
+        showToast('คืนค่า URL ฐานข้อมูล Google Sheets ส่วนกลางเรียบร้อยแล้ว!', 'success');
+    }
 }
 
 function updateGoogleStatusUI() {
