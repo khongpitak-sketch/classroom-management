@@ -428,8 +428,11 @@ function apiApproveBooking(bookingId) {
 function apiAddMaintenance(ticket) {
   try {
     const ss = getDb();
-    const sheet = ss.getSheetByName(SHEET_MAINTENANCE);
-    if (!sheet) return { success: false, message: "Sheet not found" };
+    let sheet = ss.getSheetByName(SHEET_MAINTENANCE);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_MAINTENANCE);
+      sheet.appendRow(["id", "roomId", "roomName", "reportedDate", "title", "details", "reporter", "priority", "status"]);
+    }
 
     if (!ticket.id) {
       ticket.id = "MNT-" + Math.floor(100 + Math.random() * 900);
@@ -450,6 +453,33 @@ function apiAddMaintenance(ticket) {
       ticket.status || "open"
     ]);
 
+    // Also update Bookings sheet if dual-channel fallback is used
+    const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (bkSheet) {
+      const bkData = bkSheet.getDataRange().getValues();
+      let foundInBk = false;
+      for (let j = 1; j < bkData.length; j++) {
+        if (bkData[j][0] == ticket.id) {
+          foundInBk = true;
+          break;
+        }
+      }
+      if (!foundInBk) {
+        bkSheet.appendRow([
+          ticket.id,
+          ticket.roomId,
+          ticket.roomName,
+          ticket.reportedDate,
+          ticket.priority || "medium",
+          ticket.status || "open",
+          "[MNT] " + ticket.title,
+          ticket.reporter || "ผู้แจ้งซ่อม",
+          "แจ้งซ่อม (" + (ticket.priority || "medium") + ")",
+          ticket.status || "open"
+        ]);
+      }
+    }
+
     return { success: true, ticket: ticket, message: "บันทึกแจ้งซ่อมสำเร็จ" };
   } catch (e) {
     return { success: false, message: e.toString() };
@@ -462,16 +492,33 @@ function apiAddMaintenance(ticket) {
 function apiResolveMaintenance(ticketId) {
   try {
     const ss = getDb();
+    let resolved = false;
     const sheet = ss.getSheetByName(SHEET_MAINTENANCE);
-    const data = sheet.getDataRange().getValues();
-
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == ticketId) {
-        sheet.getRange(i + 1, 9).setValue("completed");
-        return { success: true, message: "อัปเดตสถานะการซ่อมสำเร็จ" };
+    if (sheet) {
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] == ticketId) {
+          sheet.getRange(i + 1, 9).setValue("completed");
+          resolved = true;
+          break;
+        }
       }
     }
-    return { success: false, message: "ไม่พบรหัสแจ้งซ่อม: " + ticketId };
+
+    // Also resolve in Bookings sheet if dual-synced
+    const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
+    if (bkSheet) {
+      const bkData = bkSheet.getDataRange().getValues();
+      for (let j = 1; j < bkData.length; j++) {
+        if (bkData[j][0] == ticketId) {
+          bkSheet.getRange(j + 1, 9).setValue("completed");
+          resolved = true;
+          break;
+        }
+      }
+    }
+
+    return { success: true, resolved: resolved, message: "อัปเดตสถานะการซ่อมสำเร็จ" };
   } catch (e) {
     return { success: false, message: e.toString() };
   }

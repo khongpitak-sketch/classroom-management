@@ -4497,14 +4497,26 @@ if (syncChannel) {
                     saveData();
                     updateAdminMaintenanceBadge();
                     renderCurrentTab();
+                    if (!AppState.isAdmin) {
+                        showToast(`🔧 รายการแจ้งซ่อม ${rm.id} (${rm.roomName || ''}) ได้รับการซ่อมเสร็จสิ้นแล้ว!`, 'success', 6000);
+                    }
                 }
                 break;
             case 'ADD_MAINTENANCE':
-                if (data.ticket && !AppState.maintenance.some(m => m.id === data.ticket.id)) {
-                    AppState.maintenance.unshift(data.ticket);
+                if (data.ticket) {
+                    const exIdx = AppState.maintenance.findIndex(m => m.id === data.ticket.id);
+                    if (exIdx === -1) {
+                        AppState.maintenance.unshift(data.ticket);
+                    } else {
+                        AppState.maintenance[exIdx] = data.ticket;
+                    }
                     saveData();
                     updateAdminMaintenanceBadge();
                     renderCurrentTab();
+                    if (AppState.isAdmin) {
+                        playNotificationSound();
+                        showToast(`🔧 มีรายการแจ้งซ่อมใหม่เข้ามาทันที: <b>${data.ticket.roomName || ''}</b> (${data.ticket.title || ''}) โดย <b>${data.ticket.reporter || ''}</b>`, 'warning', 8000);
+                    }
                 }
                 break;
             case 'DELETE_ROOM':
@@ -6231,21 +6243,23 @@ async function fetchDataFromGoogleSheets(silent = false) {
                 const cleanCloudBk = json.data.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003');
                 mapAndApplyCloudBookings(cleanCloudBk);
             }
-            if (json.data.maintenance && Array.isArray(json.data.maintenance)) {
+            if (json.data.maintenance && Array.isArray(json.data.maintenance) && json.data.maintenance.length > 0) {
                 const filteredCloudMnt = json.data.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
                 const incomingMnt = filteredCloudMnt.map(m => {
-                    let repDate = m.reportedDate || m.reporteddate || m.date || '';
-                    if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
+                    const repDate = parseGasDate(m.reportedDate || m.reporteddate || m.date || '');
+                    const rId = String(m.roomId || m.roomid || '');
+                    const rObj = AppState.rooms.find(r => r.id === rId);
+                    const rName = String(m.roomName || m.roomname || (rObj ? rObj.name : rId));
                     return {
-                        id: m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900)),
-                        roomId: m.roomId || m.roomid || '',
-                        roomName: m.roomName || m.roomname || '',
+                        id: String(m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900))),
+                        roomId: rId,
+                        roomName: rName,
                         reportedDate: repDate || new Date().toISOString().slice(0, 10),
-                        title: m.title || m.item || 'แจ้งปัญหาอุปกรณ์',
-                        details: m.details || m.description || '',
-                        reporter: m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน',
-                        status: (m.status || 'open').toLowerCase(),
-                        priority: (m.priority || 'medium').toLowerCase()
+                        title: String(m.title || m.item || 'แจ้งปัญหาอุปกรณ์'),
+                        details: String(m.details || m.description || ''),
+                        reporter: String(m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน'),
+                        status: String(m.status || 'open').toLowerCase(),
+                        priority: String(m.priority || 'medium').toLowerCase()
                     };
                 });
 
@@ -6257,19 +6271,32 @@ async function fetchDataFromGoogleSheets(silent = false) {
                     }
                 });
 
-                // ซิงก์ลบข้อมูลตามคลาวด์แบบ Authoritative: ข้อมูลที่ Admin ลบบนคลาวด์จะถูกลบออกจากฝั่งผู้ใช้ทันที
-                AppState.maintenance = incomingMnt;
-
-                // Sync room status
-                AppState.rooms.forEach(r => {
-                    if (r.status === 'maintenance') {
-                        const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
-                        if (!hasOpen) {
-                            r.status = 'available';
-                        }
-                    }
-                });
+                // ผสานข้อมูลเข้ากับ AppState.maintenance โดยไม่ลบรายการที่ซิงก์จาก Bookings sheet
+                const mntMap = new Map();
+                AppState.maintenance.forEach(m => mntMap.set(m.id, m));
+                incomingMnt.forEach(m => mntMap.set(m.id, m));
+                AppState.maintenance = Array.from(mntMap.values());
             }
+
+            // จัดเรียงรายการแจ้งซ่อม: รายการที่ยังไม่เสร็จ (open, in_progress) อยู่บนสุดเสมอ ตามด้วยวันที่ล่าสุด
+            AppState.maintenance.sort((a, b) => {
+                const aOpen = (a.status === 'open' || a.status === 'in_progress');
+                const bOpen = (b.status === 'open' || b.status === 'in_progress');
+                if (aOpen && !bOpen) return -1;
+                if (!aOpen && bOpen) return 1;
+                return (b.reportedDate || '').localeCompare(a.reportedDate || '');
+            });
+
+            // Sync room status
+            AppState.rooms.forEach(r => {
+                if (r.status === 'maintenance') {
+                    const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
+                    if (!hasOpen) {
+                        r.status = 'available';
+                    }
+                }
+            });
+            updateAdminMaintenanceBadge();
 
             AppState.isGoogleConnected = true;
             saveData();
@@ -7336,17 +7363,19 @@ function mapAndApplyCloudBookings(rawBookings) {
 
     if (mntRows.length > 0) {
         const extractedMnt = mntRows.filter(b => String(b.status || '').toLowerCase() !== 'cancelled').map(b => {
-            let repDate = b.date || '';
-            if (repDate && repDate.includes('T')) repDate = repDate.split('T')[0];
+            const repDate = parseGasDate(b.date);
             const rawSubj = String(b.subject || b.purpose || 'แจ้งปัญหาอุปกรณ์');
             const cleanTitle = rawSubj.replace(/^\[MNT\]\s*/, '');
             const rawStatus = String(b.status || 'open').toLowerCase();
             const mStatus = (rawStatus === 'approved' || rawStatus === 'completed') ? 'completed' : 'open';
             const mPriority = String(b.department || b.startTime || 'medium').toLowerCase().includes('high') ? 'high' : 'medium';
+            const roomId = String(b.roomId || b.roomid || '');
+            const roomObj = AppState.rooms.find(r => r.id === roomId);
+            const roomName = String(b.roomName || b.roomname || (roomObj ? roomObj.name : roomId));
             return {
                 id: String(b.id),
-                roomId: String(b.roomId || b.roomid || ''),
-                roomName: String(b.roomName || b.roomname || ''),
+                roomId: roomId,
+                roomName: roomName,
                 reportedDate: repDate || new Date().toISOString().slice(0, 10),
                 title: cleanTitle,
                 details: String(b.purpose || ''),
@@ -7361,6 +7390,16 @@ function mapAndApplyCloudBookings(rawBookings) {
         AppState.maintenance.forEach(m => mntMap.set(m.id, m));
         extractedMnt.forEach(m => mntMap.set(m.id, m));
         AppState.maintenance = Array.from(mntMap.values());
+
+        // จัดเรียงรายการแจ้งซ่อม: รายการที่ยังไม่เสร็จ (open, in_progress) อยู่บนสุดเสมอ ตามด้วยวันที่ล่าสุด
+        AppState.maintenance.sort((a, b) => {
+            const aOpen = (a.status === 'open' || a.status === 'in_progress');
+            const bOpen = (b.status === 'open' || b.status === 'in_progress');
+            if (aOpen && !bOpen) return -1;
+            if (!aOpen && bOpen) return 1;
+            return (b.reportedDate || '').localeCompare(a.reportedDate || '');
+        });
+
         updateAdminMaintenanceBadge();
         // Check if any rooms were in maintenance but all tickets are now completed
         AppState.rooms.forEach(r => {
@@ -7372,7 +7411,15 @@ function mapAndApplyCloudBookings(rawBookings) {
             }
         });
         saveData();
-        renderCurrentTab();
+        if (AppState.currentTab === 'maintenance' || AppState.currentTab === 'dashboard') {
+            renderCurrentTab();
+        }
+
+        const newOpenMnt = AppState.maintenance.filter(m => m.status === 'open' || m.status === 'in_progress').length;
+        if (AppState.isAdmin && newOpenMnt > prevOpenMnt) {
+            playNotificationSound();
+            showToast(`🔧 มีรายการแจ้งซ่อมใหม่เข้ามา! (${newOpenMnt} รายการรอดำเนินการ) กรุณาตรวจสอบ`, 'warning', 8000);
+        }
     }
 
     // 2. Pure classroom bookings (excluding MNT records and empty items)
