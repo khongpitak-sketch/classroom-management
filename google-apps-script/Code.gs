@@ -809,9 +809,13 @@ function getSheetObjects(sheet) {
     const obj = {};
     for (let j = 0; j < headers.length; j++) {
       let val = row[j];
-      // Format Date values if needed
+      // Format Date / Time values if needed
       if (val instanceof Date) {
-        val = Utilities.formatDate(val, "GMT+7", "yyyy-MM-dd");
+        if (val.getFullYear() <= 1900) {
+          val = Utilities.formatDate(val, "GMT+7", "HH:mm");
+        } else {
+          val = Utilities.formatDate(val, "GMT+7", "yyyy-MM-dd");
+        }
       }
       obj[headers[j]] = val;
     }

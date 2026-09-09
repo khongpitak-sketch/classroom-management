@@ -1,6 +1,70 @@
 // ----------------------------------------------------
 // REAL-TIME INTER-TAB & MULTI-DEVICE SYNC ENGINE
 // ----------------------------------------------------
+function playNotificationSound() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const audioCtx = new AudioContext();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+    } catch(e) {}
+}
+
+/**
+ * แปลงเวลาจาก Google Sheets (ซึ่งอาจอยู่ในรูป 1899-12-30T... หรือ HH:mm) เป็น HH:mm ที่ถูกต้อง
+ */
+function parseGasTime(timeVal) {
+    if (!timeVal) return '';
+    const str = String(timeVal).trim();
+    if (!str.includes('T')) return str;
+    try {
+        const d = new Date(str);
+        if (d.getUTCFullYear() <= 1900) {
+            const utcSeconds = d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds();
+            let bkkSeconds = (utcSeconds + 24124) % 86400;
+            let totalMins = Math.round(bkkSeconds / 60);
+            const rem = totalMins % 5;
+            if (rem === 1 || rem === 2) totalMins -= rem;
+            else if (rem === 3 || rem === 4) totalMins += (5 - rem);
+            const hh = ('0' + Math.floor(totalMins / 60)).slice(-2);
+            const mm = ('0' + (totalMins % 60)).slice(-2);
+            return `${hh}:${mm}`;
+        }
+        return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    } catch(e) {
+        return str;
+    }
+}
+
+/**
+ * แปลงวันที่จาก Google Sheets (ซึ่งอาจอยู่ในรูป ISO UTC) เป็น YYYY-MM-DD ท้องถิ่นโดยไม่ถอยหลัง 1 วัน
+ */
+function parseGasDate(dateVal) {
+    if (!dateVal) return '';
+    const str = String(dateVal).trim();
+    if (!str.includes('T')) return str.slice(0, 10);
+    try {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            const year = d.getFullYear();
+            const month = ('0' + (d.getMonth() + 1)).slice(-2);
+            const day = ('0' + d.getDate()).slice(-2);
+            return `${year}-${month}-${day}`;
+        }
+    } catch(e) {}
+    return str.split('T')[0];
+}
+
 const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('CMS_REALTIME_SYNC') : null;
 
 function broadcastDataChange(type, data = {}) {
@@ -42,11 +106,20 @@ if (syncChannel) {
                 }
                 break;
             case 'ADD_BOOKING':
-                if (data.booking && !AppState.bookings.some(b => b.id === data.booking.id)) {
-                    AppState.bookings.unshift(data.booking);
+                if (data.booking) {
+                    const existingIdx = AppState.bookings.findIndex(b => b.id === data.booking.id);
+                    if (existingIdx === -1) {
+                        AppState.bookings.unshift(data.booking);
+                    } else {
+                        AppState.bookings[existingIdx] = data.booking;
+                    }
                     saveData();
                     updateAdminPendingBadge();
                     renderCurrentTab();
+                    if (AppState.isAdmin) {
+                        playNotificationSound();
+                        showToast(`🔔 มีคำขอจองห้องใหม่เข้ามาทันที: <b>${data.booking.roomName || ''}</b> โดย <b>${data.booking.bookerName || ''}</b>`, 'warning', 7500);
+                    }
                 }
                 break;
             case 'DELETE_MAINTENANCE':
@@ -168,12 +241,23 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateClock();
     setInterval(updateClock, 1000);
-    // Background real-time auto-sync with Google Sheets every 15 seconds
+    // Background real-time auto-sync with Google Sheets every 5 seconds
     setInterval(() => {
         if (AppState.googleScriptUrl) {
             fetchDataFromGoogleSheets(true);
         }
-    }, 15000);
+    }, 5000);
+
+    // Instant sync when tab gains focus or user returns to tab
+    window.addEventListener('focus', () => {
+        if (AppState.googleScriptUrl) fetchDataFromGoogleSheets(true);
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && AppState.googleScriptUrl) {
+            fetchDataFromGoogleSheets(true);
+        }
+    });
+
     renderCurrentTab();
 
     // Auto-sync with Google Apps Script if configured
@@ -240,7 +324,15 @@ function loadData() {
 
         // ล้างข้อมูล mock / รายการจำลองเก่าที่อาจค้างอยู่ใน LocalStorage
         if (Array.isArray(AppState.bookings)) {
-            AppState.bookings = AppState.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003');
+            AppState.bookings = AppState.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003' && b.status !== 'cancelled');
+            AppState.bookings.sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+                return (b.date || '').localeCompare(a.date || '');
+            });
         }
         if (Array.isArray(AppState.maintenance)) {
             AppState.maintenance = AppState.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
@@ -1088,10 +1180,27 @@ function renderBookings() {
         }
     }
 
-    let displayedBookings = AppState.bookings;
-    if (AppState.bookingFilterStatus && AppState.bookingFilterStatus !== 'all') {
-        displayedBookings = displayedBookings.filter(b => b.status === AppState.bookingFilterStatus);
+    let displayedBookings = (AppState.bookings || []).filter(b => b.id && b.date && b.startTime);
+    if (AppState.bookingFilterStatus === 'approved') {
+        displayedBookings = displayedBookings.filter(b => b.status === 'approved');
+    } else if (AppState.bookingFilterStatus === 'pending') {
+        displayedBookings = displayedBookings.filter(b => b.status === 'pending');
+    } else if (AppState.bookingFilterStatus === 'cancelled') {
+        displayedBookings = displayedBookings.filter(b => b.status === 'cancelled');
+    } else {
+        // ค่าเริ่มต้น 'all' จะแสดงรายการที่ใช้งานอยู่ (รออนุมัติ + อนุมัติแล้ว) โดยนำรายการรออนุมัติไว้บนสุดเสมอ
+        displayedBookings = displayedBookings.filter(b => b.status !== 'cancelled');
     }
+
+    // จัดเรียงข้อมูล: ปักหมุดคำขอรออนุมัติ (pending) ไว้ด้านบนสุดเสมอ ตามด้วยรายการจองล่าสุด
+    displayedBookings.sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+        return (b.date || '').localeCompare(a.date || '');
+    });
 
     if (displayedBookings.length === 0) {
         listContainer.innerHTML = `
@@ -2895,27 +3004,18 @@ function mapAndApplyCloudBookings(rawBookings) {
         renderCurrentTab();
     }
 
-    // 2. Pure classroom bookings (excluding MNT records)
+    // 2. Pure classroom bookings (excluding MNT records and empty items)
     const pureBookings = rawBookings.filter(b => {
         const strId = String(b.id || '');
         const strSubj = String(b.subject || b.purpose || '');
-        return !strId.startsWith('MNT-') && !strSubj.startsWith('[MNT]');
+        const hasInfo = Boolean(b.roomId || b.roomid || b.date || b.subject || b.purpose || b.reservedBy || b.reservedby);
+        return !strId.startsWith('MNT-') && !strSubj.startsWith('[MNT]') && hasInfo;
     });
 
-    AppState.bookings = pureBookings.map(b => {
-        let dateStr = b.date || '';
-        if (dateStr && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
-        
-        let sTime = b.startTime || b.starttime || '';
-        if (sTime && sTime.includes('T')) {
-            const d = new Date(sTime);
-            sTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-        }
-        let eTime = b.endTime || b.endtime || '';
-        if (eTime && eTime.includes('T')) {
-            const d = new Date(eTime);
-            eTime = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-        }
+    const parsedBookings = pureBookings.map(b => {
+        const dateStr = parseGasDate(b.date);
+        const sTime = parseGasTime(b.startTime || b.starttime || '');
+        const eTime = parseGasTime(b.endTime || b.endtime || '');
 
         const bName = (b.bookerName || b.bookername || b.reservedBy || b.reservedby || '').trim();
         const bSubject = (b.subject || b.purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ').trim();
@@ -2924,10 +3024,14 @@ function mapAndApplyCloudBookings(rawBookings) {
         const bPhone = (b.phone ? String(b.phone) : '').trim();
         const bStatus = (b.status || 'pending').toLowerCase().trim();
 
+        const roomId = String(b.roomId || b.roomid || '');
+        const roomObj = AppState.rooms.find(r => r.id === roomId);
+        const roomName = String(b.roomName || b.roomname || (roomObj ? roomObj.name : roomId));
+
         return {
             id: String(b.id || b.ID || ('BK-' + Math.floor(1000 + Math.random() * 9000))),
-            roomId: String(b.roomId || b.roomid || ''),
-            roomName: String(b.roomName || b.roomname || ''),
+            roomId: roomId,
+            roomName: roomName,
             date: dateStr,
             startTime: sTime,
             endTime: eTime,
@@ -2943,6 +3047,18 @@ function mapAndApplyCloudBookings(rawBookings) {
         };
     });
 
+    // ปักหมุดรายการรออนุมัติ (pending) ไว้บนสุดเสมอ ตามด้วยรายการจองล่าสุด (newest first)
+    parsedBookings.sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+        return (b.date || '').localeCompare(a.date || '');
+    });
+
+    AppState.bookings = parsedBookings;
+
     saveData();
     updateAdminPendingBadge();
     if (AppState.currentTab === 'bookings' || AppState.currentTab === 'dashboard') {
@@ -2951,7 +3067,8 @@ function mapAndApplyCloudBookings(rawBookings) {
 
     const newPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
     if (AppState.isAdmin && newPendingCount > prevPendingCount) {
-        showToast(`🔔 มีคำขอจองห้องเรียนใหม่เข้ามา (${newPendingCount} รายการรออนุมัติ)`, 'info');
+        playNotificationSound();
+        showToast(`🔔 มีคำขอจองห้องเรียนใหม่เข้ามา! (${newPendingCount} รายการรออนุมัติ) กรุณาตรวจสอบและอนุมัติ`, 'warning', 8000);
     }
 }
 
