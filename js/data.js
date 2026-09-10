@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v25_realtime_cross_sync_thai_date";
+const DATA_VERSION = "v26_maintenance_equipment_categories";
 
 const DEFAULT_ROOMS = [
     {
@@ -2889,4 +2889,57 @@ const DEFAULT_TIMETABLE = [
 
 const DEFAULT_BOOKINGS = [];
 
-const DEFAULT_MAINTENANCE = [];
+const DEFAULT_MAINTENANCE = [
+    {
+        id: "MNT-201",
+        roomId: "LAB-1",
+        roomName: "FMS201 - ห้องปฏิบัติการคอมพิวเตอร์ 1",
+        reportedDate: "2026-09-10",
+        category: "computer",
+        categoryName: "เครื่องคอมพิวเตอร์ / PC",
+        title: "เครื่องคอมพิวเตอร์เปิดไม่ติด (เครื่อง PC-12)",
+        details: "กดปุ่ม Power แล้วไฟไม่เข้า พัดลมเคสไม่หมุน ตรวจสอบปลั๊กไฟแล้วปกติ",
+        reporter: "อาจารย์ผู้สอนแล็บ",
+        priority: "high",
+        status: "open"
+    },
+    {
+        id: "MNT-302",
+        roomId: "R-302",
+        roomName: "FMS302 - ห้องทฤษฎี",
+        reportedDate: "2026-09-09",
+        category: "projector",
+        categoryName: "เครื่องโปรเจกเตอร์",
+        title: "จอโปรเจกเตอร์ภาพกระพริบและสีเพี้ยนออกโทนชมพู",
+        details: "เปิดใช้งานไประยะหนึ่งแล้วภาพกระพริบเป็นระยะ หลอดภาพเริ่มมีปัญหา",
+        reporter: "เจ้าหน้าที่ประจำอาคาร",
+        priority: "medium",
+        status: "open"
+    },
+    {
+        id: "MNT-401",
+        roomId: "R-401",
+        roomName: "FMS401 - ห้องทฤษฎี",
+        reportedDate: "2026-09-08",
+        category: "air",
+        categoryName: "เครื่องปรับอากาศ",
+        title: "เครื่องปรับอากาศไม่เย็น มีลมร้อนออกมา",
+        details: "เปิดแอร์เบอร์ 24 แล้วอุณหภูมิห้องยังร้อน คอมเพรสเซอร์ด้านนอกไม่ทำงาน",
+        reporter: "อาจารย์ ดร.สรัญณี",
+        priority: "medium",
+        status: "open"
+    },
+    {
+        id: "MNT-308",
+        roomId: "R-308",
+        roomName: "FMS308 - ห้องทฤษฎี",
+        reportedDate: "2026-09-07",
+        category: "audio",
+        categoryName: "ระบบเสียงและไมค์",
+        title: "ไมโครโฟนไร้สายสัญญาณขาดหายและมีเสียงหวีดหอน",
+        details: "เปลี่ยนถ่านไมค์แล้วยังมีเสียงหวีดหอนออกจากลำโพงด้านหลังห้อง",
+        reporter: "เจ้าหน้าที่โสตทัศนูปกรณ์",
+        priority: "low",
+        status: "open"
+    }
+];

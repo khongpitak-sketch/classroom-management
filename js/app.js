@@ -1453,18 +1453,115 @@ function cancelBooking(bookingId) {
 }
 
 // ----------------------------------------------------
-// 5. MAINTENANCE SYSTEM
+// 5. MAINTENANCE SYSTEM & EQUIPMENT CATEGORIES
 // ----------------------------------------------------
+const MAINTENANCE_CATEGORIES = {
+    projector: { name: 'เครื่องโปรเจกเตอร์', icon: 'projector', emoji: '📽️', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+    air: { name: 'เครื่องปรับอากาศ', icon: 'wind', emoji: '❄️', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },
+    computer: { name: 'เครื่องคอมพิวเตอร์ / PC', icon: 'monitor', emoji: '🖥️', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    peripheral: { name: 'เมาส์ / คีย์บอร์ด', icon: 'mouse', emoji: '🖱️', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+    audio: { name: 'ระบบเสียงและไมค์', icon: 'volume-2', emoji: '🔊', badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' },
+    network: { name: 'เน็ต / LAN / Wi-Fi', icon: 'wifi', emoji: '🌐', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
+    electricity: { name: 'ปลั๊กไฟ / ไฟฟ้า', icon: 'zap', emoji: '🔌', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
+    furniture: { name: 'โต๊ะ / เก้าอี้', icon: 'armchair', emoji: '🪑', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    other: { name: 'ปัญหาอื่นๆ', icon: 'wrench', emoji: '❓', badgeClass: 'bg-slate-100 text-slate-600 border-slate-200' }
+};
+
+const COMMON_ISSUES_BY_CATEGORY = {
+    projector: ['โปรเจกเตอร์เปิดไม่ติด', 'หลอดภาพกระพริบ / สีเพี้ยน', 'ภาพเบลอ / ปรับโฟกัสไม่ได้', 'รีโมตโปรเจกเตอร์เสีย', 'สาย HDMI / VGA ชำรุด'],
+    air: ['เครื่องปรับอากาศไม่เย็น / มีแต่ลมร้อน', 'แอร์มีน้ำหยด / รั่วซึม', 'แอร์มีเสียงดังผิดปกติ', 'รีโมตแอร์เสีย / ปรับอุณหภูมิไม่ได้', 'แอร์มีกลิ่นอับ'],
+    computer: ['เครื่องคอมพิวเตอร์เปิดไม่ติด', 'จอฟ้า / Windows ค้างบ่อย', 'หน้าจอไม่แสดงผล / จอดำ', 'พัดลมเคสดังผิดปกติ', 'เครื่องบูตช้า / ติดไวรัส'],
+    peripheral: ['เมาส์คลิกไม่ติด / เคอร์เซอร์ไม่ขยับ', 'คีย์บอร์ดพิมพ์ไม่ติด / ปุ่มหลุด', 'สายเชื่อมต่อขาดหรือหลวม', 'เมาส์ไม่มีแสง'],
+    audio: ['ไมโครโฟนไม่มีเสียง / สัญญาณหลุด', 'ลำโพงเสียงแตก / มีเสียงหวีดหอน', 'แอมป์เปิดไม่ติด / ปรับเสียงไม่ได้', 'ไมค์ลอยถ่านหมดเร็ว'],
+    network: ['สัญญาณ Wi-Fi หลุดบ่อย / ต่อไม่ติด', 'สาย LAN ชำรุด / ไม่มีสัญญาณเน็ต', 'ความเร็วเน็ตช้ามากผิดปกติ'],
+    electricity: ['ปลั๊กไฟที่โต๊ะไม่มีไฟ', 'เต้ารับหลวม / เกิดประกายไฟ', 'สวิตช์ไฟ / หลอดไฟห้องเรียนกะพริบ'],
+    furniture: ['เก้าอี้ชำรุด / พนักพิงหัก', 'โต๊ะเรียนชำรุด / โยกคลอน', 'ประตู / หน้าต่าง / มู่ลี่ชำรุด'],
+    other: ['อุปกรณ์ชำรุด กรุณาตรวจสอบ']
+};
+
+function detectMaintenanceCategory(ticket) {
+    if (!ticket) return 'other';
+    if (ticket.category && MAINTENANCE_CATEGORIES[ticket.category]) {
+        return ticket.category;
+    }
+    const text = `${ticket.title || ''} ${ticket.details || ''} ${ticket.subject || ''} ${ticket.categoryName || ''} ${ticket.item || ''}`.toLowerCase();
+    if (text.includes('โปรเจก') || text.includes('projector')) return 'projector';
+    if (text.includes('แอร์') || text.includes('ปรับอากาศ') || text.includes('ไม่เย็น') || text.includes('น้ำหยด')) return 'air';
+    if (text.includes('คอม') || text.includes('pc') || text.includes('วินโด') || text.includes('windows') || text.includes('จอฟ้า') || text.includes('เคส')) return 'computer';
+    if (text.includes('เมาส์') || text.includes('mouse') || text.includes('คีย์บอร์ด') || text.includes('keyboard')) return 'peripheral';
+    if (text.includes('เสียง') || text.includes('ไมค์') || text.includes('ลำโพง') || text.includes('audio') || text.includes('หวีด')) return 'audio';
+    if (text.includes('เน็ต') || text.includes('wifi') || text.includes('wi-fi') || text.includes('lan') || text.includes('เครือข่าย')) return 'network';
+    if (text.includes('ไฟ') || text.includes('ปลั๊ก') || text.includes('เต้ารับ') || text.includes('ช็อต')) return 'electricity';
+    if (text.includes('โต๊ะ') || text.includes('เก้าอี้') || text.includes('พนักพิง') || text.includes('บานพับ')) return 'furniture';
+    return 'other';
+}
+
+function selectMaintenanceCategory(catKey) {
+    const input = document.getElementById('maintenance-category-input');
+    if (input) input.value = catKey;
+
+    // Update buttons style
+    document.querySelectorAll('.mnt-cat-btn').forEach(btn => {
+        if (btn.getAttribute('data-cat') === catKey) {
+            btn.className = 'mnt-cat-btn p-2 rounded-xl border border-rose-400 bg-rose-50/80 text-rose-900 text-left transition flex flex-col items-center justify-center text-center shadow-xs';
+        } else {
+            btn.className = 'mnt-cat-btn p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-left transition flex flex-col items-center justify-center text-center';
+        }
+    });
+
+    // Populate common issue preset chips
+    const chipsContainer = document.getElementById('maintenance-preset-chips');
+    if (chipsContainer) {
+        const issues = COMMON_ISSUES_BY_CATEGORY[catKey] || COMMON_ISSUES_BY_CATEGORY.other;
+        chipsContainer.innerHTML = issues.map(issue => `
+            <button type="button" onclick="applyMaintenanceIssuePreset('${issue.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-white hover:bg-rose-500 hover:text-white text-slate-700 border border-rose-200/80 shadow-2xs transition flex items-center gap-1">
+                <span>+</span> <span>${issue}</span>
+            </button>
+        `).join('');
+    }
+}
+
+function applyMaintenanceIssuePreset(issueText) {
+    const titleInput = document.getElementById('maintenance-title-input');
+    if (titleInput) {
+        titleInput.value = issueText;
+        titleInput.focus();
+    }
+}
+
+function filterMaintenanceByCategory(catKey) {
+    AppState.maintenanceCategoryFilter = catKey;
+    document.querySelectorAll('.mnt-filter-btn').forEach(btn => {
+        const isCurrent = btn.id === `mnt-filter-${catKey}`;
+        if (isCurrent) {
+            btn.className = 'mnt-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-xs transition';
+        } else {
+            btn.className = 'mnt-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200';
+        }
+    });
+    renderMaintenance();
+}
+
 function renderMaintenance() {
     const tableBody = document.getElementById('maintenance-table-body');
     if (!tableBody) return;
 
-    if (AppState.maintenance.length === 0) {
+    // Filter by selected category if not 'all'
+    const filterCat = AppState.maintenanceCategoryFilter || 'all';
+    const list = filterCat === 'all' 
+        ? AppState.maintenance 
+        : AppState.maintenance.filter(m => detectMaintenanceCategory(m) === filterCat);
+
+    if (list.length === 0) {
+        const catInfo = MAINTENANCE_CATEGORIES[filterCat];
+        const msg = filterCat === 'all' 
+            ? 'ไม่มีรายการแจ้งซ่อม ทุกห้องอยู่ในสภาพพร้อมใช้งาน 100%' 
+            : `ไม่มีรายการแจ้งซ่อมสำหรับหมวดหมู่ "${catInfo ? catInfo.name : filterCat}"`;
         tableBody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-10 text-slate-400">
                     <i data-lucide="check-check" class="w-12 h-12 mx-auto mb-2 opacity-50 text-emerald-500"></i>
-                    ไม่มีรายการแจ้งซ่อม ทุกห้องอยู่ในสภาพพร้อมใช้งาน 100%
+                    <div>${msg}</div>
                 </td>
             </tr>
         `;
@@ -1472,13 +1569,22 @@ function renderMaintenance() {
         return;
     }
 
-    tableBody.innerHTML = AppState.maintenance.map(m => `
+    tableBody.innerHTML = list.map(m => {
+        const catKey = detectMaintenanceCategory(m);
+        const catInfo = MAINTENANCE_CATEGORIES[catKey] || MAINTENANCE_CATEGORIES.other;
+        return `
         <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs transition">
             <td class="p-3 font-semibold text-slate-500">${m.id}</td>
             <td class="p-3 font-bold text-slate-800">${m.roomName}</td>
             <td class="p-3">
-                <div class="font-bold text-slate-800">${m.title}</div>
-                <div class="text-slate-500 text-[11px]">${m.details || '-'}</div>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-bold border ${catInfo.badgeClass}">
+                        <span>${catInfo.emoji}</span>
+                        <span>${catInfo.name}</span>
+                    </span>
+                </div>
+                <div class="font-bold text-slate-800 text-xs">${m.title}</div>
+                <div class="text-slate-500 text-[11px] mt-0.5">${m.details || '-'}</div>
             </td>
             <td class="p-3 text-slate-600">
                 <div class="font-medium text-slate-800">${m.reporter}</div>
@@ -1516,7 +1622,7 @@ function renderMaintenance() {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
     lucide.createIcons();
 }
 
@@ -1552,6 +1658,8 @@ function handleMaintenanceSubmit(event) {
     const form = event.target;
 
     const roomId = form.roomId.value;
+    const category = (form.category && form.category.value) ? form.category.value : 'other';
+    const catInfo = MAINTENANCE_CATEGORIES[category] || MAINTENANCE_CATEGORIES.other;
     const title = form.title.value.trim();
     const details = form.details.value.trim();
     const priority = form.priority.value;
@@ -1565,6 +1673,8 @@ function handleMaintenanceSubmit(event) {
         roomId: roomId,
         roomName: room ? room.name : roomId,
         reportedDate: new Date().toISOString().slice(0, 10),
+        category: category,
+        categoryName: catInfo.name,
         title: title,
         details: details,
         reporter: reporter,
@@ -1587,7 +1697,7 @@ function handleMaintenanceSubmit(event) {
     broadcastDataChange('ADD_MAINTENANCE', { ticket: newTicket });
     
     // Instant on-screen confirmation for user (no blocking alert/OK button)
-    showToast(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">รหัสแจ้งซ่อม: <b>${newTicket.id}</b> • ห้อง: <b>${room ? room.name : roomId}</b><br>ปัญหา: <b>${title}</b> • สถานะ: 🔴 รอดำเนินการ (ส่งข้อมูลถึง Admin ทันทีแล้ว)</span>`, 'success', 5500);
+    showToast(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">หมวดหมู่: <b>${catInfo.emoji} ${catInfo.name}</b> • รหัส: <b>${newTicket.id}</b><br>ห้อง: <b>${room ? room.name : roomId}</b> • ปัญหา: <b>${title}</b><br>สถานะ: 🔴 รอดำเนินการ (ส่งข้อมูลถึง Admin ทันทีแล้ว)</span>`, 'success', 5500);
 
     // Sync to Google Sheets
     sendActionToGoogleBackend('addMaintenance', { ticket: newTicket });
@@ -1757,6 +1867,7 @@ function sendActionToGoogleBackend(action, payload) {
         // Dual-channel fallback for maintenance: ensure ticket is stored in Bookings sheet if backend lacks maintenance sheet
         if (action === 'addMaintenance' && payload.ticket) {
             const tk = payload.ticket;
+            const catInfo = (typeof MAINTENANCE_CATEGORIES !== 'undefined' && MAINTENANCE_CATEGORIES[tk.category]) ? MAINTENANCE_CATEGORIES[tk.category] : { name: 'ทั่วไป' };
             const mntBooking = {
                 id: tk.id,
                 roomId: tk.roomId,
@@ -1764,11 +1875,11 @@ function sendActionToGoogleBackend(action, payload) {
                 date: tk.reportedDate,
                 startTime: tk.priority || 'medium',
                 endTime: tk.status || 'open',
-                subject: `[MNT] ${tk.title}`,
+                subject: `[MNT:${catInfo.name}] ${tk.title}`,
                 purpose: tk.details || tk.title,
                 bookerName: tk.reporter || 'ผู้แจ้งซ่อม',
                 reservedBy: tk.reporter || 'ผู้แจ้งซ่อม',
-                department: `แจ้งซ่อม (${tk.priority || 'medium'})`,
+                department: `แจ้งซ่อม (${catInfo.name} - ${tk.priority || 'medium'})`,
                 phone: '',
                 status: tk.status || 'open'
             };
@@ -2177,7 +2288,14 @@ function openMaintenanceModalForRoom(roomId) {
         populateRoomOptions(roomSelect);
         if (roomId) roomSelect.value = roomId;
     }
+    selectMaintenanceCategory('projector');
+    const titleInput = document.getElementById('maintenance-title-input');
+    if (titleInput) titleInput.value = '';
+    const detailsInput = document.querySelector('#modal-maintenance textarea[name="details"]');
+    if (detailsInput) detailsInput.value = '';
+
     openModal('modal-maintenance');
+    lucide.createIcons();
 }
 
 function populateRoomOptions(selectElem, includeAll = false) {
@@ -2964,18 +3082,24 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
     }).map(b => {
         const repDate = parseGasDate(b.date);
         const rawSubj = String(b.subject || b.purpose || 'แจ้งปัญหาอุปกรณ์');
-        const cleanTitle = rawSubj.replace(/^\[MNT\]\s*/, '');
+        const catMatch = rawSubj.match(/^\[MNT:?([^\]]*)\]/i);
+        const catName = catMatch && catMatch[1] ? catMatch[1].trim() : '';
+        const cleanTitle = rawSubj.replace(/^\[MNT[^\]]*\]\s*/, '');
         const rawStatus = String(b.status || 'open').toLowerCase().trim();
         const mStatus = (rawStatus === 'approved' || rawStatus === 'completed') ? 'completed' : 'open';
         const mPriority = String(b.department || b.startTime || 'medium').toLowerCase().includes('high') ? 'high' : 'medium';
         const roomId = String(b.roomId || b.roomid || '');
         const roomObj = AppState.rooms.find(r => r.id === roomId);
         const roomName = String(b.roomName || b.roomname || (roomObj ? roomObj.name : roomId));
+        const dummyTicket = { title: cleanTitle, details: String(b.purpose || ''), categoryName: catName };
+        const detectedCat = detectMaintenanceCategory(dummyTicket);
         return {
             id: String(b.id),
             roomId: roomId,
             roomName: roomName,
             reportedDate: repDate || new Date().toISOString().slice(0, 10),
+            category: detectedCat,
+            categoryName: (MAINTENANCE_CATEGORIES[detectedCat] || MAINTENANCE_CATEGORIES.other).name,
             title: cleanTitle,
             details: String(b.purpose || ''),
             reporter: String(b.bookerName || b.reservedBy || b.reservedby || 'ผู้ใช้งาน'),
@@ -2995,11 +3119,15 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
             const rId = String(m.roomId || m.roomid || '');
             const rObj = AppState.rooms.find(r => r.id === rId);
             const rName = String(m.roomName || m.roomname || (rObj ? rObj.name : rId));
+            const dummyTicket = { title: m.title || m.item || '', details: m.details || m.description || '', category: m.category || '', categoryName: m.categoryName || '' };
+            const detectedCat = detectMaintenanceCategory(dummyTicket);
             return {
                 id: String(m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900))),
                 roomId: rId,
                 roomName: rName,
                 reportedDate: repDate || new Date().toISOString().slice(0, 10),
+                category: detectedCat,
+                categoryName: (MAINTENANCE_CATEGORIES[detectedCat] || MAINTENANCE_CATEGORIES.other).name,
                 title: String(m.title || m.item || 'แจ้งปัญหาอุปกรณ์'),
                 details: String(m.details || m.description || ''),
                 reporter: String(m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน'),
@@ -3013,6 +3141,11 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
     const cloudMntMap = new Map();
     extractedFromBookings.forEach(m => cloudMntMap.set(m.id, m));
     extractedFromSheet.forEach(m => cloudMntMap.set(m.id, m));
+
+    // หากระบบไม่มีข้อมูลแจ้งซ่อมเลยทั้งบนคลาวด์และเครื่อง ให้เตรียมรายการมาตรฐานเริ่มต้นไว้พร้อมใช้งาน
+    if (cloudMntMap.size === 0 && AppState.maintenance.length === 0 && typeof DEFAULT_MAINTENANCE !== 'undefined' && DEFAULT_MAINTENANCE.length > 0) {
+        DEFAULT_MAINTENANCE.forEach(m => cloudMntMap.set(m.id, m));
+    }
 
     // แจ้งเตือนผู้ใช้หากมีรายการซ่อมที่ได้รับการยืนยันว่าซ่อมเสร็จแล้ว
     cloudMntMap.forEach(cloudTicket => {
