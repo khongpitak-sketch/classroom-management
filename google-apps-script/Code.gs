@@ -358,16 +358,17 @@ function apiCancelBooking(bookingId) {
   try {
     const ss = getDb();
     let deleted = false;
+    const cleanId = String(bookingId || '').trim().toLowerCase();
+    if (!cleanId) return { success: false, message: "No bookingId provided" };
 
-    // Delete from Bookings sheet
+    // Delete from Bookings sheet (loop backwards to handle duplicates & avoid index shifting)
     const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
     if (bkSheet) {
       const data = bkSheet.getDataRange().getValues();
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][0] == bookingId) {
+      for (let i = data.length - 1; i >= 1; i--) {
+        if (String(data[i][0]).trim().toLowerCase() === cleanId) {
           bkSheet.deleteRow(i + 1);
           deleted = true;
-          break;
         }
       }
     }
@@ -376,11 +377,10 @@ function apiCancelBooking(bookingId) {
     const mntSheet = ss.getSheetByName(SHEET_MAINTENANCE);
     if (mntSheet) {
       const mntData = mntSheet.getDataRange().getValues();
-      for (let j = 1; j < mntData.length; j++) {
-        if (mntData[j][0] == bookingId) {
+      for (let j = mntData.length - 1; j >= 1; j--) {
+        if (String(mntData[j][0]).trim().toLowerCase() === cleanId) {
           mntSheet.deleteRow(j + 1);
           deleted = true;
-          break;
         }
       }
     }
@@ -594,16 +594,17 @@ function apiDeleteMaintenance(ticketId) {
   try {
     const ss = getDb();
     let deleted = false;
+    const cleanId = String(ticketId || '').trim().toLowerCase();
+    if (!cleanId) return { success: false, message: "No ticketId provided" };
 
-    // Delete from Maintenance sheet
+    // Delete from Maintenance sheet (loop backwards to handle duplicates & avoid index shifting)
     const mntSheet = ss.getSheetByName(SHEET_MAINTENANCE);
     if (mntSheet) {
       const data = mntSheet.getDataRange().getValues();
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][0] == ticketId) {
+      for (let i = data.length - 1; i >= 1; i--) {
+        if (String(data[i][0]).trim().toLowerCase() === cleanId) {
           mntSheet.deleteRow(i + 1);
           deleted = true;
-          break;
         }
       }
     }
@@ -612,11 +613,10 @@ function apiDeleteMaintenance(ticketId) {
     const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
     if (bkSheet) {
       const bkData = bkSheet.getDataRange().getValues();
-      for (let j = 1; j < bkData.length; j++) {
-        if (bkData[j][0] == ticketId) {
+      for (let j = bkData.length - 1; j >= 1; j--) {
+        if (String(bkData[j][0]).trim().toLowerCase() === cleanId) {
           bkSheet.deleteRow(j + 1);
           deleted = true;
-          break;
         }
       }
     }
