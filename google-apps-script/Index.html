@@ -253,7 +253,7 @@ body {
                         <i data-lucide="wrench" class="w-4 h-4"></i> <span>แจ้งซ่อมอุปกรณ์</span>
                         <span class="maintenance-pending-badge ml-auto px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
                     </button>
-                    <button onclick="switchTab('reports')" data-tab="reports" class="nav-link px-3.5 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition flex items-center gap-2">
+                    <button onclick="switchTab('reports')" data-tab="reports" class="nav-link admin-only-nav hidden px-3.5 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition flex items-center gap-2">
                         <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> <span>รายงาน & สถิติ</span>
                     </button>
                     <button onclick="switchTab('settings')" data-tab="settings" class="nav-link admin-only-nav hidden px-3.5 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition flex items-center gap-2">
@@ -302,7 +302,7 @@ body {
                 <i data-lucide="wrench" class="w-4 h-4"></i> <span>แจ้งซ่อม</span>
                 <span class="maintenance-pending-badge absolute top-1 right-2 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] font-extrabold hidden">0</span>
             </button>
-            <button onclick="switchTab('reports')" data-tab="reports" class="mobile-nav-link relative p-2 text-slate-400 flex flex-col items-center gap-1">
+            <button onclick="switchTab('reports')" data-tab="reports" class="mobile-nav-link admin-only-nav hidden relative p-2 text-slate-400 flex flex-col items-center gap-1">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> <span>รายงาน</span>
             </button>
         </div>
@@ -5395,8 +5395,8 @@ function resetData() {
 
 // Navigation & Tab Switching
 function switchTab(tabId) {
-    if (tabId === 'settings' && !AppState.isAdmin) {
-        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึง', 'warning');
+    if ((tabId === 'settings' || tabId === 'reports') && !AppState.isAdmin) {
+        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึงระบบรายงานผู้บริหาร', 'warning');
         switchTab('dashboard');
         return;
     }
@@ -7962,7 +7962,7 @@ function logoutAdmin() {
     AppState.isAdmin = false;
     sessionStorage.removeItem('CMS_IS_ADMIN');
     updateAdminHeaderUI();
-    if (AppState.currentTab === 'settings') {
+    if (AppState.currentTab === 'settings' || AppState.currentTab === 'reports') {
         switchTab('dashboard');
     } else {
         renderCurrentTab();
@@ -8825,6 +8825,11 @@ function getFilteredReportMaintenance(tf) {
 }
 
 function renderReportsView() {
+    if (!AppState.isAdmin) {
+        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึงระบบรายงาน', 'warning');
+        switchTab('dashboard');
+        return;
+    }
     const tf = AppState.reportTimeframe || 'all';
     const tfLabels = {
         'all': 'ข้อมูลสะสมทั้งหมด',

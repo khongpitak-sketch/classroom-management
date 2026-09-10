@@ -430,8 +430,8 @@ function resetData() {
 
 // Navigation & Tab Switching
 function switchTab(tabId) {
-    if (tabId === 'settings' && !AppState.isAdmin) {
-        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึง', 'warning');
+    if ((tabId === 'settings' || tabId === 'reports') && !AppState.isAdmin) {
+        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึงระบบรายงานผู้บริหาร', 'warning');
         switchTab('dashboard');
         return;
     }
@@ -2997,7 +2997,7 @@ function logoutAdmin() {
     AppState.isAdmin = false;
     sessionStorage.removeItem('CMS_IS_ADMIN');
     updateAdminHeaderUI();
-    if (AppState.currentTab === 'settings') {
+    if (AppState.currentTab === 'settings' || AppState.currentTab === 'reports') {
         switchTab('dashboard');
     } else {
         renderCurrentTab();
@@ -3860,6 +3860,11 @@ function getFilteredReportMaintenance(tf) {
 }
 
 function renderReportsView() {
+    if (!AppState.isAdmin) {
+        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึงระบบรายงาน', 'warning');
+        switchTab('dashboard');
+        return;
+    }
     const tf = AppState.reportTimeframe || 'all';
     const tfLabels = {
         'all': 'ข้อมูลสะสมทั้งหมด',
