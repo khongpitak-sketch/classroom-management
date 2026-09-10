@@ -257,6 +257,7 @@ const AppState = {
     buildingFilter: 'all',
     selectedRoomForSchedule: 'ALL',
     selectedInstructorForSchedule: 'ALL',
+    reportTimeframe: 'all', // 'all', 'month', 'week', 'semester'
     simulatedTime: null, // null = live real-time, or 'HH:MM'
     simulatedDayIndex: null, // 0 = Sunday, 1 = Monday, ...
     simulatedDayName: null,
@@ -465,7 +466,7 @@ function switchTab(tabId) {
         targetSection.classList.remove('hidden');
     }
 
-    if (tabId === 'bookings' || tabId === 'maintenance' || tabId === 'dashboard' || AppState.isAdmin) {
+    if (tabId === 'bookings' || tabId === 'maintenance' || tabId === 'dashboard' || tabId === 'reports' || AppState.isAdmin) {
         if (AppState.googleScriptUrl) {
             fetchDataFromGoogleSheets(true);
         }
@@ -494,6 +495,9 @@ function renderCurrentTab() {
             break;
         case 'maintenance':
             renderMaintenance();
+            break;
+        case 'reports':
+            renderReportsView();
             break;
         case 'settings':
             renderSettings();
@@ -3685,5 +3689,735 @@ function deleteTimetable(timetableId) {
         showToast(`ลบคาบเรียน ${item.subject.split(' ')[0]} เรียบร้อยแล้ว`, 'success');
         broadcastDataChange('DELETE_TIMETABLE', { id: timetableId });
         sendActionToGoogleBackend('deleteTimetable', { id: timetableId });
+    }
+}
+
+
+/**
+ * =========================================================================
+ * EXECUTIVE ANALYTICS & REPORTING SYSTEM (Chart.js Suite)
+ * ระบบรายงานสถิติและแดชบอร์ดสรุปผลสำหรับผู้บริหาร
+ * =========================================================================
+ */
+let reportChartInstances = {};
+
+function destroyReportChart(chartId) {
+    if (reportChartInstances[chartId]) {
+        try {
+            reportChartInstances[chartId].destroy();
+        } catch (e) {
+            console.warn(`Error destroying chart ${chartId}:`, e);
+        }
+        delete reportChartInstances[chartId];
+    }
+}
+
+function toggleReportExportMenu() {
+    const dropdown = document.getElementById('report-export-dropdown');
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+
+// Close export dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('report-export-dropdown');
+    if (dropdown && !dropdown.classList.contains('hidden')) {
+        if (!e.target.closest('#report-export-dropdown') && !e.target.closest('button[onclick*="toggleReportExportMenu"]')) {
+            dropdown.classList.add('hidden');
+        }
+    }
+});
+
+function setReportTimeframe(tf) {
+    AppState.reportTimeframe = tf || 'all';
+    document.querySelectorAll('.report-tf-btn').forEach(btn => {
+        if (btn.dataset.tf === AppState.reportTimeframe) {
+            btn.classList.add('bg-blue-600', 'text-white', 'shadow-xs');
+            btn.classList.remove('text-slate-300', 'hover:text-white');
+        } else {
+            btn.classList.remove('bg-blue-600', 'text-white', 'shadow-xs');
+            btn.classList.add('text-slate-300', 'hover:text-white');
+        }
+    });
+    renderReportsView();
+}
+
+function printExecutiveReport() {
+    const printDateEl = document.getElementById('report-print-date');
+    if (printDateEl) {
+        printDateEl.textContent = formatThaiDate(new Date(), true) + ' เวลา ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+    }
+    const printTfEl = document.getElementById('report-print-timeframe');
+    if (printTfEl) {
+        const tfNames = {
+            'all': 'ข้อมูลสะสมทั้งหมด',
+            'month': 'ประจำเดือนปัจจุบัน (' + new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' }) + ')',
+            'week': 'ข้อมูลย้อนหลัง 7 วันล่าสุด',
+            'semester': 'ภาคการศึกษาที่ 1/2569'
+        };
+        printTfEl.textContent = tfNames[AppState.reportTimeframe] || 'ข้อมูลสะสมทั้งหมด';
+    }
+    const printUserEl = document.getElementById('report-print-user');
+    if (printUserEl) {
+        printUserEl.textContent = AppState.isAdmin ? 'ผู้ดูแลระบบ (Admin) - งานบริการการศึกษา' : 'ผู้ใช้งานระบบ (User)';
+    }
+
+    setTimeout(() => {
+        window.print();
+    }, 250);
+}
+
+function exportReportCSV(type) {
+    const tf = AppState.reportTimeframe || 'all';
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+
+    if (type === 'bookings') {
+        const bookings = getFilteredReportBookings(tf);
+        if (bookings.length === 0) {
+            showToast('ไม่มีข้อมูลการจองในช่วงเวลานี้สำหรับส่งออก', 'warning');
+            return;
+        }
+        let csv = "\uFEFFลำดับ,รหัสการจอง,ห้องเรียน,วันที่,เวลาเริ่มต้น,เวลาสิ้นสุด,หัวข้อ/วิชา,วัตถุประสงค์,ผู้ขอจอง,หน่วยงาน/สาขา,เบอร์โทร,สถานะ\n";
+        bookings.forEach((b, idx) => {
+            const statusTh = b.status === 'approved' ? 'อนุมัติแล้ว' : (b.status === 'rejected' ? 'ไม่อนุมัติ' : (b.status === 'cancelled' ? 'ยกเลิก' : 'รออนุมัติ'));
+            csv += `"${idx + 1}","${b.id || ''}","${b.roomName || b.roomId || ''}","${formatThaiDate(b.date)}","${b.startTime || ''}","${b.endTime || ''}","${(b.subject || '').replace(/"/g, '""')}","${(b.purpose || '').replace(/"/g, '""')}","${(b.bookerName || '').replace(/"/g, '""')}","${(b.department || '').replace(/"/g, '""')}","${b.phone || ''}","${statusTh}"\n`;
+        });
+        downloadCSVFile(csv, `Executive_Bookings_Report_${tf}_${dateStr}.csv`);
+        showToast(`ส่งออกสถิติการจอง (${bookings.length} รายการ) เป็นไฟล์ CSV เรียบร้อยแล้ว`, 'success');
+    } else if (type === 'maintenance') {
+        const tickets = getFilteredReportMaintenance(tf);
+        if (tickets.length === 0) {
+            showToast('ไม่มีข้อมูลแจ้งซ่อมในช่วงเวลานี้สำหรับส่งออก', 'warning');
+            return;
+        }
+        let csv = "\uFEFFลำดับ,รหัสแจ้งซ่อม,ห้องเรียน,วันที่แจ้ง,หมวดหมู่อุปกรณ์,หัวข้อปัญหา,รายละเอียด,ผู้แจ้ง,ระดับความด่วน,สถานะ\n";
+        tickets.forEach((m, idx) => {
+            const statusTh = m.status === 'completed' ? 'ซ่อมเสร็จสิ้น' : (m.status === 'in_progress' ? 'กำลังซ่อม' : 'รอดำเนินการ');
+            const catName = (typeof MAINTENANCE_CATEGORIES !== 'undefined' && MAINTENANCE_CATEGORIES[m.category]) ? MAINTENANCE_CATEGORIES[m.category].name : (m.categoryName || 'ทั่วไป');
+            csv += `"${idx + 1}","${m.id || ''}","${m.roomName || m.roomId || ''}","${formatThaiDate(m.reportedDate)}","${catName}","${(m.title || '').replace(/"/g, '""')}","${(m.details || '').replace(/"/g, '""')}","${(m.reporter || '').replace(/"/g, '""')}","${m.priority || 'medium'}","${statusTh}"\n`;
+        });
+        downloadCSVFile(csv, `Executive_Maintenance_Report_${tf}_${dateStr}.csv`);
+        showToast(`ส่งออกสถิติแจ้งซ่อม (${tickets.length} รายการ) เป็นไฟล์ CSV เรียบร้อยแล้ว`, 'success');
+    }
+}
+
+function downloadCSVFile(csvContent, fileName) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function getFilteredReportBookings(tf) {
+    const bookings = Array.isArray(AppState.bookings) ? AppState.bookings : [];
+    if (tf === 'all') return bookings;
+
+    const now = new Date();
+    const currentMonthPrefix = now.toISOString().slice(0, 7); // YYYY-MM
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    return bookings.filter(b => {
+        if (!b.date) return false;
+        const d = new Date(b.date);
+        if (tf === 'month') {
+            return String(b.date).startsWith(currentMonthPrefix);
+        } else if (tf === 'week') {
+            return d >= sevenDaysAgo && d <= now;
+        } else if (tf === 'semester') {
+            const month = d.getMonth() + 1;
+            return month >= 6 && month <= 10;
+        }
+        return true;
+    });
+}
+
+function getFilteredReportMaintenance(tf) {
+    const tickets = Array.isArray(AppState.maintenance) ? AppState.maintenance : [];
+    if (tf === 'all') return tickets;
+
+    const now = new Date();
+    const currentMonthPrefix = now.toISOString().slice(0, 7);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    return tickets.filter(m => {
+        if (!m.reportedDate) return false;
+        const d = new Date(m.reportedDate);
+        if (tf === 'month') {
+            return String(m.reportedDate).startsWith(currentMonthPrefix);
+        } else if (tf === 'week') {
+            return d >= sevenDaysAgo && d <= now;
+        } else if (tf === 'semester') {
+            const month = d.getMonth() + 1;
+            return month >= 6 && month <= 10;
+        }
+        return true;
+    });
+}
+
+function renderReportsView() {
+    const tf = AppState.reportTimeframe || 'all';
+    const tfLabels = {
+        'all': 'ข้อมูลสะสมทั้งหมด',
+        'month': 'ข้อมูลประจำเดือนปัจจุบัน',
+        'week': 'ข้อมูล 7 วันล่าสุด',
+        'semester': 'ภาคการศึกษาที่ 1/2569'
+    };
+    const tagEl = document.getElementById('report-active-timeframe-tag');
+    if (tagEl) tagEl.textContent = tfLabels[tf] || 'ข้อมูลสะสมทั้งหมด';
+
+    const bookings = getFilteredReportBookings(tf);
+    const maintenance = getFilteredReportMaintenance(tf);
+
+    // 1. Calculate Booking Metrics
+    const totalBookings = bookings.length;
+    const approvedBookings = bookings.filter(b => b.status === 'approved' || b.status === 'completed');
+    const pendingBookings = bookings.filter(b => b.status === 'pending');
+    const rejectedBookings = bookings.filter(b => b.status === 'rejected');
+    const cancelledBookings = bookings.filter(b => b.status === 'cancelled');
+
+    const consideredCount = approvedBookings.length + rejectedBookings.length;
+    const approvalRate = consideredCount > 0 ? Math.round((approvedBookings.length / consideredCount) * 100) : (totalBookings > 0 ? 100 : 0);
+
+    // Calculate total hours
+    let totalHours = 0;
+    approvedBookings.forEach(b => {
+        if (b.startTime && b.endTime) {
+            const sParts = b.startTime.split(':').map(Number);
+            const eParts = b.endTime.split(':').map(Number);
+            if (sParts.length === 2 && eParts.length === 2) {
+                const startM = sParts[0] * 60 + sParts[1];
+                const endM = eParts[0] * 60 + eParts[1];
+                if (endM > startM) {
+                    totalHours += (endM - startM) / 60;
+                } else {
+                    totalHours += 2;
+                }
+            } else {
+                totalHours += 2;
+            }
+        } else {
+            totalHours += 2;
+        }
+    });
+    totalHours = Math.round(totalHours * 10) / 10;
+    const avgHoursPerBooking = approvedBookings.length > 0 ? (totalHours / approvedBookings.length).toFixed(1) : 0;
+
+    const uniqueUsersSet = new Set(bookings.map(b => (b.bookerName || b.reservedBy || '').trim()).filter(Boolean));
+    const uniqueUsersCount = uniqueUsersSet.size;
+
+    // Update Booking KPI DOM
+    const kpiTotalBk = document.getElementById('kpi-total-bookings');
+    if (kpiTotalBk) kpiTotalBk.textContent = totalBookings.toLocaleString();
+    const kpiBkDetail = document.getElementById('kpi-bookings-status-detail');
+    if (kpiBkDetail) kpiBkDetail.textContent = `อนุมัติ ${approvedBookings.length} • รอ ${pendingBookings.length} • ปฏิเสธ ${rejectedBookings.length}`;
+
+    const kpiAppRate = document.getElementById('kpi-approval-rate');
+    if (kpiAppRate) kpiAppRate.textContent = `${approvalRate}%`;
+    const kpiAppDetail = document.getElementById('kpi-approval-detail');
+    if (kpiAppDetail) kpiAppDetail.textContent = `อนุมัติ ${approvedBookings.length} จาก ${consideredCount || totalBookings} รายการ`;
+
+    const kpiHours = document.getElementById('kpi-total-hours');
+    if (kpiHours) kpiHours.textContent = `${totalHours} ชม.`;
+    const kpiHoursDetail = document.getElementById('kpi-hours-detail');
+    if (kpiHoursDetail) kpiHoursDetail.textContent = `เฉลี่ย ${avgHoursPerBooking} ชม./ครั้งที่อนุมัติ`;
+
+    const kpiUsers = document.getElementById('kpi-unique-users');
+    if (kpiUsers) kpiUsers.textContent = `${uniqueUsersCount} คน`;
+    const kpiUsersDetail = document.getElementById('kpi-users-detail');
+    if (kpiUsersDetail) kpiUsersDetail.textContent = `บุคลากร ${uniqueUsersCount} คนมีคำขอใช้งาน`;
+
+    // 2. Calculate Maintenance Metrics
+    const totalMnt = maintenance.length;
+    const completedMnt = maintenance.filter(m => m.status === 'completed');
+    const inProgressMnt = maintenance.filter(m => m.status === 'in_progress');
+    const openMnt = maintenance.filter(m => m.status === 'open' || !m.status);
+    const highPriorityMnt = maintenance.filter(m => (m.priority || '').toLowerCase() === 'high');
+    const medPriorityMnt = maintenance.filter(m => (m.priority || '').toLowerCase() === 'medium');
+    const lowPriorityMnt = maintenance.filter(m => (m.priority || '').toLowerCase() === 'low');
+
+    const resolutionRate = totalMnt > 0 ? Math.round((completedMnt.length / totalMnt) * 100) : 100;
+    const activeBacklog = openMnt.length + inProgressMnt.length;
+
+    // Calculate room readiness index (out of 16 rooms)
+    const activeIssueRoomIds = new Set(maintenance.filter(m => m.status !== 'completed').map(m => m.roomId));
+    const totalRoomsCount = (AppState.rooms && AppState.rooms.length > 0) ? AppState.rooms.length : 16;
+    const readyRoomsCount = Math.max(0, totalRoomsCount - activeIssueRoomIds.size);
+    const readinessRate = Math.round((readyRoomsCount / totalRoomsCount) * 1000) / 10;
+
+    // Update Maintenance KPI DOM
+    const kpiTotalMnt = document.getElementById('kpi-total-mnt');
+    if (kpiTotalMnt) kpiTotalMnt.textContent = totalMnt.toLocaleString();
+    const kpiMntDetail = document.getElementById('kpi-mnt-status-detail');
+    if (kpiMntDetail) kpiMntDetail.textContent = `ด่วนสูง ${highPriorityMnt.length} • ปานกลาง ${medPriorityMnt.length} • ทั่วไป ${lowPriorityMnt.length}`;
+
+    const kpiResRate = document.getElementById('kpi-resolution-rate');
+    if (kpiResRate) kpiResRate.textContent = `${resolutionRate}%`;
+    const kpiResDetail = document.getElementById('kpi-resolution-detail');
+    if (kpiResDetail) kpiResDetail.textContent = `แก้ไขเสร็จแล้ว ${completedMnt.length} จาก ${totalMnt} รายการ`;
+
+    const kpiReadiness = document.getElementById('kpi-readiness-rate');
+    if (kpiReadiness) kpiReadiness.textContent = `${readinessRate}%`;
+    const kpiReadDetail = document.getElementById('kpi-readiness-detail');
+    if (kpiReadDetail) kpiReadDetail.textContent = `พร้อมใช้งาน ${readyRoomsCount} จาก ${totalRoomsCount} ห้อง`;
+
+    const kpiBacklog = document.getElementById('kpi-active-backlog');
+    if (kpiBacklog) kpiBacklog.textContent = `${activeBacklog} รายการ`;
+    const kpiBackDetail = document.getElementById('kpi-backlog-detail');
+    if (kpiBackDetail) kpiBackDetail.textContent = `รอดำเนินการ ${openMnt.length} • กำลังซ่อม ${inProgressMnt.length}`;
+
+    // 3. Generate Executive Briefing Insights Text
+    generateExecutiveInsights(bookings, maintenance, totalHours, approvalRate, resolutionRate, readinessRate, activeBacklog);
+
+    // 4. Render All 6 Chart.js Charts
+    renderReportCharts(bookings, maintenance);
+
+    // 5. Populate Recent Activity Tables
+    renderReportRecentTables(bookings, maintenance);
+
+    lucide.createIcons();
+}
+
+function generateExecutiveInsights(bookings, maintenance, totalHours, approvalRate, resolutionRate, readinessRate, activeBacklog) {
+    const container = document.getElementById('report-executive-insights');
+    if (!container) return;
+
+    // Identify top utilized room
+    const roomCounts = {};
+    bookings.forEach(b => {
+        const name = b.roomName || b.roomId || 'ไม่ระบุห้อง';
+        roomCounts[name] = (roomCounts[name] || 0) + 1;
+    });
+    const sortedRooms = Object.entries(roomCounts).sort((a, b) => b[1] - a[1]);
+    const topRoomName = sortedRooms.length > 0 ? sortedRooms[0][0] : 'ห้องปฏิบัติการคอมพิวเตอร์ 1';
+    const topRoomCount = sortedRooms.length > 0 ? sortedRooms[0][1] : 0;
+    const topRoomPct = bookings.length > 0 ? Math.round((topRoomCount / bookings.length) * 100) : 0;
+
+    // Identify top maintenance category
+    const catCounts = {};
+    maintenance.forEach(m => {
+        const catKey = m.category || 'other';
+        const catInfo = (typeof MAINTENANCE_CATEGORIES !== 'undefined' && MAINTENANCE_CATEGORIES[catKey]) ? MAINTENANCE_CATEGORIES[catKey] : { name: 'อุปกรณ์ทั่วไป', emoji: '📦' };
+        const label = `${catInfo.emoji} ${catInfo.name}`;
+        catCounts[label] = (catCounts[label] || 0) + 1;
+    });
+    const sortedCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1]);
+    const topCatName = sortedCats.length > 0 ? sortedCats[0][0] : '📽️ โปรเจกเตอร์ / จอภาพ';
+    const topCatCount = sortedCats.length > 0 ? sortedCats[0][1] : 0;
+    const topCatPct = maintenance.length > 0 ? Math.round((topCatCount / maintenance.length) * 100) : 0;
+
+    let html = `
+        <div class="flex items-start gap-2">
+            <span class="text-blue-600 font-bold shrink-0">1.</span>
+            <p><b>ภาพรวมการใช้ห้องเรียน:</b> มีการยื่นขอใช้ห้องสะสม <b>${bookings.length} รายการ</b> รวมการใช้งานจริงกว่า <b>${totalHours} ชั่วโมง</b> โดย <b>${topRoomName}</b> ได้รับความนิยมสูงสุด คิดเป็น <b>${topRoomPct}%</b> ของการจองทั้งหมด และมีอัตราการอนุมัติอยู่ที่ <b>${approvalRate}%</b></p>
+        </div>
+        <div class="flex items-start gap-2">
+            <span class="text-rose-600 font-bold shrink-0">2.</span>
+            <p><b>งานซ่อมบำรุงและสภาพความพร้อม:</b> พบปัญหาอุปกรณ์ชำรุด <b>${maintenance.length} รายการ</b> หมวดหมู่ที่พบมากที่สุดคือ <b>${topCatName} (${topCatPct}%)</b> ทั้งนี้งานซ่อมสำเร็จแล้วเสร็จคิดเป็น <b>${resolutionRate}%</b> คงเหลือรอดำเนินการ <b>${activeBacklog} รายการ</b> โดยดัชนีความพร้อมของห้องเรียนอยู่ที่ระดับ <b>${readinessRate}%</b></p>
+        </div>
+        <div class="flex items-start gap-2">
+            <span class="text-emerald-600 font-bold shrink-0">3.</span>
+            <p><b>ข้อเสนอแนะเชิงบริหาร (Actionable Recommendation):</b> ฝ่ายอาคารและศูนย์เทคโนโลยีควรจัดเตรียมอะไหล่สำรองสำหรับ <b>${topCatName}</b> และจัดตารางตรวจเช็กเชิงป้องกัน (Preventive Maintenance) ใน <b>${topRoomName}</b> เพื่อรองรับช่วงสอบและกิจกรรมการเรียนการสอนอย่างต่อเนื่อง</p>
+        </div>
+    `;
+    container.innerHTML = html;
+}
+
+function renderReportCharts(bookings, maintenance) {
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js library is not loaded yet.');
+        return;
+    }
+
+    // Configure Chart.js global typography
+    Chart.defaults.font.family = "'Prompt', sans-serif";
+    Chart.defaults.color = '#475569';
+
+    // -------------------------------------------------------------
+    // CHART 1: Booking Trends Over Time (Bar / Line)
+    // -------------------------------------------------------------
+    const ctxTrends = document.getElementById('chart-booking-trends');
+    if (ctxTrends) {
+        destroyReportChart('trends');
+        
+        // Group bookings by date (or day of week if small)
+        const dateMap = {};
+        bookings.forEach(b => {
+            const d = b.date ? b.date.slice(5) : 'ไม่ระบุ'; // MM-DD
+            dateMap[d] = (dateMap[d] || 0) + 1;
+        });
+        
+        let labels = Object.keys(dateMap).sort().slice(-10);
+        let values = labels.map(k => dateMap[k]);
+
+        if (labels.length === 0) {
+            labels = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+            values = [0, 0, 0, 0, 0, 0, 0];
+        }
+
+        reportChartInstances['trends'] = new Chart(ctxTrends, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'จำนวนการจอง (ครั้ง)',
+                    data: values,
+                    backgroundColor: 'rgba(37, 99, 235, 0.75)',
+                    hoverBackgroundColor: 'rgba(29, 78, 216, 0.95)',
+                    borderRadius: 8,
+                    borderWidth: 0,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        padding: 10,
+                        titleFont: { family: "'Prompt', sans-serif", size: 12 },
+                        bodyFont: { family: "'Prompt', sans-serif", size: 11 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // CHART 2: Top 5 Most Utilized Rooms (Horizontal Bar)
+    // -------------------------------------------------------------
+    const ctxUtil = document.getElementById('chart-room-utilization');
+    if (ctxUtil) {
+        destroyReportChart('utilization');
+
+        const roomCounts = {};
+        bookings.forEach(b => {
+            const name = b.roomName || b.roomId || 'ไม่ระบุห้อง';
+            roomCounts[name] = (roomCounts[name] || 0) + 1;
+        });
+
+        const sorted = Object.entries(roomCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        const labels = sorted.map(item => item[0].length > 18 ? item[0].slice(0, 18) + '...' : item[0]);
+        const values = sorted.map(item => item[1]);
+
+        reportChartInstances['utilization'] = new Chart(ctxUtil, {
+            type: 'bar',
+            data: {
+                labels: labels.length > 0 ? labels : ['ไม่มีข้อมูลการจอง'],
+                datasets: [{
+                    axis: 'y',
+                    label: 'จำนวนการใช้งาน',
+                    data: values.length > 0 ? values : [0],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(99, 102, 241, 0.85)',
+                        'rgba(168, 85, 247, 0.85)',
+                        'rgba(236, 72, 153, 0.85)',
+                        'rgba(245, 158, 11, 0.85)'
+                    ],
+                    borderRadius: 8,
+                    barPercentage: 0.65
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        padding: 10
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // CHART 3: Booking Purposes Breakdown (Doughnut)
+    // -------------------------------------------------------------
+    const ctxPurp = document.getElementById('chart-booking-purposes');
+    if (ctxPurp) {
+        destroyReportChart('purposes');
+
+        const purposeCategories = {
+            'การเรียนการสอน / สอนชดเชย': 0,
+            'การสอบวัดระดับ / สอบข้อเขียน': 0,
+            'อบรม / สัมมนาเชิงปฏิบัติการ': 0,
+            'ประชุมคณะ / งานบริหาร': 0,
+            'กิจกรรมนักศึกษา / อื่นๆ': 0
+        };
+
+        bookings.forEach(b => {
+            const txt = `${b.subject || ''} ${b.purpose || ''}`.toLowerCase();
+            if (txt.includes('สอน') || txt.includes('ชดเชย') || txt.includes('เรียน') || txt.includes('แล็บ')) {
+                purposeCategories['การเรียนการสอน / สอนชดเชย']++;
+            } else if (txt.includes('สอบ') || txt.includes('exam')) {
+                purposeCategories['การสอบวัดระดับ / สอบข้อเขียน']++;
+            } else if (txt.includes('อบรม') || txt.includes('สัมมนา') || txt.includes('workshop')) {
+                purposeCategories['อบรม / สัมมนาเชิงปฏิบัติการ']++;
+            } else if (txt.includes('ประชุม') || txt.includes('meeting')) {
+                purposeCategories['ประชุมคณะ / งานบริหาร']++;
+            } else {
+                purposeCategories['กิจกรรมนักศึกษา / อื่นๆ']++;
+            }
+        });
+
+        reportChartInstances['purposes'] = new Chart(ctxPurp, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(purposeCategories),
+                datasets: [{
+                    data: Object.values(purposeCategories),
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#8b5cf6',
+                        '#f59e0b',
+                        '#94a3b8'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 10.5 } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // CHART 4: Maintenance Equipment Categories (PolarArea / Doughnut)
+    // -------------------------------------------------------------
+    const ctxMntCat = document.getElementById('chart-maintenance-categories');
+    if (ctxMntCat) {
+        destroyReportChart('mntCat');
+
+        const catKeys = ['projector', 'ac', 'pc', 'input', 'audio', 'network', 'electricity', 'furniture', 'other'];
+        const catLabels = [];
+        const catValues = [];
+        const catColors = [
+            '#3b82f6', // projector
+            '#06b6d4', // ac
+            '#6366f1', // pc
+            '#ec4899', // input
+            '#8b5cf6', // audio
+            '#10b981', // network
+            '#f59e0b', // power
+            '#d97706', // furniture
+            '#64748b'  // other
+        ];
+
+        catKeys.forEach(k => {
+            const catInfo = (typeof MAINTENANCE_CATEGORIES !== 'undefined' && MAINTENANCE_CATEGORIES[k]) ? MAINTENANCE_CATEGORIES[k] : { name: k };
+            catLabels.push(catInfo.name);
+            const count = maintenance.filter(m => (m.category === k || detectMaintenanceCategory(m) === k)).length;
+            catValues.push(count);
+        });
+
+        reportChartInstances['mntCat'] = new Chart(ctxMntCat, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catValues,
+                    backgroundColor: catColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 11, font: { size: 10 } }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // CHART 5: Maintenance Resolution Funnel (Doughnut)
+    // -------------------------------------------------------------
+    const ctxMntStatus = document.getElementById('chart-maintenance-status');
+    if (ctxMntStatus) {
+        destroyReportChart('mntStatus');
+
+        const completed = maintenance.filter(m => m.status === 'completed').length;
+        const inProgress = maintenance.filter(m => m.status === 'in_progress').length;
+        const open = maintenance.filter(m => m.status === 'open' || !m.status).length;
+
+        reportChartInstances['mntStatus'] = new Chart(ctxMntStatus, {
+            type: 'doughnut',
+            data: {
+                labels: ['ซ่อมเสร็จสิ้น (🟢)', 'กำลังดำเนินการ (🟡)', 'รอดำเนินการ (🔴)'],
+                datasets: [{
+                    data: [completed, inProgress, open],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // CHART 6: Rooms with Most Issues (Bar)
+    // -------------------------------------------------------------
+    const ctxRoomIssues = document.getElementById('chart-room-issues');
+    if (ctxRoomIssues) {
+        destroyReportChart('roomIssues');
+
+        const roomIssueCounts = {};
+        maintenance.forEach(m => {
+            const name = m.roomName || m.roomId || 'ไม่ระบุห้อง';
+            roomIssueCounts[name] = (roomIssueCounts[name] || 0) + 1;
+        });
+
+        const sorted = Object.entries(roomIssueCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+        const labels = sorted.map(item => item[0].length > 16 ? item[0].slice(0, 16) + '...' : item[0]);
+        const values = sorted.map(item => item[1]);
+
+        reportChartInstances['roomIssues'] = new Chart(ctxRoomIssues, {
+            type: 'bar',
+            data: {
+                labels: labels.length > 0 ? labels : ['ไม่มีรายการแจ้งซ่อม'],
+                datasets: [{
+                    label: 'จำนวนปัญหาที่พบ',
+                    data: values.length > 0 ? values : [0],
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderRadius: 8,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        padding: 10
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function renderReportRecentTables(bookings, maintenance) {
+    // Recent Bookings Snapshot
+    const bkBody = document.getElementById('report-recent-bookings-tbody');
+    if (bkBody) {
+        const recentBk = bookings.slice(0, 5);
+        if (recentBk.length === 0) {
+            bkBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400">ไม่มีรายการจองในช่วงเวลานี้</td></tr>`;
+        } else {
+            bkBody.innerHTML = recentBk.map(b => {
+                let badge = '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">รออนุมัติ</span>';
+                if (b.status === 'approved') badge = '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>';
+                else if (b.status === 'rejected') badge = '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">ไม่อนุมัติ</span>';
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-2.5 font-bold text-slate-800">${b.roomName || b.roomId || '-'}</td>
+                        <td class="py-2.5 text-slate-600">${formatThaiDate(b.date)} <span class="text-[10px] text-slate-400">(${b.startTime || ''}-${b.endTime || ''})</span></td>
+                        <td class="py-2.5 text-slate-700">${b.bookerName || b.reservedBy || '-'}</td>
+                        <td class="py-2.5 text-right">${badge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+
+    // Recent Maintenance Snapshot
+    const mntBody = document.getElementById('report-recent-maintenance-tbody');
+    if (mntBody) {
+        const recentMnt = maintenance.slice(0, 5);
+        if (recentMnt.length === 0) {
+            mntBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400">ไม่มีรายการแจ้งซ่อมในช่วงเวลานี้</td></tr>`;
+        } else {
+            mntBody.innerHTML = recentMnt.map(m => {
+                const catKey = m.category || detectMaintenanceCategory(m);
+                const catInfo = (typeof MAINTENANCE_CATEGORIES !== 'undefined' && MAINTENANCE_CATEGORIES[catKey]) ? MAINTENANCE_CATEGORIES[catKey] : { name: 'ทั่วไป', emoji: '📦', badgeClass: 'bg-slate-100 text-slate-700' };
+                let stBadge = '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">รอดำเนินการ</span>';
+                if (m.status === 'completed') stBadge = '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">ซ่อมเสร็จสิ้น</span>';
+                else if (m.status === 'in_progress') stBadge = '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">กำลังซ่อม</span>';
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-2.5">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-bold ${catInfo.badgeClass}">
+                                <span>${catInfo.emoji}</span> ${catInfo.name}
+                            </span>
+                        </td>
+                        <td class="py-2.5">
+                            <div class="font-bold text-slate-800">${m.roomName || m.roomId || '-'}</div>
+                            <div class="text-[10px] text-slate-500 truncate max-w-[140px]">${m.title || ''}</div>
+                        </td>
+                        <td class="py-2.5 text-slate-600">${formatThaiDate(m.reportedDate)}</td>
+                        <td class="py-2.5 text-right">${stBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
     }
 }
