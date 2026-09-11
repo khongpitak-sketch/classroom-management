@@ -83,6 +83,27 @@ function addDeletedMaintenanceId(id) {
     } catch(e) {}
 }
 
+function getDeletedBookingIds() {
+    try {
+        const raw = localStorage.getItem('CMS_DELETED_BOOKING_IDS');
+        const set = raw ? new Set(JSON.parse(raw)) : new Set();
+        // Pre-seed known purged/cancelled IDs
+        set.add('BK-1399');
+        return set;
+    } catch(e) {
+        return new Set(['BK-1399']);
+    }
+}
+
+function addDeletedBookingId(id) {
+    if (!id) return;
+    const set = getDeletedBookingIds();
+    set.add(String(id).trim());
+    try {
+        localStorage.setItem('CMS_DELETED_BOOKING_IDS', JSON.stringify(Array.from(set)));
+    } catch(e) {}
+}
+
 const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('CMS_REALTIME_SYNC') : null;
 
 function broadcastDataChange(type, data = {}) {
@@ -100,10 +121,14 @@ if (syncChannel) {
 
         switch (type) {
             case 'DELETE_BOOKING':
+                if (data.id) addDeletedBookingId(data.id);
                 AppState.bookings = AppState.bookings.filter(b => b.id !== data.id);
                 saveData();
                 updateAdminPendingBadge();
                 renderCurrentTab();
+                if (!AppState.isAdmin) {
+                    showToast(`🗑️ รายการจอง ${data.id} ถูกลบโดยผู้ดูแลระบบแล้ว`, 'info', 4000);
+                }
                 break;
             case 'APPROVE_BOOKING':
                 const ab = AppState.bookings.find(b => b.id === data.id);
@@ -1465,13 +1490,15 @@ function cancelBooking(bookingId) {
         return;
     }
     if (confirm(`คุณต้องการลบรายการจอง ${bookingId} ใช่หรือไม่?\n(ข้อมูลจะถูกลบออกจากทั้งฝั่ง Admin และฝั่งผู้ใช้งานทันที)`)) {
+        addDeletedBookingId(bookingId);
         AppState.bookings = AppState.bookings.filter(b => b.id !== bookingId);
         saveData();
         updateAdminPendingBadge();
         renderBookings();
-        showToast('ลบรายการจองสำเร็จ (ข้อมูลฝั่งผู้ใช้ถูกอัปเดตแล้ว)', 'success');
+        showToast(`ลบรายการจอง ${bookingId} สำเร็จ (ข้อมูลฝั่งผู้ใช้ถูกอัปเดตแล้ว)`, 'success');
         broadcastDataChange('DELETE_BOOKING', { id: bookingId });
         sendActionToGoogleBackend('cancelBooking', { id: bookingId });
+        sendActionToGoogleBackend('deleteBooking', { id: bookingId });
     }
 }
 
@@ -1817,6 +1844,7 @@ function sendActionToGoogleBackend(action, payload) {
                     google.script.run.withSuccessHandler(res => console.log('GAS Add Booking:', res)).apiAddBooking(payload.booking);
                     break;
                 case 'cancelBooking':
+                case 'deleteBooking':
                     google.script.run.withSuccessHandler(res => console.log('GAS Cancel Booking:', res)).apiCancelBooking(payload.id);
                     break;
                 case 'approveBooking':
@@ -2032,7 +2060,6 @@ async function fetchDataFromGoogleSheets(silent = false) {
 
             AppState.isGoogleConnected = true;
             saveData();
-            renderCurrentTab();
             updateGoogleStatusUI();
             if (!silent) showToast('ดึงข้อมูลล่าสุดจาก Google Sheets สำเร็จเรียบร้อย!', 'success');
         } else {
@@ -3240,13 +3267,30 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         showToast(`🔧 มีรายการแจ้งซ่อมใหม่เข้ามา! (${trulyNewTickets.length} รายการใหม่) กรุณาตรวจสอบ`, 'warning', 8000);
     }
 
-    // 2. Pure classroom bookings (excluding MNT records and empty items)
+    const deletedBkIds = getDeletedBookingIds();
+
+    // 2. Pure classroom bookings (excluding MNT records, empty items, and deleted/cancelled items)
     const pureBookings = rawBookings.filter(b => {
+        const strId = String(b.id || b.ID || '').trim();
+        if (deletedBkIds.has(strId)) return false;
+        const st = String(b.status || '').toLowerCase().trim();
+        if (st === 'cancelled' || st === 'deleted') return false;
         const hasInfo = Boolean(b.roomId || b.roomid || b.date || b.subject || b.purpose || b.reservedBy || b.reservedby);
         return !isMaintenanceRecord(b) && hasInfo;
     });
 
-    const parsedBookings = pureBookings.map(b => {
+    // Deduplicate bookings by ID: If cloud returns duplicate rows, keep the latest valid record
+    const seenBookingIds = new Set();
+    const uniquePureBookings = [];
+    pureBookings.forEach(b => {
+        const bId = String(b.id || b.ID || '').trim();
+        if (!seenBookingIds.has(bId)) {
+            seenBookingIds.add(bId);
+            uniquePureBookings.push(b);
+        }
+    });
+
+    const parsedBookings = uniquePureBookings.map(b => {
         const dateStr = parseGasDate(b.date);
         const sTime = parseGasTime(b.startTime || b.starttime || '');
         const eTime = parseGasTime(b.endTime || b.endtime || '');
@@ -3291,12 +3335,18 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         return (b.date || '').localeCompare(a.date || '');
     });
 
-    AppState.bookings = parsedBookings;
+    // ตรวจสอบว่าข้อมูลการจองมีการเปลี่ยนแปลงจริงหรือไม่ก่อนสั่ง redraw เพื่อแก้ปัญหาตารางเด้งเข้าเด้งออกและกระพริบ
+    const currentBkSig = (AppState.bookings || []).map(b => `${b.id}:${b.status}:${b.date}:${b.startTime}:${b.endTime}`).join('|');
+    const nextBkSig = parsedBookings.map(b => `${b.id}:${b.status}:${b.date}:${b.startTime}:${b.endTime}`).join('|');
+    const bkChanged = (currentBkSig !== nextBkSig);
 
-    saveData();
-    updateAdminPendingBadge();
-    if (AppState.currentTab === 'bookings' || AppState.currentTab === 'dashboard') {
-        renderCurrentTab();
+    if (bkChanged) {
+        AppState.bookings = parsedBookings;
+        saveData();
+        updateAdminPendingBadge();
+        if (AppState.currentTab === 'bookings' || AppState.currentTab === 'dashboard') {
+            renderCurrentTab();
+        }
     }
 
     const newPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;

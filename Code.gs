@@ -54,6 +54,7 @@ function doPost(e) {
         result = apiAddBooking(requestData.booking);
         break;
       case 'cancelBooking':
+      case 'deleteBooking':
         result = apiCancelBooking(requestData.id);
         break;
       case 'approveBooking':
@@ -354,6 +355,10 @@ function apiAddBooking(booking) {
 /**
  * ยกเลิกการจองห้อง
  */
+function apiDeleteBooking(bookingId) {
+  return apiCancelBooking(bookingId);
+}
+
 function apiCancelBooking(bookingId) {
   try {
     const ss = getDb();
