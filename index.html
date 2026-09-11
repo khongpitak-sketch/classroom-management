@@ -5334,6 +5334,15 @@ function parseGasDate(dateVal) {
     return str.split('T')[0];
 }
 
+// Helper for Safe Storage with Quota Protection
+function safeStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    } catch(e) {
+        console.warn('Storage write skipped (quota/private browsing):', key, e);
+    }
+}
+
 function getDeletedMaintenanceIds() {
     try {
         const raw = localStorage.getItem('CMS_DELETED_MAINTENANCE_IDS');
@@ -5347,17 +5356,14 @@ function addDeletedMaintenanceId(id) {
     if (!id) return;
     const set = getDeletedMaintenanceIds();
     set.add(String(id).trim());
-    try {
-        localStorage.setItem('CMS_DELETED_MAINTENANCE_IDS', JSON.stringify(Array.from(set)));
-    } catch(e) {}
+    safeStorageSet('CMS_DELETED_MAINTENANCE_IDS', Array.from(set));
 }
 
 function getDeletedBookingIds() {
     try {
         const raw = localStorage.getItem('CMS_DELETED_BOOKING_IDS');
         const set = raw ? new Set(JSON.parse(raw)) : new Set();
-        // Pre-seed known purged/cancelled IDs
-        set.add('BK-1399');
+        set.add('BK-1399'); // Pre-seed known duplicate
         return set;
     } catch(e) {
         return new Set(['BK-1399']);
@@ -5368,9 +5374,16 @@ function addDeletedBookingId(id) {
     if (!id) return;
     const set = getDeletedBookingIds();
     set.add(String(id).trim());
-    try {
-        localStorage.setItem('CMS_DELETED_BOOKING_IDS', JSON.stringify(Array.from(set)));
-    } catch(e) {}
+    safeStorageSet('CMS_DELETED_BOOKING_IDS', Array.from(set));
+}
+
+// Modal State Detector to protect active user typing
+function isAnyModalOpen() {
+    const modals = document.querySelectorAll('[id^="modal-"]');
+    for (let i = 0; i < modals.length; i++) {
+        if (!modals[i].classList.contains('hidden')) return true;
+    }
+    return false;
 }
 
 const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('CMS_REALTIME_SYNC') : null;
@@ -5570,30 +5583,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateClock();
     setInterval(updateClock, 1000);
-    // Background real-time auto-sync with Google Sheets every 5 seconds
-    setInterval(() => {
-        if (AppState.googleScriptUrl) {
-            fetchDataFromGoogleSheets(true);
-        }
-    }, 5000);
-
-    // Instant sync when tab gains focus or user returns to tab
-    window.addEventListener('focus', () => {
-        if (AppState.googleScriptUrl) fetchDataFromGoogleSheets(true);
-    });
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && AppState.googleScriptUrl) {
-            fetchDataFromGoogleSheets(true);
-        }
-    });
-
     renderCurrentTab();
 
-    // Auto-sync with Google Apps Script if configured
+    // Setup adaptive background synchronization with concurrency lock and tab visibility detection
+    initAdaptiveSync();
+
+    // Auto-sync with Google Apps Script environment if inside Google Web App
     if (isGoogleAppsScriptEnvironment()) {
         syncFromGoogleAppsScript();
-    } else if (AppState.googleScriptUrl) {
-        fetchDataFromGoogleSheets(true);
     }
 });
 
@@ -6686,6 +6683,15 @@ async function handleBookingSubmit(event) {
         initialStatus = 'approved';
     }
 
+    // Anti-double-submission protection
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.dataset.originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> กำลังบันทึก...';
+    }
+
     const fullDept = department + (phone ? ` (โทร. ${phone})` : '');
     const cleanSubject = (subject || purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ').trim();
     const cleanPurpose = (purpose || subject || '').trim();
@@ -6704,7 +6710,8 @@ async function handleBookingSubmit(event) {
         department: fullDept,
         phone: phone,
         status: initialStatus,
-        createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
+        createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        _localCreatedAt: Date.now()
     };
 
     AppState.bookings.unshift(newBooking);
@@ -6744,6 +6751,7 @@ function approveBooking(bookingId) {
     const booking = AppState.bookings.find(b => b.id === bookingId);
     if (booking) {
         booking.status = 'approved';
+        booking._localUpdatedAt = Date.now();
         saveData();
         updateAdminPendingBadge();
         renderBookings();
@@ -6976,6 +6984,15 @@ function deleteMaintenance(ticketId) {
 function handleMaintenanceSubmit(event) {
     event.preventDefault();
     const form = event.target;
+
+    // Anti-double-submission protection
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.dataset.originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> กำลังบันทึก...';
+    }
 
     const roomId = form.roomId.value;
     const category = (form.category && form.category.value) ? form.category.value : 'other';
@@ -7293,6 +7310,80 @@ function syncFromGoogleAppsScript() {
         .apiGetData();
 }
 
+// ----------------------------------------------------
+// ADAPTIVE BACKGROUND SYNC CONTROLLER (CONCURRENCY LOCK)
+// ----------------------------------------------------
+let syncTimer = null;
+let isSyncInProgress = false;
+let lastSuccessfulSync = 0;
+
+function initAdaptiveSync() {
+    // Initial sync
+    triggerAdaptiveSync(true, true);
+
+    // Tab visibility change: reduce frequency when backgrounded, sync immediately when foregrounded
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            triggerAdaptiveSync(true, true);
+        } else {
+            scheduleAdaptiveSync(40000);
+        }
+    });
+
+    // Window focus: check if sync is needed
+    window.addEventListener('focus', () => {
+        const now = Date.now();
+        if (now - lastSuccessfulSync > 6000) {
+            triggerAdaptiveSync(true, false);
+        }
+    });
+
+    // Online event: auto recover immediately
+    window.addEventListener('online', () => {
+        showToast('🌐 กลับมาเชื่อมต่ออินเทอร์เน็ตแล้ว กำลังซิงก์ข้อมูล...', 'info', 3000);
+        triggerAdaptiveSync(true, true);
+    });
+}
+
+function scheduleAdaptiveSync(delayMs = null) {
+    if (syncTimer) clearTimeout(syncTimer);
+    if (!delayMs) {
+        // 8 seconds when tab is actively visible, 40 seconds when tab is hidden in background
+        delayMs = (document.visibilityState === 'visible') ? 8000 : 40000;
+    }
+    syncTimer = setTimeout(() => {
+        triggerAdaptiveSync(true, false);
+    }, delayMs);
+}
+
+async function triggerAdaptiveSync(silent = true, force = false) {
+    if (!AppState.googleScriptUrl || isSyncInProgress) {
+        scheduleAdaptiveSync();
+        return;
+    }
+    if (!navigator.onLine) {
+        scheduleAdaptiveSync(15000);
+        return;
+    }
+
+    const now = Date.now();
+    if (!force && (now - lastSuccessfulSync < 4000)) {
+        scheduleAdaptiveSync();
+        return;
+    }
+
+    isSyncInProgress = true;
+    try {
+        await fetchDataFromGoogleSheets(silent);
+        lastSuccessfulSync = Date.now();
+    } catch(e) {
+        console.warn('Sync manager error:', e);
+    } finally {
+        isSyncInProgress = false;
+        scheduleAdaptiveSync();
+    }
+}
+
 /**
  * ดึงข้อมูลจาก Google Sheets ผ่าน URL API (เมื่อรันบน GitHub Pages / Web)
  */
@@ -7304,18 +7395,25 @@ async function fetchDataFromGoogleSheets(silent = false) {
 
     try {
         if (!silent) showToast('กำลังดึงข้อมูลจาก Google Sheets...', 'info');
-        const url = AppState.googleScriptUrl + (AppState.googleScriptUrl.includes('?') ? '&' : '?') + 'action=getAll';
-        const res = await fetch(url);
+        const url = AppState.googleScriptUrl + (AppState.googleScriptUrl.includes('?') ? '&' : '?') + 'action=getAll&_t=' + Date.now();
+        
+        // 12-second abort timeout prevents hanging background fetches
+        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 12000) : null;
+
+        const res = await fetch(url, { signal: controller ? controller.signal : undefined });
+        if (timeoutId) clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
 
-        if (json.success && json.data) {
-            if (json.data.rooms && Array.isArray(json.data.rooms) && json.data.rooms.length > 0) {
+        if (json && json.success && json.data) {
+            if (json.data.rooms && Array.isArray(json.data.rooms) && json.data.rooms.length >= 10) {
                 AppState.rooms = json.data.rooms;
             }
             if (json.data.timetable && Array.isArray(json.data.timetable) && json.data.timetable.length > 0) {
                 AppState.timetable = json.data.timetable;
             } else {
-                // If cloud sheet has no timetable entries yet, NEVER wipe out the 184 timetable classes!
                 if (!AppState.timetable || AppState.timetable.length === 0) {
                     AppState.timetable = DEFAULT_TIMETABLE;
                 }
@@ -7335,7 +7433,9 @@ async function fetchDataFromGoogleSheets(silent = false) {
             if (!silent) showToast('ไม่สามารถอ่านข้อมูลจาก Google Sheets ได้', 'error');
         }
     } catch (e) {
-        console.error('Fetch Google Sheets error:', e);
+        if (e.name !== 'AbortError') {
+            console.warn('Fetch Google Sheets notice:', e.message);
+        }
         AppState.isGoogleConnected = false;
         updateGoogleStatusUI();
         if (!silent) showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: ' + e.message, 'error');
@@ -7878,6 +7978,15 @@ function closeModal(modalId) {
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+
+        // Restore submit button state if it was in loading state
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            if (submitBtn.dataset.originalText) {
+                submitBtn.innerHTML = submitBtn.dataset.originalText;
+            }
+        }
     }
 }
 
@@ -8348,6 +8457,7 @@ function rejectBooking(bookingId) {
     const booking = AppState.bookings.find(b => b.id === bookingId);
     if (booking) {
         booking.status = 'rejected';
+        booking._localUpdatedAt = Date.now();
         saveData();
         updateAdminPendingBadge();
         renderBookings();
@@ -8526,8 +8636,10 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         });
 
         saveData();
-        if (AppState.currentTab === 'maintenance' || AppState.currentTab === 'dashboard') {
-            renderCurrentTab();
+        if (!isAnyModalOpen()) {
+            if (AppState.currentTab === 'maintenance' || AppState.currentTab === 'dashboard') {
+                renderCurrentTab();
+            }
         }
     }
 
@@ -8559,7 +8671,27 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         }
     });
 
-    const parsedBookings = uniquePureBookings.map(b => {
+    // Preserve in-flight locally created bookings (under 45 seconds) waiting for cloud persistence
+    const cloudBkMap = new Map();
+    uniquePureBookings.forEach(b => cloudBkMap.set(b.id, b));
+
+    (AppState.bookings || []).forEach(localB => {
+        if (deletedBkIds.has(localB.id)) return;
+        // Keep newly submitted local booking if cloud doesn't have it yet
+        if (localB._localCreatedAt && (Date.now() - localB._localCreatedAt < 45000) && !cloudBkMap.has(localB.id)) {
+            cloudBkMap.set(localB.id, localB);
+        }
+        // Keep optimistic status update (approved/rejected) within 30 seconds
+        if (localB._localUpdatedAt && (Date.now() - localB._localUpdatedAt < 30000) && cloudBkMap.has(localB.id)) {
+            const cloudItem = cloudBkMap.get(localB.id);
+            if (cloudItem.status !== localB.status) {
+                cloudItem.status = localB.status;
+            }
+        }
+    });
+
+    const reconciledBookings = Array.from(cloudBkMap.values());
+    const parsedBookings = reconciledBookings.map(b => {
         const dateStr = parseGasDate(b.date);
         const sTime = parseGasTime(b.startTime || b.starttime || '');
         const eTime = parseGasTime(b.endTime || b.endtime || '');
@@ -8613,8 +8745,11 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         AppState.bookings = parsedBookings;
         saveData();
         updateAdminPendingBadge();
-        if (AppState.currentTab === 'bookings' || AppState.currentTab === 'dashboard') {
-            renderCurrentTab();
+        // Do not interrupt user typing or cause modal flickering if a modal is currently open
+        if (!isAnyModalOpen()) {
+            if (AppState.currentTab === 'bookings' || AppState.currentTab === 'dashboard') {
+                renderCurrentTab();
+            }
         }
     }
 
