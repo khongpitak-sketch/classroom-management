@@ -50,6 +50,9 @@ function doPost(e) {
     let result = { success: false, message: "Unknown action" };
 
     switch (action) {
+      case 'ping':
+        result = { success: true, timestamp: new Date().toISOString() };
+        break;
       case 'addBooking':
         result = apiAddBooking(requestData.booking);
         break;
@@ -115,7 +118,9 @@ function handleApiGet(params) {
     const action = params.action;
     let responseData = {};
 
-    if (action === 'getData' || action === 'getAll') {
+    if (action === 'ping') {
+      responseData = { success: true, timestamp: new Date().toISOString() };
+    } else if (action === 'getData' || action === 'getAll') {
       responseData = {
         success: true,
         data: apiGetData()

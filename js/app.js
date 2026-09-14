@@ -301,7 +301,7 @@ const AppState = {
     simulatedDayName: null,
     selectedDayIndex: 1, // 1 = Monday
     googleScriptUrl: '', // Google Apps Script Web App URL
-    isGoogleConnected: false,
+    isGoogleConnected: localStorage.getItem('CMS_IS_GOOGLE_CONNECTED') !== 'false' && (!!localStorage.getItem('CMS_GAS_URL') || (typeof DEFAULT_GAS_URL !== 'undefined' && !!DEFAULT_GAS_URL)),
     isAdmin: sessionStorage.getItem('CMS_IS_ADMIN') === 'true',
     bookingFilterStatus: 'all'
 };
@@ -340,6 +340,10 @@ function loadSettings() {
         } else if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
             AppState.googleScriptUrl = DEFAULT_GAS_URL;
             localStorage.setItem('CMS_GAS_URL', DEFAULT_GAS_URL);
+        }
+        if (AppState.googleScriptUrl) {
+            AppState.isGoogleConnected = true;
+            localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'true');
         }
     } catch (e) {
         console.error("Error loading settings:", e);
@@ -2128,9 +2132,9 @@ async function fetchDataFromGoogleSheets(silent = false) {
         if (!silent) showToast('กำลังดึงข้อมูลจาก Google Sheets...', 'info');
         const url = AppState.googleScriptUrl + (AppState.googleScriptUrl.includes('?') ? '&' : '?') + 'action=getAll&_t=' + Date.now();
         
-        // 12-second abort timeout prevents hanging background fetches
+        // 25-second abort timeout prevents hanging while safely allowing Google Apps Script cold starts
         const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-        const timeoutId = controller ? setTimeout(() => controller.abort(), 12000) : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 25000) : null;
 
         const res = await fetch(url, { signal: controller ? controller.signal : undefined });
         if (timeoutId) clearTimeout(timeoutId);
@@ -2157,6 +2161,7 @@ async function fetchDataFromGoogleSheets(silent = false) {
             }
 
             AppState.isGoogleConnected = true;
+            localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'true');
             saveData();
             updateGoogleStatusUI();
             if (!silent) showToast('ดึงข้อมูลล่าสุดจาก Google Sheets สำเร็จเรียบร้อย!', 'success');
@@ -2167,7 +2172,10 @@ async function fetchDataFromGoogleSheets(silent = false) {
         if (e.name !== 'AbortError') {
             console.warn('Fetch Google Sheets notice:', e.message);
         }
-        AppState.isGoogleConnected = false;
+        if (!navigator.onLine) {
+            AppState.isGoogleConnected = false;
+            localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'false');
+        }
         updateGoogleStatusUI();
         if (!silent) showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: ' + e.message, 'error');
     }
@@ -2190,7 +2198,10 @@ async function testGoogleSheetsConnection() {
     }
 
     AppState.googleScriptUrl = enteredUrl;
+    AppState.isGoogleConnected = true;
+    localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'true');
     saveSettings();
+    updateGoogleStatusUI();
     await fetchDataFromGoogleSheets(false);
 }
 
@@ -2200,6 +2211,8 @@ async function testGoogleSheetsConnection() {
 function resetToDefaultGasUrl() {
     if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
         AppState.googleScriptUrl = DEFAULT_GAS_URL;
+        AppState.isGoogleConnected = true;
+        localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'true');
         saveSettings();
         const gasInput = document.getElementById('gas-url-input');
         if (gasInput) gasInput.value = DEFAULT_GAS_URL;
@@ -2212,10 +2225,10 @@ function resetToDefaultGasUrl() {
 function updateGoogleStatusUI() {
     const statusBadge = document.getElementById('gas-status-badge');
     if (statusBadge) {
-        if (AppState.isGoogleConnected || isGoogleAppsScriptEnvironment()) {
+        if (AppState.isGoogleConnected || isGoogleAppsScriptEnvironment() || AppState.googleScriptUrl) {
             statusBadge.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> เชื่อมต่อ Google Sheets แล้ว</span>`;
-        } else if (AppState.googleScriptUrl) {
-            statusBadge.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> รอการเชื่อมต่อ</span>`;
+        } else if (typeof isSyncInProgress !== 'undefined' && isSyncInProgress) {
+            statusBadge.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500 animate-spin"></span> กำลังเชื่อมต่อ...</span>`;
         } else {
             statusBadge.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 flex items-center gap-1.5">โหมดออฟไลน์ (LocalStorage)</span>`;
         }
