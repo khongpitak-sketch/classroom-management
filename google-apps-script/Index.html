@@ -1663,6 +1663,10 @@ body {
                             <span>จำนวนคาบตารางเรียน:</span>
                             <span id="settings-total-schedules" class="font-bold text-slate-800">0 คาบ</span>
                         </div>
+                        <div class="flex justify-between pt-1 border-t border-slate-200 text-slate-600">
+                            <span>เวอร์ชันระบบ (System Version):</span>
+                            <span id="settings-system-version" class="font-bold text-amber-700">Version 2.6.0 (Admin Mode)</span>
+                        </div>
                     </div>
 
                     <button onclick="resetData()" class="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 border border-rose-200 transition">
@@ -1676,10 +1680,21 @@ body {
 
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-12 no-print">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div>© 2026 ระบบจัดการห้องเรียน (Classroom Management System)</div>
-            <div class="flex items-center gap-2 font-medium text-slate-600">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span> ระบบพร้อมทำงานบน Web Browser
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 flex-wrap justify-center sm:justify-start">
+                <span class="font-semibold text-slate-700">© 2026 ระบบจัดการห้องเรียน (Classroom Management System)</span>
+                <span class="text-slate-300 hidden sm:inline">•</span>
+                <span id="footer-version-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">
+                    <i data-lucide="tag" class="w-3.5 h-3.5 text-blue-500"></i>
+                    <span id="footer-version-text">Version 2.6.0 (ฝั่งผู้ใช้ User)</span>
+                </span>
+            </div>
+            <div class="flex items-center gap-3 font-medium text-slate-600 flex-wrap justify-center sm:justify-end">
+                <span id="footer-connection-indicator" class="flex items-center gap-1.5 text-emerald-600">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Google Sheets Cloud
+                </span>
+                <span class="text-slate-300">•</span>
+                <span>คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
             </div>
         </div>
     </footer>
@@ -2331,6 +2346,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  */
 
 const DATA_VERSION = "v26_maintenance_equipment_categories";
+const APP_VERSION = "2.6.0";
 
 const DEFAULT_ROOMS = [
     {
@@ -7811,6 +7827,12 @@ function renderSettings() {
     document.getElementById('settings-total-bookings').textContent = `${AppState.bookings.length} รายการ`;
     document.getElementById('settings-total-schedules').textContent = `${AppState.timetable.length} คาบ`;
 
+    const versionEl = document.getElementById('settings-system-version');
+    if (versionEl) {
+        const ver = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '2.6.0';
+        versionEl.textContent = `Version ${ver} (Admin Mode)`;
+    }
+
     const gasInput = document.getElementById('gas-url-input');
     if (gasInput && AppState.googleScriptUrl) {
         gasInput.value = AppState.googleScriptUrl;
@@ -8457,9 +8479,25 @@ function updateAdminHeaderUI() {
         el.classList.toggle('hidden', !AppState.isAdmin);
     });
 
+    updateFooterVersionUI();
     updateAdminPendingBadge();
     updateAdminMaintenanceBadge();
     lucide.createIcons();
+}
+
+function updateFooterVersionUI() {
+    const badgeEl = document.getElementById('footer-version-badge');
+    const ver = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '2.6.0';
+
+    if (badgeEl) {
+        if (AppState.isAdmin) {
+            badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-xs';
+            badgeEl.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-600"></i> <span id="footer-version-text">Version ${ver} (ฝั่งผู้ดูแลระบบ Admin)</span>`;
+        } else {
+            badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs';
+            badgeEl.innerHTML = `<i data-lucide="tag" class="w-3.5 h-3.5 text-blue-500"></i> <span id="footer-version-text">Version ${ver} (ฝั่งผู้ใช้งาน User)</span>`;
+        }
+    }
 }
 
 function rejectBooking(bookingId) {

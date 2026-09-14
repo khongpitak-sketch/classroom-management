@@ -8,6 +8,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  */
 
 const DATA_VERSION = "v26_maintenance_equipment_categories";
+const APP_VERSION = "2.6.0";
 
 const DEFAULT_ROOMS = [
     {

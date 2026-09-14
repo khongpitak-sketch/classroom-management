@@ -2542,6 +2542,12 @@ function renderSettings() {
     document.getElementById('settings-total-bookings').textContent = `${AppState.bookings.length} รายการ`;
     document.getElementById('settings-total-schedules').textContent = `${AppState.timetable.length} คาบ`;
 
+    const versionEl = document.getElementById('settings-system-version');
+    if (versionEl) {
+        const ver = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '2.6.0';
+        versionEl.textContent = `Version ${ver} (Admin Mode)`;
+    }
+
     const gasInput = document.getElementById('gas-url-input');
     if (gasInput && AppState.googleScriptUrl) {
         gasInput.value = AppState.googleScriptUrl;
@@ -3188,9 +3194,25 @@ function updateAdminHeaderUI() {
         el.classList.toggle('hidden', !AppState.isAdmin);
     });
 
+    updateFooterVersionUI();
     updateAdminPendingBadge();
     updateAdminMaintenanceBadge();
     lucide.createIcons();
+}
+
+function updateFooterVersionUI() {
+    const badgeEl = document.getElementById('footer-version-badge');
+    const ver = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '2.6.0';
+
+    if (badgeEl) {
+        if (AppState.isAdmin) {
+            badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-xs';
+            badgeEl.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-600"></i> <span id="footer-version-text">Version ${ver} (ฝั่งผู้ดูแลระบบ Admin)</span>`;
+        } else {
+            badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs';
+            badgeEl.innerHTML = `<i data-lucide="tag" class="w-3.5 h-3.5 text-blue-500"></i> <span id="footer-version-text">Version ${ver} (ฝั่งผู้ใช้งาน User)</span>`;
+        }
+    }
 }
 
 function rejectBooking(bookingId) {
