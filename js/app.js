@@ -704,7 +704,7 @@ function renderTodayActivity() {
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                     <h5 class="font-semibold text-slate-800 text-sm truncate">${room.currentClass.subject}</h5>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-medium ${room.status === 'occupied' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium ${room.status === 'occupied' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-700'}">
                         ${room.status === 'occupied' ? 'กำลังเรียน' : 'จองใช้งาน'}
                     </span>
                 </div>
@@ -784,8 +784,8 @@ function renderRooms() {
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent"></div>
                         
                         <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : room.type === 'meeting_room' ? 'bg-amber-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
-                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม' : '📖 ห้องเรียน'}
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : room.type === 'meeting_room' ? 'bg-pink-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
+                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม / สัมมนา' : '📖 ห้องเรียน'}
                             </span>
                         </div>
                         <div class="absolute top-3 right-3">
@@ -822,10 +822,10 @@ function renderRooms() {
                         </div>
 
                         ${room.currentClass ? `
-                            <div onclick="viewRoomTimetable('${room.id}')" class="p-2.5 rounded-xl bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200/70 text-xs cursor-pointer transition" title="คลิกเพื่อดูตารางห้องนี้">
-                                <div class="font-semibold text-amber-900 flex items-center justify-between">
-                                    <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i> ${room.currentClass.time}</span>
-                                    <span class="text-[10px] bg-amber-200/80 text-amber-900 font-bold px-1.5 py-0.5 rounded">กำลังเรียน (ดูตาราง ↗)</span>
+                            <div onclick="viewRoomTimetable('${room.id}')" class="p-2.5 rounded-xl ${room.status === 'reserved' ? 'bg-pink-50/80 hover:bg-pink-100/80 border border-pink-200/70' : 'bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200/70'} text-xs cursor-pointer transition" title="คลิกเพื่อดูตารางห้องนี้">
+                                <div class="font-semibold ${room.status === 'reserved' ? 'text-pink-900' : 'text-amber-900'} flex items-center justify-between">
+                                    <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5 ${room.status === 'reserved' ? 'text-pink-600' : 'text-amber-600'}"></i> ${room.currentClass.time}</span>
+                                    <span class="text-[10px] ${room.status === 'reserved' ? 'bg-pink-200/80 text-pink-900' : 'bg-amber-200/80 text-amber-900'} font-bold px-1.5 py-0.5 rounded">${room.status === 'reserved' ? 'จองใช้งาน (ดูตาราง ↗)' : 'กำลังเรียน (ดูตาราง ↗)'}</span>
                                 </div>
                                 <div class="font-medium text-slate-800 mt-1 truncate">${room.currentClass.subject}</div>
                                 <div class="text-slate-500 text-[11px] mt-0.5">${room.currentClass.instructor}</div>
@@ -1284,7 +1284,10 @@ function renderBookings() {
 
     listContainer.innerHTML = displayedBookings.map(bk => {
         const strRoomId = String(bk.roomId || '');
-        const dotColor = strRoomId.startsWith('LAB') ? 'bg-indigo-500' : strRoomId.startsWith('CONF') ? 'bg-amber-500' : 'bg-blue-500';
+        const roomObj = AppState.rooms.find(r => r.id === bk.roomId);
+        const isMeeting = strRoomId.startsWith('CONF') || (roomObj && roomObj.type === 'meeting_room');
+        const isLab = strRoomId.startsWith('LAB') || (roomObj && roomObj.type === 'computer_lab');
+        const dotColor = isLab ? 'bg-indigo-500' : isMeeting ? 'bg-pink-500' : 'bg-blue-500';
         return `
         <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs transition">
             <td class="p-3 font-semibold text-slate-500">${bk.id}</td>
@@ -2251,8 +2254,8 @@ function openRoomDetailModal(roomId) {
                 <img src="${room.image || 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60'}" alt="${room.name}" class="w-full h-full object-cover opacity-70">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
                 <div class="absolute top-4 left-4 flex gap-2">
-                    <span class="px-3 py-1 rounded-lg text-xs font-bold ${isLab ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white'} shadow-md">
-                        ${isLab ? '💻 ห้องปฏิบัติการคอมพิวเตอร์' : '📖 ห้องเรียนทั่วไป'}
+                    <span class="px-3 py-1 rounded-lg text-xs font-bold ${isLab ? 'bg-indigo-600 text-white' : room.type === 'meeting_room' ? 'bg-pink-600 text-white' : 'bg-blue-600 text-white'} shadow-md">
+                        ${isLab ? '💻 ห้องปฏิบัติการคอมพิวเตอร์' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม / สัมมนา' : '📖 ห้องเรียนทั่วไป'}
                     </span>
                     ${getStatusBadge(room.status)}
                 </div>
@@ -2751,8 +2754,8 @@ function getStatusBadge(status) {
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> กำลังใช้งาน
             </span>`;
         case 'reserved':
-            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
-                <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> จองแล้ว
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-800 border border-pink-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span> จองแล้ว
             </span>`;
         case 'maintenance':
             return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
@@ -5158,9 +5161,15 @@ function renderFullReportBookingsTable(bookings) {
         if (b.status === 'approved') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>';
         else if (b.status === 'rejected') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">ไม่อนุมัติ</span>';
 
+        const strRoomId = String(b.roomId || '');
+        const rObj = AppState.rooms.find(r => r.id === b.roomId);
+        const isM = strRoomId.startsWith('CONF') || (rObj && rObj.type === 'meeting_room');
+        const isL = strRoomId.startsWith('LAB') || (rObj && rObj.type === 'computer_lab');
+        const dotCol = isL ? 'bg-indigo-500' : isM ? 'bg-pink-500' : 'bg-blue-500';
+
         return `
             <tr class="hover:bg-slate-50 transition">
-                <td class="py-2.5 px-3 font-bold text-slate-900">${b.roomName || b.roomId || '-'}</td>
+                <td class="py-2.5 px-3 font-bold text-slate-900"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${dotCol}"></span><span>${b.roomName || b.roomId || '-'}</span></div></td>
                 <td class="py-2.5 px-3 text-slate-600">${formatThaiDate(b.date)}</td>
                 <td class="py-2.5 px-3 text-slate-600">${b.startTime || ''} - ${b.endTime || ''}</td>
                 <td class="py-2.5 px-3">
