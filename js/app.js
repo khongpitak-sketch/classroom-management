@@ -1650,6 +1650,14 @@ function renderMaintenance() {
                 </div>
                 <div class="font-bold text-slate-800 text-xs">${m.title}</div>
                 <div class="text-slate-500 text-[11px] mt-0.5">${m.details || '-'}</div>
+                ${m.attachment ? `
+                    <div class="mt-1.5">
+                        <button type="button" onclick="viewMaintenanceAttachment('${m.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-semibold transition hover:scale-105 shadow-2xs">
+                            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-rose-500"></i>
+                            <span>ดูรูปภาพ / ไฟล์แนบ</span>
+                        </button>
+                    </div>
+                ` : ''}
             </td>
             <td class="p-3 text-slate-600">
                 <div class="font-medium text-slate-800">${m.reporter}</div>
@@ -1743,6 +1751,10 @@ function handleMaintenanceSubmit(event) {
 
     const room = AppState.rooms.find(r => r.id === roomId);
 
+    const attachment = AppState._tempMaintenanceAttachment ? AppState._tempMaintenanceAttachment.data : null;
+    const attachmentName = AppState._tempMaintenanceAttachment ? AppState._tempMaintenanceAttachment.name : null;
+    const attachmentType = AppState._tempMaintenanceAttachment ? AppState._tempMaintenanceAttachment.type : null;
+
     const newTicket = {
         id: `MNT-${Math.floor(100 + Math.random() * 900)}`,
         roomId: roomId,
@@ -1755,6 +1767,9 @@ function handleMaintenanceSubmit(event) {
         reporter: reporter,
         status: 'open',
         priority: priority,
+        attachment: attachment,
+        attachmentName: attachmentName,
+        attachmentType: attachmentType,
         _localCreatedAt: Date.now()
     };
 
@@ -1767,15 +1782,187 @@ function handleMaintenanceSubmit(event) {
 
     saveData();
     closeModal('modal-maintenance');
+    resetMaintenanceFileInput();
     updateAdminMaintenanceBadge();
     renderCurrentTab();
     broadcastDataChange('ADD_MAINTENANCE', { ticket: newTicket });
     
     // Instant on-screen confirmation for user (no blocking alert/OK button)
-    showToast(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">หมวดหมู่: <b>${catInfo.emoji} ${catInfo.name}</b> • รหัส: <b>${newTicket.id}</b><br>ห้อง: <b>${room ? room.name : roomId}</b> • ปัญหา: <b>${title}</b><br>สถานะ: 🔴 รอดำเนินการ (ส่งข้อมูลถึง Admin ทันทีแล้ว)</span>`, 'success', 5500);
+    showToast(`✅ แจ้งซ่อมอุปกรณ์เรียบร้อยแล้ว!<br><span class="text-[11px] text-slate-300">หมวดหมู่: <b>${catInfo.emoji} ${catInfo.name}</b> • รหัส: <b>${newTicket.id}</b><br>ห้อง: <b>${room ? room.name : roomId}</b> • ปัญหา: <b>${title}</b>${attachmentName ? `<br>📎 แนบไฟล์: <b>${attachmentName}</b>` : ''}<br>สถานะ: 🔴 รอดำเนินการ (ส่งข้อมูลถึง Admin ทันทีแล้ว)</span>`, 'success', 5500);
 
     // Sync to Google Sheets
     sendActionToGoogleBackend('addMaintenance', { ticket: newTicket });
+}
+
+// -------------------------------------------------------------
+// Maintenance File Attachment Handlers
+// -------------------------------------------------------------
+function handleMaintenanceFileSelect(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    // Limit size to 10 MB
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('⚠️ ขนาดไฟล์เกิน 10 MB กรุณาเลือกไฟล์ที่มีขนาดเล็กลง', 'warning');
+        event.target.value = '';
+        return;
+    }
+
+    const fileNameEl = document.getElementById('maintenance-file-name');
+    const fileSizeEl = document.getElementById('maintenance-file-size');
+    const placeholder = document.getElementById('maintenance-upload-placeholder');
+    const previewBox = document.getElementById('maintenance-file-preview-box');
+    const imgPreview = document.getElementById('maintenance-img-preview');
+    const fileIcon = document.getElementById('maintenance-file-icon');
+
+    const formattedSize = file.size < 1024 * 1024 
+        ? `${(file.size / 1024).toFixed(1)} KB` 
+        : `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+    if (fileNameEl) fileNameEl.textContent = file.name;
+    if (fileSizeEl) fileSizeEl.textContent = formattedSize;
+
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                // Client-side canvas compression for rapid sync and storage safety
+                const maxDim = 1000;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+
+                AppState._tempMaintenanceAttachment = {
+                    data: compressedDataUrl,
+                    name: file.name,
+                    type: 'image/jpeg',
+                    size: Math.round(compressedDataUrl.length * 0.75)
+                };
+
+                if (imgPreview) {
+                    imgPreview.src = compressedDataUrl;
+                    imgPreview.classList.remove('hidden');
+                }
+                if (fileIcon) fileIcon.classList.add('hidden');
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Documents / PDF
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            AppState._tempMaintenanceAttachment = {
+                data: e.target.result,
+                name: file.name,
+                type: file.type || 'application/pdf',
+                size: file.size
+            };
+            if (imgPreview) imgPreview.classList.add('hidden');
+            if (fileIcon) fileIcon.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (placeholder) placeholder.classList.add('hidden');
+    if (previewBox) {
+        previewBox.classList.remove('hidden');
+        previewBox.classList.add('flex');
+    }
+}
+
+function removeMaintenanceFile(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    resetMaintenanceFileInput();
+}
+
+function resetMaintenanceFileInput() {
+    AppState._tempMaintenanceAttachment = null;
+    const fileInput = document.getElementById('maintenance-file-input');
+    if (fileInput) fileInput.value = '';
+    const placeholder = document.getElementById('maintenance-upload-placeholder');
+    const previewBox = document.getElementById('maintenance-file-preview-box');
+    const imgPreview = document.getElementById('maintenance-img-preview');
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (previewBox) {
+        previewBox.classList.add('hidden');
+        previewBox.classList.remove('flex');
+    }
+    if (imgPreview) {
+        imgPreview.src = '';
+        imgPreview.classList.add('hidden');
+    }
+}
+
+function viewMaintenanceAttachment(ticketId) {
+    const ticket = AppState.maintenance.find(m => m.id === ticketId);
+    if (!ticket || !ticket.attachment) {
+        showToast('ไม่พบไฟล์แนบของรายการแจ้งซ่อมนี้', 'warning');
+        return;
+    }
+
+    const titleEl = document.getElementById('attachment-viewer-title');
+    const subtitleEl = document.getElementById('attachment-viewer-subtitle');
+    const container = document.getElementById('attachment-viewer-container');
+    const downloadBtn = document.getElementById('attachment-viewer-download');
+
+    if (titleEl) titleEl.innerHTML = `<i data-lucide="image" class="w-5 h-5 text-rose-600 inline"></i> หลักฐานการแจ้งซ่อม: <span class="font-mono text-rose-600">${ticket.id}</span> (${ticket.roomName})`;
+    if (subtitleEl) subtitleEl.textContent = `${ticket.title} • ผู้แจ้ง: ${ticket.reporter} (${formatThaiDate(ticket.reportedDate)})`;
+
+    const isPdf = (ticket.attachmentType && ticket.attachmentType.includes('pdf')) || (ticket.attachmentName && ticket.attachmentName.toLowerCase().endsWith('.pdf'));
+
+    if (isPdf) {
+        container.innerHTML = `
+            <div class="text-center p-8 bg-slate-50 rounded-2xl border border-slate-200">
+                <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-8 h-8"></i>
+                </div>
+                <h5 class="font-bold text-slate-800 text-sm mb-1">${ticket.attachmentName || 'เอกสารแนบ PDF'}</h5>
+                <p class="text-xs text-slate-500 mb-4">ไฟล์เอกสารประกอบการแจ้งซ่อม</p>
+                <a href="${ticket.attachment}" download="${ticket.attachmentName || 'attachment.pdf'}" class="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-rose-700 transition">
+                    <i data-lucide="download" class="w-4 h-4"></i> ดาวน์โหลด / เปิดเอกสาร
+                </a>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="relative max-h-[70vh] overflow-hidden rounded-2xl bg-slate-950 flex items-center justify-center border border-slate-800 p-2">
+                <img src="${ticket.attachment}" alt="หลักฐานแจ้งซ่อม" class="max-h-[66vh] w-auto max-w-full object-contain rounded-xl shadow-2xl">
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 mt-2 px-1">
+                <span>ชื่อไฟล์: <b class="text-slate-700">${ticket.attachmentName || 'ภาพถ่ายอาการเสีย.jpg'}</b></span>
+                <a href="${ticket.attachment}" download="${ticket.attachmentName || 'maintenance-photo.jpg'}" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> ดาวน์โหลดรูปภาพ
+                </a>
+            </div>
+        `;
+    }
+
+    if (downloadBtn) {
+        downloadBtn.href = ticket.attachment;
+        downloadBtn.download = ticket.attachmentName || 'attachment';
+    }
+
+    openModal('modal-attachment-viewer');
+    lucide.createIcons();
 }
 
 function resolveMaintenance(ticketId) {
@@ -2460,6 +2647,7 @@ function openMaintenanceModalForRoom(roomId) {
     if (titleInput) titleInput.value = '';
     const detailsInput = document.querySelector('#modal-maintenance textarea[name="details"]');
     if (detailsInput) detailsInput.value = '';
+    resetMaintenanceFileInput();
 
     openModal('modal-maintenance');
     lucide.createIcons();
@@ -2739,6 +2927,10 @@ function closeModal(modalId) {
             if (submitBtn.dataset.originalText) {
                 submitBtn.innerHTML = submitBtn.dataset.originalText;
             }
+        }
+
+        if (modalId === 'modal-maintenance') {
+            resetMaintenanceFileInput();
         }
     }
 }
@@ -4962,6 +5154,7 @@ function renderReportRecentTables(bookings, maintenance) {
                         <td class="py-2">
                             <div class="font-bold text-slate-800">${m.roomName || m.roomId || '-'}</div>
                             <div class="text-[10px] text-slate-500 truncate max-w-[140px]">${m.title || ''}</div>
+                            ${m.attachment ? `<button onclick="viewMaintenanceAttachment('${m.id}')" class="inline-flex items-center gap-1 text-[9.5px] font-semibold text-rose-600 hover:underline"><i data-lucide="paperclip" class="w-2.5 h-2.5"></i> แนบไฟล์</button>` : ''}
                         </td>
                         <td class="py-2 text-slate-600">${formatThaiDate(m.reportedDate)}</td>
                         <td class="py-2 text-right">${stBadge}</td>
@@ -4970,6 +5163,7 @@ function renderReportRecentTables(bookings, maintenance) {
             }).join('');
         }
     }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 /**
@@ -5229,6 +5423,13 @@ function renderFullReportMaintenanceTable(tickets) {
                 <td class="py-2.5 px-3 max-w-[220px]">
                     <div class="font-medium text-slate-800 truncate">${m.title || '-'}</div>
                     <div class="text-[10px] text-slate-400 truncate">${m.details || ''}</div>
+                    ${m.attachment ? `
+                        <div class="mt-1">
+                            <button onclick="viewMaintenanceAttachment('${m.id}')" class="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-600 hover:text-rose-700 hover:underline">
+                                <i data-lucide="paperclip" class="w-3 h-3"></i> ดูไฟล์แนบ
+                            </button>
+                        </div>
+                    ` : ''}
                 </td>
                 <td class="py-2.5 px-3 text-slate-600">${formatThaiDate(m.reportedDate)}</td>
                 <td class="py-2.5 px-3 text-center">
@@ -5238,4 +5439,5 @@ function renderFullReportMaintenanceTable(tickets) {
             </tr>
         `;
     }).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
