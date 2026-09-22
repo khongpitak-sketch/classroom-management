@@ -268,6 +268,12 @@ body {
                         <div id="current-date-display" class="text-[11px] text-slate-400">วันพุธที่ 9 ก.ย. 2569</div>
                     </div>
                     
+                    <!-- Car Reservation System External Link -->
+                    <a href="https://car-git-main-khongpitak-6338.vercel.app/index.php" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 hover:text-white border border-emerald-500/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs hover:scale-[1.02] active:scale-[0.98]" title="ระบบขออนุญาตใช้รถยนต์ (v2.0) - คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์">
+                        <i data-lucide="car" class="w-4 h-4 text-emerald-400"></i>
+                        <span>ขอใช้รถยนต์ ↗</span>
+                    </a>
+
                     <!-- Admin Portal Status / Login -->
                     <div id="admin-header-status">
                         <button onclick="openAdminLoginModal()" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
@@ -305,6 +311,9 @@ body {
             <button onclick="switchTab('reports')" data-tab="reports" class="mobile-nav-link admin-only-nav hidden relative p-2 text-slate-400 flex flex-col items-center gap-1">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> <span>รายงาน</span>
             </button>
+            <a href="https://car-git-main-khongpitak-6338.vercel.app/index.php" target="_blank" rel="noopener noreferrer" class="mobile-nav-link shrink-0 p-2 text-emerald-400 hover:text-emerald-300 flex flex-col items-center gap-1" title="ระบบขออนุญาตใช้รถยนต์ (v2.0)">
+                <i data-lucide="car" class="w-4 h-4 text-emerald-400"></i> <span>ขอใช้รถ ↗</span>
+            </a>
         </div>
     </header>
 
@@ -335,6 +344,9 @@ body {
                         <button onclick="openBookingModalForRoom('')" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow transition">
                             <i data-lucide="plus" class="w-4 h-4"></i> จองห้องเรียน
                         </button>
+                        <a href="https://car-git-main-khongpitak-6338.vercel.app/index.php" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow transition border border-emerald-400/40 hover:scale-[1.02]" title="ระบบขออนุญาตใช้รถยนต์ (v2.0) - คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์">
+                            <i data-lucide="car" class="w-4 h-4 text-emerald-200"></i> ขอใช้รถยนต์ (v2.0) ↗
+                        </a>
                         <button onclick="openModal('modal-add-room')" class="admin-only-action hidden px-4 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-bold flex items-center gap-2 border border-slate-700 transition">
                             <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> เพิ่มห้องใหม่
                         </button>
@@ -550,6 +562,29 @@ body {
                 <div id="dash-today-activity" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     <!-- Populated by JS -->
                 </div>
+            </div>
+
+            <!-- Related University Services Banner -->
+            <div class="bg-gradient-to-r from-emerald-900 via-teal-950 to-slate-900 rounded-2xl p-5 border border-emerald-700/40 shadow-lg text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner">
+                        <i data-lucide="car" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/30 text-emerald-300 border border-emerald-400/30">
+                                บริการคณะวิทยาการจัดการ
+                            </span>
+                            <span class="text-[11px] text-emerald-400/90 font-medium">Version 2.0</span>
+                        </div>
+                        <h4 class="font-bold text-white text-base mt-1">ระบบขออนุญาตใช้รถยนต์ (v2.0)</h4>
+                        <p class="text-xs text-slate-300 mt-0.5">บริการขอใช้ยานพาหนะส่วนกลาง ติดตามคำขอ และตรวจสอบสถานะรถ คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</p>
+                    </div>
+                </div>
+                <a href="https://car-git-main-khongpitak-6338.vercel.app/index.php" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition shrink-0 hover:scale-[1.02] active:scale-[0.98]">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    <span>เข้าสู่ระบบขอใช้รถยนต์ ↗</span>
+                </a>
             </div>
         </section>
 
@@ -1644,6 +1679,32 @@ body {
                     </div>
                 </div>
 
+                <!-- Related Faculty Systems Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <i data-lucide="external-link" class="w-5 h-5 text-emerald-600"></i> ลิงก์ระบบงานที่เกี่ยวข้อง (Faculty Systems)
+                    </h4>
+                    <p class="text-xs text-slate-500">ทางลัดเข้าสู่ระบบงานสารสนเทศอื่น ๆ ของคณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</p>
+
+                    <div class="pt-2">
+                        <a href="https://car-git-main-khongpitak-6338.vercel.app/index.php" target="_blank" rel="noopener noreferrer" class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-200 rounded-xl flex items-center justify-between transition group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                                    <i data-lucide="car" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900 group-hover:text-emerald-800 flex items-center gap-1.5">
+                                        ระบบขออนุญาตใช้รถยนต์ (v2.0)
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-800 font-bold">Vercel</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</div>
+                                </div>
+                            </div>
+                            <i data-lucide="arrow-up-right" class="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Reset / System Info Card -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -1688,6 +1749,11 @@ body {
                     <i data-lucide="tag" class="w-3.5 h-3.5 text-blue-500"></i>
                     <span id="footer-version-text">Version 2.6.0 (ฝั่งผู้ใช้ User)</span>
                 </span>
+                <span class="text-slate-300 hidden sm:inline">•</span>
+                <a href="https://car-git-main-khongpitak-6338.vercel.app/index.php" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-semibold hover:underline" title="ระบบขออนุญาตใช้รถยนต์ (v2.0) - คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์">
+                    <i data-lucide="car" class="w-3.5 h-3.5"></i>
+                    <span>ระบบขออนุญาตใช้รถยนต์ (v2.0) ↗</span>
+                </a>
             </div>
             <div class="flex items-center gap-3 font-medium text-slate-600 flex-wrap justify-center sm:justify-end">
                 <span id="footer-connection-indicator" class="flex items-center gap-1.5 text-emerald-600">
