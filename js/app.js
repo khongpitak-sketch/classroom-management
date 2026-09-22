@@ -3168,22 +3168,22 @@ function updateAdminHeaderUI() {
     if (adminContainer) {
         if (AppState.isAdmin) {
             adminContainer.innerHTML = `
-                <div class="flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 rounded-xl shadow-xs">
-                    <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 px-2.5 py-1.5 rounded-xl shadow-xs whitespace-nowrap">
+                    <span class="text-xs font-bold text-amber-300 flex items-center gap-1" title="เข้าสู่ระบบในฐานะ Admin">
                         <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
-                        <span>Admin Mode</span>
+                        <span>Admin</span>
                     </span>
                     <span id="admin-pending-count-badge" class="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
-                    <button onclick="logoutAdmin()" class="text-[11px] text-slate-300 hover:text-white underline ml-1">
+                    <button onclick="logoutAdmin()" class="text-[11px] text-slate-300 hover:text-rose-300 ml-1 font-medium underline" title="ออกจากระบบ Admin">
                         ออก
                     </button>
                 </div>
             `;
         } else {
             adminContainer.innerHTML = `
-                <button onclick="openAdminLoginModal()" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
-                    <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-400"></i>
-                    <span>สำหรับ Admin</span>
+                <button onclick="openAdminLoginModal()" class="relative group p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition border border-slate-700 flex items-center justify-center hover:scale-105 active:scale-95" title="สำหรับ Admin">
+                    <i data-lucide="shield" class="w-5 h-5 text-blue-400"></i>
+                    <span class="nav-tooltip">เข้าสู่ระบบสำหรับ Admin</span>
                 </button>
             `;
         }
