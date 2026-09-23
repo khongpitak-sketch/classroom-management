@@ -196,6 +196,9 @@ function handleApiGet(params) {
     } else if (action === 'deleteRoom') {
       responseData = apiDeleteRoom(params.id);
       if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'updateRoomStatus') {
+      responseData = apiUpdateRoomStatus(params.id, params.status, params.currentClass);
+      if (responseData.success) responseData.data = apiGetData();
     } else if (action === 'addTimetable') {
       let item = {};
       if (params.item) item = typeof params.item === 'string' ? JSON.parse(params.item) : params.item;
@@ -503,12 +506,14 @@ function apiResolveMaintenance(ticketId) {
   try {
     const ss = getDb();
     let resolved = false;
+    let targetRoomId = null;
     const sheet = ss.getSheetByName(SHEET_MAINTENANCE);
     if (sheet) {
       const data = sheet.getDataRange().getValues();
       for (let i = 1; i < data.length; i++) {
         if (data[i][0] == ticketId) {
           sheet.getRange(i + 1, 9).setValue("completed");
+          targetRoomId = String(data[i][1] || '').trim();
           resolved = true;
           break;
         }
@@ -522,9 +527,30 @@ function apiResolveMaintenance(ticketId) {
       for (let j = 1; j < bkData.length; j++) {
         if (bkData[j][0] == ticketId) {
           bkSheet.getRange(j + 1, 9).setValue("completed");
+          if (!targetRoomId) targetRoomId = String(bkData[j][1] || '').trim();
           resolved = true;
           break;
         }
+      }
+    }
+
+    // Update Room status to available if no other active maintenance tickets exist
+    if (targetRoomId) {
+      let hasOtherOpen = false;
+      if (sheet) {
+        const mntData = sheet.getDataRange().getValues();
+        for (let i = 1; i < mntData.length; i++) {
+          const rId = String(mntData[i][1] || '').trim();
+          const tId = String(mntData[i][0] || '').trim();
+          const st = String(mntData[i][8] || '').trim().toLowerCase();
+          if (tId != ticketId && rId == targetRoomId && st != "completed") {
+            hasOtherOpen = true;
+            break;
+          }
+        }
+      }
+      if (!hasOtherOpen) {
+        apiUpdateRoomStatus(targetRoomId, "available", null);
       }
     }
 
@@ -574,10 +600,14 @@ function apiUpdateRoomStatus(roomId, status, currentClass) {
   try {
     const ss = getDb();
     const sheet = ss.getSheetByName(SHEET_ROOMS);
+    if (!sheet) return { success: false, message: "Sheet not found" };
     const data = sheet.getDataRange().getValues();
+    const target = String(roomId || '').trim().toLowerCase();
 
     for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == roomId) {
+      const rId = String(data[i][0] || '').trim().toLowerCase();
+      const rName = String(data[i][1] || '').trim().toLowerCase();
+      if (rId == target || rName == target || rName.indexOf(target) !== -1 || (target && target.indexOf(rId) !== -1)) {
         sheet.getRange(i + 1, 9).setValue(status);
         if (currentClass !== undefined) {
           sheet.getRange(i + 1, 15).setValue(currentClass ? JSON.stringify(currentClass) : "");

@@ -180,37 +180,64 @@ if (syncChannel) {
                 break;
             case 'DELETE_MAINTENANCE':
                 if (data.id) addDeletedMaintenanceId(data.id);
+                const delTicket = AppState.maintenance.find(m => m.id === data.id);
                 AppState.maintenance = AppState.maintenance.filter(m => m.id !== data.id);
-                if (data.roomId) {
-                    const room = AppState.rooms.find(r => r.id === data.roomId);
-                    if (room && room.status === 'maintenance') {
-                        const hasOther = AppState.maintenance.some(m => m.roomId === data.roomId && m.status !== 'completed');
-                        if (!hasOther) room.status = 'available';
+                const delRoom = (data.roomId ? AppState.rooms.find(r => r.id === data.roomId || r.code === data.roomId) : null) || (delTicket ? findRoomForTicket(delTicket) : null);
+                if (delRoom && delRoom.status === 'maintenance') {
+                    const hasOther = AppState.maintenance.some(m => isTicketForRoom(m, delRoom) && m.status !== 'completed');
+                    if (!hasOther) {
+                        delRoom.status = 'available';
+                        delRoom.currentClass = null;
                     }
                 }
+                syncRoomStatusWithTimetable();
                 saveData();
                 updateAdminMaintenanceBadge();
                 renderCurrentTab();
+                renderRooms();
                 if (!AppState.isAdmin) {
                     showToast(`🗑️ รายการแจ้งซ่อม ${data.id} ถูกลบโดยผู้ดูแลระบบแล้ว`, 'info', 4000);
                 }
                 break;
             case 'RESOLVE_MAINTENANCE':
-                const rm = AppState.maintenance.find(m => m.id === data.id);
-                if (rm) {
-                    rm.status = 'completed';
-                    if (data.roomId) {
-                        const room = AppState.rooms.find(r => r.id === data.roomId);
-                        if (room && room.status === 'maintenance') {
-                            const hasOther = AppState.maintenance.some(m => m.roomId === data.roomId && m.status !== 'completed');
-                            if (!hasOther) room.status = 'available';
-                        }
+                let resTicket = AppState.maintenance.find(m => m.id === data.id);
+                if (resTicket) {
+                    resTicket.status = 'completed';
+                    if (data.notes) resTicket.resolutionNotes = data.notes;
+                    if (!resTicket.resolvedDate) resTicket.resolvedDate = new Date().toISOString().slice(0, 10);
+                }
+                const resRoom = (data.roomId ? AppState.rooms.find(r => r.id === data.roomId || r.code === data.roomId) : null) || (resTicket ? findRoomForTicket(resTicket) : null);
+                if (resRoom) {
+                    const hasOther = AppState.maintenance.some(m => 
+                        m.id !== data.id && 
+                        m.status !== 'completed' && 
+                        isTicketForRoom(m, resRoom)
+                    );
+                    if (!hasOther) {
+                        resRoom.status = 'available';
+                        resRoom.currentClass = null;
                     }
-                    saveData();
-                    updateAdminMaintenanceBadge();
-                    renderCurrentTab();
-                    if (!AppState.isAdmin) {
-                        showToast(`🔧 รายการแจ้งซ่อม ${rm.id} (${rm.roomName || ''}) ได้รับการซ่อมเสร็จสิ้นแล้ว!`, 'success', 6000);
+                }
+                syncRoomStatusWithTimetable();
+                saveData();
+                updateAdminMaintenanceBadge();
+                renderCurrentTab();
+                renderRooms();
+                if (!AppState.isAdmin) {
+                    const roomTitle = resRoom ? resRoom.name : (resTicket ? resTicket.roomName : 'ห้องเรียน');
+                    showToast(`🔧 ห้อง <b>${roomTitle}</b> ได้รับการซ่อมเสร็จสิ้นแล้ว! ปรับสถานะกลับมาเป็นพร้อมใช้งานเรียบร้อยแล้ว`, 'success', 6000);
+                }
+                break;
+            case 'UPDATE_ROOM_STATUS':
+                if (data.id && data.status) {
+                    const targetR = AppState.rooms.find(r => r.id === data.id || r.code === data.id);
+                    if (targetR) {
+                        targetR.status = data.status;
+                        if (data.status === 'available') targetR.currentClass = null;
+                        syncRoomStatusWithTimetable();
+                        saveData();
+                        renderCurrentTab();
+                        renderRooms();
                     }
                 }
                 break;
@@ -654,6 +681,10 @@ function renderDashboard() {
                     ${lab.currentClass ? `
                     <div class="pt-1.5 mt-1.5 border-t border-slate-200 text-blue-700 font-medium">
                         <i data-lucide="book-open" class="w-3.5 h-3.5 inline mr-1"></i> ${lab.currentClass.subject}
+                    </div>
+                    ` : lab.status === 'maintenance' ? `
+                    <div class="pt-1.5 mt-1.5 border-t border-slate-200 text-rose-600 font-medium">
+                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline mr-1"></i> ปิดปรับปรุง / ซ่อมบำรุง
                     </div>
                     ` : `
                     <div class="pt-1.5 mt-1.5 border-t border-slate-200 text-emerald-600 font-medium">
@@ -1676,7 +1707,7 @@ function renderMaintenance() {
                 <div class="flex items-center justify-end gap-1.5">
                     ${AppState.isAdmin ? `
                         ${m.status !== 'completed' ? `
-                            <button onclick="resolveMaintenance('${m.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1 shadow-2xs" title="บันทึกว่าซ่อมเสร็จแล้ว">
+                            <button onclick="resolveMaintenance('${m.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1 shadow-2xs" title="บันทึกว่าซ่อมเสร็จแล้วและปรับห้องพร้อมใช้งาน">
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i> ซ่อมเสร็จ
                             </button>
                         ` : `
@@ -1684,6 +1715,9 @@ function renderMaintenance() {
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i> เรียบร้อย
                             </span>
                         `}
+                        <button onclick="openEditMaintenanceModal('${m.id}')" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="แก้ไขข้อมูลการซ่อม (เฉพาะ Admin)">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
                         <button onclick="deleteMaintenance('${m.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="ลบรายการแจ้งซ่อม (เฉพาะ Admin)">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
@@ -1707,21 +1741,23 @@ function deleteMaintenance(ticketId) {
     if (confirm(`คุณต้องการลบรายการแจ้งซ่อม ${ticketId} หรือไม่?\n(ข้อมูลจะถูกลบออกจากทั้งฝั่ง Admin และฝั่งผู้ใช้งานทันที)`)) {
         addDeletedMaintenanceId(ticketId);
         const ticket = AppState.maintenance.find(m => m.id === ticketId);
-        const roomId = ticket ? ticket.roomId : null;
+        const room = findRoomForTicket(ticket);
         AppState.maintenance = AppState.maintenance.filter(m => m.id !== ticketId);
-        if (roomId) {
-            const room = AppState.rooms.find(r => r.id === roomId);
-            if (room && room.status === 'maintenance') {
-                const hasOther = AppState.maintenance.some(m => m.roomId === roomId && m.status !== 'completed');
-                if (!hasOther) room.status = 'available';
+        if (room && room.status === 'maintenance') {
+            const hasOther = AppState.maintenance.some(m => isTicketForRoom(m, room) && m.status !== 'completed');
+            if (!hasOther) {
+                room.status = 'available';
+                room.currentClass = null;
+                sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'available' });
             }
         }
+        syncRoomStatusWithTimetable();
         saveData();
         renderMaintenance();
         renderRooms();
         updateAdminMaintenanceBadge();
         showToast(`ลบรายการแจ้งซ่อม ${ticketId} เรียบร้อยแล้ว (ข้อมูลฝั่งผู้ใช้ถูกอัปเดตแล้ว)`, 'success');
-        broadcastDataChange('DELETE_MAINTENANCE', { id: ticketId, roomId: roomId });
+        broadcastDataChange('DELETE_MAINTENANCE', { id: ticketId, roomId: room ? room.id : (ticket ? ticket.roomId : null) });
         sendActionToGoogleBackend('deleteMaintenance', { id: ticketId });
         sendActionToGoogleBackend('cancelBooking', { id: ticketId });
     }
@@ -1965,30 +2001,189 @@ function viewMaintenanceAttachment(ticketId) {
     lucide.createIcons();
 }
 
+// -------------------------------------------------------------
+// MAINTENANCE ROOM MATCHING & RESOLUTION HELPERS
+// -------------------------------------------------------------
+function findRoomForTicket(ticket) {
+    if (!ticket) return null;
+    const tId = String(ticket.roomId || '').trim().toLowerCase();
+    const tName = String(ticket.roomName || '').trim().toLowerCase();
+    return (AppState.rooms || []).find(r => {
+        const rId = String(r.id || '').trim().toLowerCase();
+        const rCode = String(r.code || '').trim().toLowerCase();
+        const rName = String(r.name || '').trim().toLowerCase();
+        return (tId && (rId === tId || rCode === tId)) ||
+               (tName && (rName === tName || rName.includes(tName) || (rCode && tName.includes(rCode))));
+    }) || null;
+}
+
+function isTicketForRoom(ticket, room) {
+    if (!ticket || !room) return false;
+    const tId = String(ticket.roomId || '').trim().toLowerCase();
+    const tName = String(ticket.roomName || '').trim().toLowerCase();
+    const rId = String(room.id || '').trim().toLowerCase();
+    const rCode = String(room.code || '').trim().toLowerCase();
+    const rName = String(room.name || '').trim().toLowerCase();
+    return (tId && (tId === rId || tId === rCode)) ||
+           (tName && (tName === rName || rName.includes(tName) || (rCode && tName.includes(rCode))));
+}
+
 function resolveMaintenance(ticketId) {
     if (!AppState.isAdmin) {
         showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
         return;
     }
     const ticket = AppState.maintenance.find(m => m.id === ticketId);
-    if (ticket) {
-        ticket.status = 'completed';
-        const room = AppState.rooms.find(r => r.id === ticket.roomId);
-        if (room && room.status === 'maintenance') {
-            const hasOtherActive = AppState.maintenance.some(m => m.roomId === ticket.roomId && m.id !== ticketId && m.status !== 'completed');
-            if (!hasOtherActive) {
-                room.status = 'available';
-                sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'available' });
-            }
+    if (!ticket) return;
+
+    ticket.status = 'completed';
+    ticket.resolvedDate = new Date().toISOString().slice(0, 10);
+
+    const room = findRoomForTicket(ticket);
+    let roomUpdatedToAvailable = false;
+
+    if (room) {
+        const hasOtherActive = AppState.maintenance.some(m => 
+            m.id !== ticketId && 
+            m.status !== 'completed' && 
+            isTicketForRoom(m, room)
+        );
+        if (!hasOtherActive) {
+            room.status = 'available';
+            room.currentClass = null;
+            roomUpdatedToAvailable = true;
+            sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'available' });
         }
+    }
 
-        saveData();
-        updateAdminMaintenanceBadge();
-        renderCurrentTab();
-        showToast(`✅ ยืนยันการซ่อมรหัส ${ticketId} เสร็จสิ้นเรียบร้อย (อัปเดตสถานะห้องพร้อมใช้งานและแจ้งผู้ใช้ทันที)`, 'success', 5000);
-        broadcastDataChange('RESOLVE_MAINTENANCE', { id: ticketId, roomId: ticket ? ticket.roomId : null });
+    syncRoomStatusWithTimetable();
+    saveData();
+    updateAdminMaintenanceBadge();
+    renderCurrentTab();
+    renderRooms();
 
-        // Sync to Google Sheets (Central Cloud Database)
+    const toastMsg = roomUpdatedToAvailable && room
+        ? `✅ บันทึกการซ่อมรหัส ${ticketId} เสร็จสิ้น! ปรับห้อง <b>${room.name}</b> กลับมาเป็น "ห้องพร้อมใช้งาน" เรียบร้อยแล้ว`
+        : `✅ บันทึกการซ่อมรหัส ${ticketId} เสร็จสิ้นเรียบร้อย`;
+    showToast(toastMsg, 'success', 5000);
+
+    broadcastDataChange('RESOLVE_MAINTENANCE', { 
+        id: ticketId, 
+        roomId: room ? room.id : ticket.roomId,
+        roomName: room ? room.name : ticket.roomName,
+        status: 'available'
+    });
+
+    // Sync to Google Sheets (Central Cloud Database)
+    sendActionToGoogleBackend('resolveMaintenance', { id: ticketId, status: 'completed' });
+    if (roomUpdatedToAvailable && room) {
+        sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'available' });
+    }
+}
+
+function openEditMaintenanceModal(ticketId) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const ticket = AppState.maintenance.find(m => m.id === ticketId);
+    if (!ticket) {
+        showToast('ไม่พบรายการแจ้งซ่อมนี้', 'warning');
+        return;
+    }
+
+    const room = findRoomForTicket(ticket);
+
+    const form = document.getElementById('form-edit-maintenance');
+    if (!form) return;
+
+    document.getElementById('edit-mnt-id').value = ticket.id;
+    document.getElementById('edit-mnt-roomId').value = ticket.roomId || (room ? room.id : '');
+    document.getElementById('edit-mnt-display-id').textContent = ticket.id;
+    document.getElementById('edit-mnt-display-room').textContent = ticket.roomName || (room ? room.name : ticket.roomId);
+    document.getElementById('edit-mnt-display-reporter').textContent = `${ticket.reporter || 'ผู้ใช้งาน'} (${formatThaiDate(ticket.reportedDate)})`;
+
+    document.getElementById('edit-mnt-status').value = ticket.status || 'open';
+    document.getElementById('edit-mnt-priority').value = ticket.priority || 'medium';
+    document.getElementById('edit-mnt-title').value = ticket.title || '';
+    document.getElementById('edit-mnt-details').value = ticket.details || '';
+    document.getElementById('edit-mnt-resolution').value = ticket.resolutionNotes || '';
+    document.getElementById('edit-mnt-auto-available').checked = true;
+
+    openModal('modal-edit-maintenance');
+    lucide.createIcons();
+}
+
+function handleEditMaintenanceSubmit(event) {
+    event.preventDefault();
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const form = event.target;
+    const ticketId = form.id.value;
+    const ticket = AppState.maintenance.find(m => m.id === ticketId);
+    if (!ticket) return;
+
+    const newStatus = form.status.value;
+    const newPriority = form.priority.value;
+    const newTitle = form.title.value.trim();
+    const newDetails = form.details.value.trim();
+    const resolutionNotes = form.resolutionNotes.value.trim();
+    const autoAvailable = form.autoAvailable.checked;
+
+    ticket.status = newStatus;
+    ticket.priority = newPriority;
+    ticket.title = newTitle;
+    ticket.details = newDetails;
+    ticket.resolutionNotes = resolutionNotes;
+    if (newStatus === 'completed' && !ticket.resolvedDate) {
+        ticket.resolvedDate = new Date().toISOString().slice(0, 10);
+    }
+
+    const room = findRoomForTicket(ticket);
+    let roomStatusChanged = false;
+
+    if (newStatus === 'completed' && autoAvailable && room) {
+        const hasOtherActive = AppState.maintenance.some(m => 
+            m.id !== ticketId && 
+            m.status !== 'completed' && 
+            isTicketForRoom(m, room)
+        );
+        if (!hasOtherActive) {
+            room.status = 'available';
+            room.currentClass = null;
+            roomStatusChanged = true;
+            sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'available' });
+        }
+    } else if ((newStatus === 'open' || newStatus === 'in_progress') && room) {
+        room.status = 'maintenance';
+        room.currentClass = null;
+        roomStatusChanged = true;
+        sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'maintenance' });
+    }
+
+    syncRoomStatusWithTimetable();
+    saveData();
+    closeModal('modal-edit-maintenance');
+    updateAdminMaintenanceBadge();
+    renderCurrentTab();
+    renderRooms();
+
+    const toastMsg = (newStatus === 'completed' && roomStatusChanged && room)
+        ? `✅ อัปเดตงานซ่อมเรียบร้อย! ปรับห้อง <b>${room.name}</b> กลับมาเป็น "ห้องพร้อมใช้งาน" แล้ว`
+        : `✅ บันทึกการแก้ไขงานซ่อม ${ticketId} เรียบร้อยแล้ว`;
+    showToast(toastMsg, 'success', 5000);
+
+    broadcastDataChange('RESOLVE_MAINTENANCE', { 
+        id: ticketId, 
+        roomId: room ? room.id : ticket.roomId,
+        roomName: room ? room.name : ticket.roomName,
+        status: (newStatus === 'completed' && roomStatusChanged) ? 'available' : newStatus,
+        notes: resolutionNotes
+    });
+
+    if (newStatus === 'completed') {
         sendActionToGoogleBackend('resolveMaintenance', { id: ticketId, status: 'completed' });
     }
 }
@@ -3198,15 +3393,21 @@ function syncRoomStatusWithTimetable() {
     const dateStr = now.toISOString().split('T')[0];
 
     // Find rooms with active maintenance
-    const activeMaintenanceRoomIds = new Set(
-        (AppState.maintenance || [])
-            .filter(m => m.status === 'open' || m.status === 'in_progress')
-            .map(m => m.roomId)
-    );
+    const activeMaintenanceRoomIds = new Set();
+    (AppState.maintenance || []).forEach(m => {
+        if (m.status === 'open' || m.status === 'in_progress') {
+            const r = findRoomForTicket(m);
+            if (r) {
+                activeMaintenanceRoomIds.add(r.id);
+            } else if (m.roomId) {
+                activeMaintenanceRoomIds.add(m.roomId);
+            }
+        }
+    });
 
     AppState.rooms.forEach(room => {
         // Priority 1: Maintenance
-        if (activeMaintenanceRoomIds.has(room.id)) {
+        if (activeMaintenanceRoomIds.has(room.id) || (room.code && activeMaintenanceRoomIds.has(room.code))) {
             room.status = 'maintenance';
             room.currentClass = null;
             return;
@@ -3585,22 +3786,34 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
     if (mntChanged) {
         AppState.maintenance = nextMaintenance;
         updateAdminMaintenanceBadge();
-
-        // Check if any rooms were in maintenance but all tickets are now completed or deleted
-        AppState.rooms.forEach(r => {
-            if (r.status === 'maintenance') {
-                const hasOpen = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
-                if (!hasOpen) {
-                    r.status = 'available';
-                }
-            }
-        });
-
         saveData();
         if (!isAnyModalOpen()) {
             if (AppState.currentTab === 'maintenance' || AppState.currentTab === 'dashboard') {
                 renderCurrentTab();
             }
+        }
+    }
+
+    // Always ensure rooms without active maintenance are NOT left stuck in 'maintenance'
+    let roomsStatusFixed = false;
+    AppState.rooms.forEach(r => {
+        if (r.status === 'maintenance') {
+            const hasOpen = (AppState.maintenance || []).some(m => isTicketForRoom(m, r) && m.status !== 'completed');
+            if (!hasOpen) {
+                r.status = 'available';
+                r.currentClass = null;
+                roomsStatusFixed = true;
+                sendActionToGoogleBackend('updateRoomStatus', { id: r.id, status: 'available' });
+            }
+        }
+    });
+
+    if (roomsStatusFixed) {
+        syncRoomStatusWithTimetable();
+        saveData();
+        if (!isAnyModalOpen()) {
+            renderCurrentTab();
+            renderRooms();
         }
     }
 
@@ -3909,7 +4122,9 @@ function handleEditRoomSubmit(event) {
     room.building = form.building.value.trim();
     room.capacity = parseInt(form.capacity.value) || 40;
     room.pcCount = parseInt(form.pcCount.value) || 0;
-    room.status = form.status.value;
+    const prevStatus = room.status;
+    const newStatus = form.status.value;
+    room.status = newStatus;
     room.description = form.description.value.trim();
     room.image = form.image.value.trim() || room.image;
     room.facilities = facilitiesArr;
@@ -3924,11 +4139,39 @@ function handleEditRoomSubmit(event) {
         room.software = softwareArr;
     }
 
+    // If Admin explicitly set room status to 'available', auto-resolve any pending maintenance for this room
+    let resolvedCount = 0;
+    if (newStatus === 'available') {
+        room.currentClass = null;
+        (AppState.maintenance || []).forEach(m => {
+            if (isTicketForRoom(m, room) && m.status !== 'completed') {
+                m.status = 'completed';
+                m.resolvedDate = new Date().toISOString().slice(0, 10);
+                resolvedCount++;
+                sendActionToGoogleBackend('resolveMaintenance', { id: m.id, status: 'completed' });
+            }
+        });
+        if (resolvedCount > 0) {
+            updateAdminMaintenanceBadge();
+        }
+    } else if (newStatus === 'maintenance') {
+        room.currentClass = null;
+    }
+
+    syncRoomStatusWithTimetable();
     saveData();
     closeModal('modal-edit-room');
     renderRooms();
-    showToast(`อัปเดตข้อมูล ${room.name} สำเร็จ!`, 'success');
+    renderCurrentTab();
+
+    const toastMsg = (newStatus === 'available' && resolvedCount > 0)
+        ? `อัปเดตข้อมูล ${room.name} สำเร็จ! (ปรับเป็นห้องพร้อมใช้งาน และปิดงานซ่อมที่ค้างอยู่ ${resolvedCount} รายการ)`
+        : `อัปเดตข้อมูล ${room.name} สำเร็จ!`;
+    showToast(toastMsg, 'success');
+
+    broadcastDataChange('UPDATE_ROOM_STATUS', { id: room.id, status: newStatus });
     sendActionToGoogleBackend('updateRoom', { room: room });
+    sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: newStatus });
 }
 
 function deleteRoom(roomId) {
