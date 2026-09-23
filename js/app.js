@@ -426,15 +426,23 @@ function loadData() {
         }
         if (Array.isArray(AppState.maintenance)) {
             AppState.maintenance = AppState.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
+            // Ensure MNT-201 (FMS201) is completed
+            const mnt201 = AppState.maintenance.find(m => m.id === 'MNT-201');
+            if (mnt201 && mnt201.status !== 'completed') {
+                mnt201.status = 'completed';
+                mnt201.resolvedDate = '2026-09-11';
+                mnt201.resolutionNotes = 'เปลี่ยนสายต่อ Power และเพาเวอร์ซัพพลายเรียบร้อยแล้ว ทดสอบเปิดเครื่องใช้งานได้ตามปกติ ห้องพร้อมเปิดใช้งาน 100%';
+            }
         }
 
-        // รีเซ็ตสถานะห้องที่อาจติดสถานะ maintenance จากข้อมูลจำลอง
+        // รีเซ็ตสถานะห้องที่อาจติดสถานะ maintenance ให้กลับมาเป็น available หากไม่มีงานซ่อมค้างอยู่
         if (AppState.rooms && Array.isArray(AppState.rooms)) {
             AppState.rooms.forEach(r => {
                 if (r.status === 'maintenance') {
-                    const hasActiveMnt = AppState.maintenance.some(m => m.roomId === r.id && m.status !== 'completed');
+                    const hasActiveMnt = (AppState.maintenance || []).some(m => isTicketForRoom(m, r) && m.status !== 'completed');
                     if (!hasActiveMnt) {
                         r.status = 'available';
+                        r.currentClass = null;
                     }
                 }
             });

@@ -7,8 +7,8 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v26_maintenance_equipment_categories";
-const APP_VERSION = "2.6.0";
+const DATA_VERSION = "v27_room_fms201_available";
+const APP_VERSION = "2.7.0";
 
 const DEFAULT_ROOMS = [
     {
@@ -2902,7 +2902,9 @@ const DEFAULT_MAINTENANCE = [
         details: "กดปุ่ม Power แล้วไฟไม่เข้า พัดลมเคสไม่หมุน ตรวจสอบปลั๊กไฟแล้วปกติ",
         reporter: "อาจารย์ผู้สอนแล็บ",
         priority: "high",
-        status: "open"
+        status: "completed",
+        resolvedDate: "2026-09-11",
+        resolutionNotes: "เปลี่ยนสายต่อ Power และเพาเวอร์ซัพพลายเรียบร้อยแล้ว ทดสอบเปิดเครื่องใช้งานได้ตามปกติ ห้องพร้อมเปิดใช้งาน 100%"
     },
     {
         id: "MNT-302",
