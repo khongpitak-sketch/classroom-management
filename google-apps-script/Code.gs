@@ -61,7 +61,10 @@ function doPost(e) {
         result = apiCancelBooking(requestData.id);
         break;
       case 'approveBooking':
-        result = apiApproveBooking(requestData.id);
+        result = apiApproveBooking(requestData.id, requestData.status || 'approved');
+        break;
+      case 'completeBooking':
+        result = apiApproveBooking(requestData.id, 'completed');
         break;
       case 'addMaintenance':
         result = apiAddMaintenance(requestData.ticket);
@@ -142,7 +145,12 @@ function handleApiGet(params) {
         responseData.data = apiGetData();
       }
     } else if (action === 'approveBooking') {
-      responseData = apiApproveBooking(params.id);
+      responseData = apiApproveBooking(params.id, params.status || 'approved');
+      if (responseData.success) {
+        responseData.data = apiGetData();
+      }
+    } else if (action === 'completeBooking') {
+      responseData = apiApproveBooking(params.id, 'completed');
       if (responseData.success) {
         responseData.data = apiGetData();
       }
@@ -407,8 +415,9 @@ function apiCancelBooking(bookingId) {
 /**
  * อนุมัติการจอง
  */
-function apiApproveBooking(bookingId) {
+function apiApproveBooking(bookingId, targetStatus) {
   try {
+    const newStatus = targetStatus || "approved";
     const ss = getDb();
     const sheet = ss.getSheetByName(SHEET_BOOKINGS);
     if (!sheet) return { success: false, message: "Sheet not found" };
@@ -425,8 +434,8 @@ function apiApproveBooking(bookingId) {
 
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] == bookingId) {
-        sheet.getRange(i + 1, statusCol).setValue("approved");
-        return { success: true, message: "อนุมัติการจองเรียบร้อยแล้ว" };
+        sheet.getRange(i + 1, statusCol).setValue(newStatus);
+        return { success: true, message: newStatus === 'completed' ? "บันทึกสิ้นสุดการจองเรียบร้อยแล้ว" : "อนุมัติการจองเรียบร้อยแล้ว" };
       }
     }
     return { success: false, message: "ไม่พบรหัสการจอง: " + bookingId };
