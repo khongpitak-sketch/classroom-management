@@ -7,8 +7,8 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v29_room_fms404_monday_available";
-const APP_VERSION = "2.9.0";
+const DATA_VERSION = "v30_room_fms305_update";
+const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
     {
@@ -1159,27 +1159,27 @@ const DEFAULT_TIMETABLE = [
     },
     {
         "id": "TT-52",
-        "roomId": "R-306",
+        "roomId": "R-305",
         "day": "ศุกร์",
         "dayIndex": 5,
         "startTime": "13:20",
         "endTime": "15:20",
         "subject": "07-004-221 สถิติธุรกิจ (ทฤษฎี)",
         "code": "07-004-221",
-        "instructor": "อาจารย์ ดร.อัฟซา อาแว, อ.วีรศักดิ์ โศจิพันธุ์",
+        "instructor": "อาจารย์ ดร.อัฟซา อาแว",
         "group": "กลุ่ม 01 (ชั้นปี 3)",
         "color": "indigo"
     },
     {
         "id": "TT-53",
-        "roomId": "R-306",
+        "roomId": "R-305",
         "day": "ศุกร์",
         "dayIndex": 5,
         "startTime": "15:20",
         "endTime": "17:20",
         "subject": "07-004-221 สถิติธุรกิจ (ปฏิบัติ)",
         "code": "07-004-221",
-        "instructor": "อาจารย์ ดร.อัฟซา อาแว, อ.วีรศักดิ์ โศจิพันธุ์",
+        "instructor": "อาจารย์ ดร.อัฟซา อาแว",
         "group": "กลุ่ม 01 (ชั้นปี 3)",
         "color": "indigo"
     },
