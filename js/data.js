@@ -7,8 +7,8 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v27_room_fms201_available";
-const APP_VERSION = "2.7.0";
+const DATA_VERSION = "v28_timetable_fms405_update";
+const APP_VERSION = "2.8.0";
 
 const DEFAULT_ROOMS = [
     {
@@ -1835,7 +1835,7 @@ const DEFAULT_TIMETABLE = [
     },
     {
         "id": "TT-104",
-        "roomId": "R-404",
+        "roomId": "R-405",
         "day": "จันทร์",
         "dayIndex": 1,
         "startTime": "08:20",
@@ -1848,7 +1848,7 @@ const DEFAULT_TIMETABLE = [
     },
     {
         "id": "TT-105",
-        "roomId": "R-404",
+        "roomId": "R-405",
         "day": "จันทร์",
         "dayIndex": 1,
         "startTime": "10:20",
@@ -1965,14 +1965,14 @@ const DEFAULT_TIMETABLE = [
     },
     {
         "id": "TT-114",
-        "roomId": "R-405",
+        "roomId": "R-306",
         "day": "จันทร์",
         "dayIndex": 1,
         "startTime": "13:20",
         "endTime": "16:20",
         "subject": "07-024-234 การส่งเสริมการตลาดและการบริหารสื่อใหม่",
         "code": "07-024-234",
-        "instructor": "อาจารย์ ดร.กชพรพรรณ พงค์ทองเมือง",
+        "instructor": "อาจารย์ ดร.กชพรพรรณ พาสหพงษ์",
         "group": "กลุ่ม 01 (ชั้นปี 4 การตลาด/การจัดการ)",
         "color": "orange"
     },

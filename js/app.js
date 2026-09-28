@@ -408,8 +408,16 @@ function loadData() {
         if (savedVersion !== DATA_VERSION || !savedRooms) {
             AppState.rooms = DEFAULT_ROOMS;
             AppState.timetable = DEFAULT_TIMETABLE;
-            AppState.bookings = DEFAULT_BOOKINGS;
-            AppState.maintenance = DEFAULT_MAINTENANCE;
+            try {
+                AppState.bookings = savedBookings ? JSON.parse(savedBookings) : DEFAULT_BOOKINGS;
+            } catch(e) {
+                AppState.bookings = DEFAULT_BOOKINGS;
+            }
+            try {
+                AppState.maintenance = savedMaintenance ? JSON.parse(savedMaintenance) : DEFAULT_MAINTENANCE;
+            } catch(e) {
+                AppState.maintenance = DEFAULT_MAINTENANCE;
+            }
             saveData();
             localStorage.setItem('CMS_VERSION', DATA_VERSION);
         } else {
