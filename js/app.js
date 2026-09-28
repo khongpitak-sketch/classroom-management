@@ -429,6 +429,11 @@ function loadData() {
             AppState.maintenance = savedMaintenance ? JSON.parse(savedMaintenance) : DEFAULT_MAINTENANCE;
         }
 
+        // ตรวจสอบให้แน่ใจว่าห้อง FMS404 วันจันทร์เป็นห้องว่างทั้งเช้าและบ่าย (ไม่มีคาบเรียนค้าง)
+        if (Array.isArray(AppState.timetable)) {
+            AppState.timetable = AppState.timetable.filter(s => !(s.roomId === 'R-404' && (s.dayIndex === 1 || s.day === 'จันทร์')));
+        }
+
         // ล้างข้อมูล mock / รายการจำลองเก่าที่อาจค้างอยู่ใน LocalStorage
         if (Array.isArray(AppState.bookings)) {
             AppState.bookings = AppState.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003' && b.status !== 'cancelled');

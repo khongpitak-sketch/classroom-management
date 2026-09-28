@@ -7,8 +7,8 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v28_timetable_fms405_update";
-const APP_VERSION = "2.8.0";
+const DATA_VERSION = "v29_room_fms404_monday_available";
+const APP_VERSION = "2.9.0";
 
 const DEFAULT_ROOMS = [
     {
