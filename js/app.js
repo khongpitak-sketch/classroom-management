@@ -339,7 +339,11 @@ const AppState = {
     googleScriptUrl: '', // Google Apps Script Web App URL
     isGoogleConnected: localStorage.getItem('CMS_IS_GOOGLE_CONNECTED') !== 'false' && (!!localStorage.getItem('CMS_GAS_URL') || (typeof DEFAULT_GAS_URL !== 'undefined' && !!DEFAULT_GAS_URL)),
     isAdmin: sessionStorage.getItem('CMS_IS_ADMIN') === 'true',
-    bookingFilterStatus: 'all'
+    bookingFilterStatus: 'all',
+    bookingSortField: 'default',
+    bookingSortDir: 'asc',
+    bookingPage: 1,
+    bookingPageSize: 10
 };
 
 // Initialize Application
@@ -1545,6 +1549,26 @@ function setScheduleDay(dayIndex) {
 // ----------------------------------------------------
 // 4. BOOKINGS MANAGEMENT & CONFLICT CHECKER
 // ----------------------------------------------------
+function toggleBookingSort(field) {
+    if (AppState.bookingSortField === field) {
+        AppState.bookingSortDir = (AppState.bookingSortDir === 'asc') ? 'desc' : 'asc';
+    } else {
+        AppState.bookingSortField = field;
+        AppState.bookingSortDir = 'asc';
+    }
+    AppState.bookingPage = 1;
+    renderBookings();
+}
+
+function changeBookingPage(page) {
+    AppState.bookingPage = page;
+    renderBookings();
+    const table = document.getElementById('bookings-table');
+    if (table) {
+        table.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
 function renderBookings() {
     const listContainer = document.getElementById('bookings-table-body');
     if (!listContainer) return;
@@ -1555,7 +1579,6 @@ function renderBookings() {
     const pendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
     const completedCount = AppState.bookings.filter(b => b.status === 'completed').length;
 
-    
     // Update Cloud Sync Banner in Bookings View
     const cloudBanner = document.getElementById('bookings-cloud-sync-banner');
     if (cloudBanner) {
@@ -1620,19 +1643,88 @@ function renderBookings() {
         displayedBookings = displayedBookings.filter(b => b.status !== 'cancelled' && b.status !== 'rejected');
     }
 
-    // จัดเรียงข้อมูล: ปักหมุดคำขอรออนุมัติ (pending) ไว้ด้านบนสุดเสมอ ตามด้วยรายการจองล่าสุด
-    displayedBookings.sort((a, b) => {
-        if (a.status === 'pending' && b.status !== 'pending') return -1;
-        if (a.status !== 'pending' && b.status === 'pending') return 1;
-        if (a.status === 'approved' && b.status === 'completed') return -1;
-        if (a.status === 'completed' && b.status === 'approved') return 1;
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (timeA && timeB && timeA !== timeB) return timeB - timeA;
-        return (b.date || '').localeCompare(a.date || '');
+    // จัดเรียงข้อมูล: ตรวจสอบว่ามีการคลิกเรียงตามหัวตารางหรือไม่ (Toggle น้อยไปหามาก <-> มากไปหาน้อย)
+    if (AppState.bookingSortField && AppState.bookingSortField !== 'default') {
+        const field = AppState.bookingSortField;
+        const dir = (AppState.bookingSortDir === 'asc') ? 1 : -1;
+        displayedBookings.sort((a, b) => {
+            let valA = '';
+            let valB = '';
+            if (field === 'id') {
+                valA = String(a.id || '');
+                valB = String(b.id || '');
+            } else if (field === 'roomName') {
+                valA = String(a.roomName || a.roomId || '');
+                valB = String(b.roomName || b.roomId || '');
+            } else if (field === 'date') {
+                valA = `${a.date || ''} ${a.startTime || ''}`;
+                valB = `${b.date || ''} ${b.startTime || ''}`;
+            } else if (field === 'subject') {
+                valA = String(a.subject || '');
+                valB = String(b.subject || '');
+            } else if (field === 'bookerName') {
+                valA = String(a.bookerName || '');
+                valB = String(b.bookerName || '');
+            } else if (field === 'status') {
+                valA = String(a.status || '');
+                valB = String(b.status || '');
+            }
+
+            const cleanA = valA.replace(/,/g, '').trim();
+            const cleanB = valB.replace(/,/g, '').trim();
+            const numA = Number(cleanA);
+            const numB = Number(cleanB);
+            if (!isNaN(numA) && !isNaN(numB) && cleanA !== '' && cleanB !== '') {
+                return (numA - numB) * dir;
+            }
+            return valA.localeCompare(valB, 'th', { numeric: true, sensitivity: 'base' }) * dir;
+        });
+    } else {
+        // ค่าเริ่มต้น: ปักหมุดคำขอรออนุมัติ (pending) ไว้ด้านบนสุดเสมอ ตามด้วยรายการจองล่าสุด
+        displayedBookings.sort((a, b) => {
+            if (a.status === 'pending' && b.status !== 'pending') return -1;
+            if (a.status !== 'pending' && b.status === 'pending') return 1;
+            if (a.status === 'approved' && b.status === 'completed') return -1;
+            if (a.status === 'completed' && b.status === 'approved') return 1;
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+            return (b.date || '').localeCompare(a.date || '');
+        });
+    }
+
+    // อัปเดตไอคอนบนหัวตาราง (Sort UI Indicator)
+    ['id', 'roomName', 'date', 'subject', 'bookerName', 'status'].forEach(col => {
+        const iconElem = document.getElementById(`booking-sort-icon-${col}`);
+        const thElem = iconElem ? iconElem.closest('th') : null;
+        if (iconElem) {
+            if (AppState.bookingSortField === col) {
+                if (AppState.bookingSortDir === 'asc') {
+                    iconElem.innerHTML = '▲ <span class="text-[9px] font-bold">น้อยไปมาก</span>';
+                    iconElem.className = 'text-blue-600 font-bold text-[10px] ml-1 bg-blue-50 px-1.5 py-0.5 rounded';
+                } else {
+                    iconElem.innerHTML = '▼ <span class="text-[9px] font-bold">มากไปน้อย</span>';
+                    iconElem.className = 'text-blue-600 font-bold text-[10px] ml-1 bg-blue-50 px-1.5 py-0.5 rounded';
+                }
+                if (thElem) {
+                    thElem.classList.add('text-blue-600', 'bg-blue-50/50');
+                    thElem.setAttribute('title', AppState.bookingSortDir === 'asc' ? 'กำลังเรียง: น้อยไปหามาก (คลิกเพื่อสลับเป็น: มากไปหาน้อย)' : 'กำลังเรียง: มากไปหาน้อย (คลิกเพื่อสลับเป็น: น้อยไปหามาก)');
+                }
+            } else {
+                iconElem.innerHTML = '⇅';
+                iconElem.className = 'text-slate-400 text-[11px] ml-1 opacity-60';
+                if (thElem) {
+                    thElem.classList.remove('text-blue-600', 'bg-blue-50/50');
+                    thElem.setAttribute('title', 'คลิกเพื่อเรียงลำดับ น้อยไปหามาก / มากไปหาน้อย');
+                }
+            }
+        }
     });
 
-    if (displayedBookings.length === 0) {
+    const totalRecords = displayedBookings.length;
+    const paginationToolbar = document.getElementById('bookings-pagination-toolbar');
+
+    if (totalRecords === 0) {
         listContainer.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-12 text-slate-400">
@@ -1642,11 +1734,25 @@ function renderBookings() {
                 </td>
             </tr>
         `;
+        if (paginationToolbar) {
+            paginationToolbar.innerHTML = '';
+            paginationToolbar.classList.add('hidden');
+        }
         lucide.createIcons();
         return;
     }
 
-    listContainer.innerHTML = displayedBookings.map(bk => {
+    // การแบ่งหน้า 10 แร็คคอร์ดต่อหน้า (Pagination 10 Records / Page)
+    const pageSize = AppState.bookingPageSize || 10;
+    const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+    if (AppState.bookingPage > totalPages) AppState.bookingPage = totalPages;
+    if (AppState.bookingPage < 1) AppState.bookingPage = 1;
+
+    const startIndex = (AppState.bookingPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalRecords);
+    const pagedBookings = displayedBookings.slice(startIndex, endIndex);
+
+    listContainer.innerHTML = pagedBookings.map(bk => {
         const strRoomId = String(bk.roomId || '');
         const roomObj = AppState.rooms.find(r => r.id === bk.roomId);
         const isMeeting = strRoomId.startsWith('CONF') || (roomObj && roomObj.type === 'meeting_room');
@@ -1712,6 +1818,66 @@ function renderBookings() {
         </tr>
         `;
     }).join('');
+
+    // เรนเดอร์แถบควบคุมการแบ่งหน้า (Pagination Toolbar พร้อมปุ่ม ถัดไป และ ย้อนกลับ)
+    if (paginationToolbar) {
+        paginationToolbar.classList.remove('hidden');
+        const startRecordDisplay = totalRecords === 0 ? 0 : startIndex + 1;
+        const endRecordDisplay = endIndex;
+        const isPrevDisabled = AppState.bookingPage <= 1;
+        const isNextDisabled = AppState.bookingPage >= totalPages;
+
+        let pageBtnsHtml = '';
+        const maxButtons = 5;
+        let startPage = Math.max(1, AppState.bookingPage - 2);
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        if (endPage - startPage < maxButtons - 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        if (startPage > 1) {
+            pageBtnsHtml += `<button onclick="changeBookingPage(1)" class="w-8 h-8 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">1</button>`;
+            if (startPage > 2) {
+                pageBtnsHtml += `<span class="px-1 text-slate-400 text-xs">...</span>`;
+            }
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+            if (p === AppState.bookingPage) {
+                pageBtnsHtml += `<button class="w-8 h-8 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs">${p}</button>`;
+            } else {
+                pageBtnsHtml += `<button onclick="changeBookingPage(${p})" class="w-8 h-8 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">${p}</button>`;
+            }
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                pageBtnsHtml += `<span class="px-1 text-slate-400 text-xs">...</span>`;
+            }
+            pageBtnsHtml += `<button onclick="changeBookingPage(${totalPages})" class="w-8 h-8 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">${totalPages}</button>`;
+        }
+
+        paginationToolbar.innerHTML = `
+            <div class="text-xs text-slate-500 flex items-center gap-2">
+                <span>แสดง <strong class="text-slate-800 font-bold">${startRecordDisplay} - ${endRecordDisplay}</strong> จากทั้งหมด <strong class="text-slate-800 font-bold">${totalRecords}</strong> รายการ</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-semibold">หน้า ${AppState.bookingPage} / ${totalPages}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="changeBookingPage(${AppState.bookingPage - 1})" ${isPrevDisabled ? 'disabled' : ''} 
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${isPrevDisabled ? 'text-slate-300 bg-slate-50 cursor-not-allowed border border-slate-100' : 'text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs hover:text-blue-600'}">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> ย้อนกลับ
+                </button>
+                <div class="flex items-center gap-1">
+                    ${pageBtnsHtml}
+                </div>
+                <button onclick="changeBookingPage(${AppState.bookingPage + 1})" ${isNextDisabled ? 'disabled' : ''} 
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${isNextDisabled ? 'text-slate-300 bg-slate-50 cursor-not-allowed border border-slate-100' : 'text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs hover:text-blue-600'}">
+                    ถัดไป <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        `;
+    }
+
     lucide.createIcons();
 }
 
@@ -3991,6 +4157,7 @@ function rejectBooking(bookingId) {
 
 function filterBookingsByStatus(status) {
     AppState.bookingFilterStatus = status;
+    AppState.bookingPage = 1;
     document.querySelectorAll('.booking-filter-btn').forEach(btn => {
         if (btn.dataset.status === status) {
             btn.classList.add('bg-blue-600', 'text-white', 'shadow-xs');
