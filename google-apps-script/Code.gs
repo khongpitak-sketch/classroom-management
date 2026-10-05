@@ -432,8 +432,9 @@ function apiApproveBooking(bookingId, targetStatus) {
       }
     }
 
+    const cleanId = String(bookingId || '').trim().toLowerCase();
     for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == bookingId) {
+      if (String(data[i][0] || '').trim().toLowerCase() === cleanId) {
         sheet.getRange(i + 1, statusCol).setValue(newStatus);
         return { success: true, message: newStatus === 'completed' ? "บันทึกสิ้นสุดการจองเรียบร้อยแล้ว" : "อนุมัติการจองเรียบร้อยแล้ว" };
       }
@@ -516,45 +517,99 @@ function apiResolveMaintenance(ticketId) {
     const ss = getDb();
     let resolved = false;
     let targetRoomId = null;
+    const cleanId = String(ticketId || '').trim().toLowerCase();
+
+    // 1. Resolve in Maintenance sheet
     const sheet = ss.getSheetByName(SHEET_MAINTENANCE);
     if (sheet) {
       const data = sheet.getDataRange().getValues();
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][0] == ticketId) {
-          sheet.getRange(i + 1, 9).setValue("completed");
-          targetRoomId = String(data[i][1] || '').trim();
-          resolved = true;
-          break;
+      if (data.length > 1) {
+        let statusCol = 9;
+        let resolvedDateCol = -1;
+        for (let c = 0; c < data[0].length; c++) {
+          const h = String(data[0][c] || '').trim().toLowerCase();
+          if (h === 'status') statusCol = c + 1;
+          if (h === 'resolveddate' || h === 'resolved_date' || h === 'resolved') resolvedDateCol = c + 1;
+        }
+        for (let i = 1; i < data.length; i++) {
+          if (String(data[i][0] || '').trim().toLowerCase() === cleanId) {
+            sheet.getRange(i + 1, statusCol).setValue("completed");
+            if (resolvedDateCol > 0) {
+              sheet.getRange(i + 1, resolvedDateCol).setValue(Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd"));
+            }
+            targetRoomId = String(data[i][1] || '').trim();
+            resolved = true;
+            break;
+          }
         }
       }
     }
 
-    // Also resolve in Bookings sheet if dual-synced
+    // 2. Also resolve in Bookings sheet if dual-synced
     const bkSheet = ss.getSheetByName(SHEET_BOOKINGS);
     if (bkSheet) {
       const bkData = bkSheet.getDataRange().getValues();
-      for (let j = 1; j < bkData.length; j++) {
-        if (bkData[j][0] == ticketId) {
-          bkSheet.getRange(j + 1, 9).setValue("completed");
-          if (!targetRoomId) targetRoomId = String(bkData[j][1] || '').trim();
-          resolved = true;
-          break;
+      if (bkData.length > 1) {
+        let bkStatusCol = 11;
+        for (let c = 0; c < bkData[0].length; c++) {
+          if (String(bkData[0][c] || '').trim().toLowerCase() === 'status') {
+            bkStatusCol = c + 1;
+            break;
+          }
+        }
+        for (let j = 1; j < bkData.length; j++) {
+          if (String(bkData[j][0] || '').trim().toLowerCase() === cleanId) {
+            bkSheet.getRange(j + 1, bkStatusCol).setValue("completed");
+            if (!targetRoomId) targetRoomId = String(bkData[j][1] || '').trim();
+            resolved = true;
+            break;
+          }
         }
       }
     }
 
-    // Update Room status to available if no other active maintenance tickets exist
+    // 3. Update Room status to available if no other active maintenance tickets exist
     if (targetRoomId) {
       let hasOtherOpen = false;
       if (sheet) {
         const mntData = sheet.getDataRange().getValues();
-        for (let i = 1; i < mntData.length; i++) {
-          const rId = String(mntData[i][1] || '').trim();
-          const tId = String(mntData[i][0] || '').trim();
-          const st = String(mntData[i][8] || '').trim().toLowerCase();
-          if (tId != ticketId && rId == targetRoomId && st != "completed") {
-            hasOtherOpen = true;
-            break;
+        if (mntData.length > 1) {
+          let mntStCol = 8;
+          for (let c = 0; c < mntData[0].length; c++) {
+            if (String(mntData[0][c] || '').trim().toLowerCase() === 'status') {
+              mntStCol = c;
+              break;
+            }
+          }
+          for (let i = 1; i < mntData.length; i++) {
+            const rId = String(mntData[i][1] || '').trim().toLowerCase();
+            const tId = String(mntData[i][0] || '').trim().toLowerCase();
+            const st = String(mntData[i][mntStCol] || '').trim().toLowerCase();
+            if (tId !== cleanId && (rId === targetRoomId.toLowerCase() || rId.includes(targetRoomId.toLowerCase())) && st !== "completed") {
+              hasOtherOpen = true;
+              break;
+            }
+          }
+        }
+      }
+      if (!hasOtherOpen && bkSheet) {
+        const bkData = bkSheet.getDataRange().getValues();
+        if (bkData.length > 1) {
+          let bkStCol = 10;
+          for (let c = 0; c < bkData[0].length; c++) {
+            if (String(bkData[0][c] || '').trim().toLowerCase() === 'status') {
+              bkStCol = c;
+              break;
+            }
+          }
+          for (let j = 1; j < bkData.length; j++) {
+            const rId = String(bkData[j][1] || '').trim().toLowerCase();
+            const tId = String(bkData[j][0] || '').trim().toLowerCase();
+            const st = String(bkData[j][bkStCol] || '').trim().toLowerCase();
+            if (tId !== cleanId && tId.startsWith('mnt-') && (rId === targetRoomId.toLowerCase() || rId.includes(targetRoomId.toLowerCase())) && st !== "completed") {
+              hasOtherOpen = true;
+              break;
+            }
           }
         }
       }

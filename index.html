@@ -931,8 +931,24 @@ body {
                     </button>
                 </div>
 
+                <!-- Maintenance Status Filter Tabs -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/80">
+                        <button type="button" onclick="filterMaintenanceByStatus('all')" id="mnt-status-all" class="mnt-status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-xs transition">
+                            ทั้งหมด
+                        </button>
+                        <button type="button" onclick="filterMaintenanceByStatus('pending')" id="mnt-status-pending" class="mnt-status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5">
+                            <span>รอดำเนินการ</span>
+                            <span class="maintenance-pending-badge px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
+                        </button>
+                        <button type="button" onclick="filterMaintenanceByStatus('completed')" id="mnt-status-completed" class="mnt-status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 hover:bg-slate-50 transition">
+                            ✓ ซ่อมเสร็จสิ้น
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Equipment Category Filter Tabs -->
-                <div class="flex flex-wrap items-center gap-1.5 mt-4 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                <div class="flex flex-wrap items-center gap-1.5 mt-3 p-2 bg-slate-50 border border-slate-200 rounded-xl">
                     <span class="text-xs font-bold text-slate-500 px-2 flex items-center gap-1">
                         <i data-lucide="filter" class="w-3.5 h-3.5"></i> กรองตามอุปกรณ์:
                     </span>
@@ -5723,6 +5739,28 @@ function addDeletedMaintenanceId(id) {
     safeStorageSet('CMS_DELETED_MAINTENANCE_IDS', Array.from(set));
 }
 
+function getResolvedMaintenanceIds() {
+    try {
+        const raw = localStorage.getItem('CMS_RESOLVED_MAINTENANCE_IDS');
+        const set = raw ? new Set(JSON.parse(raw)) : new Set();
+        set.add('MNT-558'); // Pre-seed ticket from admin completed report
+        set.add('mnt-558');
+        return set;
+    } catch(e) {
+        return new Set(['MNT-558', 'mnt-558']);
+    }
+}
+
+function addResolvedMaintenanceId(id) {
+    if (!id) return;
+    const clean = String(id).trim();
+    const set = getResolvedMaintenanceIds();
+    set.add(clean);
+    set.add(clean.toLowerCase());
+    set.add(clean.toUpperCase());
+    safeStorageSet('CMS_RESOLVED_MAINTENANCE_IDS', Array.from(set));
+}
+
 function getDeletedBookingIds() {
     try {
         const raw = localStorage.getItem('CMS_DELETED_BOOKING_IDS');
@@ -6085,6 +6123,14 @@ function loadData() {
         }
         if (Array.isArray(AppState.maintenance)) {
             AppState.maintenance = AppState.maintenance.filter(m => m.id !== 'MNT-001' && m.id !== 'MNT-002');
+            const resolvedIds = getResolvedMaintenanceIds();
+            AppState.maintenance.forEach(m => {
+                const mId = String(m.id || '').trim();
+                if (resolvedIds.has(mId) || resolvedIds.has(mId.toLowerCase()) || resolvedIds.has(mId.toUpperCase())) {
+                    m.status = 'completed';
+                    if (!m.resolvedDate) m.resolvedDate = new Date().toISOString().slice(0, 10);
+                }
+            });
             // Ensure MNT-201 (FMS201) is completed
             const mnt201 = AppState.maintenance.find(m => m.id === 'MNT-201');
             if (mnt201 && mnt201.status !== 'completed') {
@@ -7781,6 +7827,19 @@ function applyMaintenanceIssuePreset(issueText) {
     }
 }
 
+function filterMaintenanceByStatus(status) {
+    AppState.maintenanceStatusFilter = status;
+    document.querySelectorAll('.mnt-status-btn').forEach(btn => {
+        const isCurrent = btn.id === `mnt-status-${status}`;
+        if (isCurrent) {
+            btn.className = 'mnt-status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-xs transition';
+        } else {
+            btn.className = 'mnt-status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200';
+        }
+    });
+    renderMaintenance();
+}
+
 function filterMaintenanceByCategory(catKey) {
     AppState.maintenanceCategoryFilter = catKey;
     document.querySelectorAll('.mnt-filter-btn').forEach(btn => {
@@ -7798,17 +7857,43 @@ function renderMaintenance() {
     const tableBody = document.getElementById('maintenance-table-body');
     if (!tableBody) return;
 
-    // Filter by selected category if not 'all'
+    // Filter by selected category & status
     const filterCat = AppState.maintenanceCategoryFilter || 'all';
-    const list = filterCat === 'all' 
-        ? AppState.maintenance 
-        : AppState.maintenance.filter(m => detectMaintenanceCategory(m) === filterCat);
+    const filterStatus = AppState.maintenanceStatusFilter || 'all';
+
+    let list = Array.isArray(AppState.maintenance) ? [...AppState.maintenance] : [];
+
+    // Filter by status if specified
+    if (filterStatus === 'pending') {
+        list = list.filter(m => m.status === 'open' || m.status === 'in_progress');
+    } else if (filterStatus === 'completed') {
+        list = list.filter(m => m.status === 'completed');
+    }
+
+    // Filter by category if not all
+    if (filterCat !== 'all') {
+        list = list.filter(m => detectMaintenanceCategory(m) === filterCat);
+    }
+
+    // Sort list: pending/in_progress first, then newest reportedDate first
+    list.sort((a, b) => {
+        const aOpen = (a.status === 'open' || a.status === 'in_progress');
+        const bOpen = (b.status === 'open' || b.status === 'in_progress');
+        if (aOpen && !bOpen) return -1;
+        if (!aOpen && bOpen) return 1;
+        return (b.reportedDate || '').localeCompare(a.reportedDate || '');
+    });
 
     if (list.length === 0) {
         const catInfo = MAINTENANCE_CATEGORIES[filterCat];
-        const msg = filterCat === 'all' 
-            ? 'ไม่มีรายการแจ้งซ่อม ทุกห้องอยู่ในสภาพพร้อมใช้งาน 100%' 
-            : `ไม่มีรายการแจ้งซ่อมสำหรับหมวดหมู่ "${catInfo ? catInfo.name : filterCat}"`;
+        let msg = 'ไม่มีรายการแจ้งซ่อม ทุกห้องอยู่ในสภาพพร้อมใช้งาน 100%';
+        if (filterStatus === 'pending') {
+            msg = 'ไม่มีรายการแจ้งซ่อมที่รอดำเนินการ ทุกอุปกรณ์ได้รับการแก้ไขเรียบร้อยแล้ว';
+        } else if (filterStatus === 'completed') {
+            msg = 'ยังไม่มีประวัติรายการที่ซ่อมเสร็จสิ้น';
+        } else if (filterCat !== 'all') {
+            msg = `ไม่มีรายการแจ้งซ่อมสำหรับหมวดหมู่ "${catInfo ? catInfo.name : filterCat}"`;
+        }
         tableBody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-10 text-slate-400">
@@ -8189,18 +8274,21 @@ function resolveMaintenance(ticketId) {
         showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
         return;
     }
-    const ticket = AppState.maintenance.find(m => m.id === ticketId);
+    const cleanId = String(ticketId || '').trim();
+    const ticket = (AppState.maintenance || []).find(m => String(m.id || '').trim().toLowerCase() === cleanId.toLowerCase());
     if (!ticket) return;
 
     ticket.status = 'completed';
     ticket.resolvedDate = new Date().toISOString().slice(0, 10);
+    addResolvedMaintenanceId(cleanId);
+    addResolvedMaintenanceId(ticket.id);
 
     const room = findRoomForTicket(ticket);
     let roomUpdatedToAvailable = false;
 
     if (room) {
-        const hasOtherActive = AppState.maintenance.some(m => 
-            m.id !== ticketId && 
+        const hasOtherActive = (AppState.maintenance || []).some(m => 
+            String(m.id || '').trim().toLowerCase() !== cleanId.toLowerCase() && 
             m.status !== 'completed' && 
             isTicketForRoom(m, room)
         );
@@ -8217,21 +8305,22 @@ function resolveMaintenance(ticketId) {
     updateAdminMaintenanceBadge();
     renderCurrentTab();
     renderRooms();
+    renderMaintenance();
 
     const toastMsg = roomUpdatedToAvailable && room
-        ? `✅ บันทึกการซ่อมรหัส ${ticketId} เสร็จสิ้น! ปรับห้อง <b>${room.name}</b> กลับมาเป็น "ห้องพร้อมใช้งาน" เรียบร้อยแล้ว`
-        : `✅ บันทึกการซ่อมรหัส ${ticketId} เสร็จสิ้นเรียบร้อย`;
+        ? `✅ บันทึกการซ่อมรหัส ${ticket.id} เสร็จสิ้น! ปรับห้อง <b>${room.name}</b> กลับมาเป็น "ห้องพร้อมใช้งาน" เรียบร้อยแล้ว`
+        : `✅ บันทึกการซ่อมรหัส ${ticket.id} เสร็จสิ้นเรียบร้อย`;
     showToast(toastMsg, 'success', 5000);
 
     broadcastDataChange('RESOLVE_MAINTENANCE', { 
-        id: ticketId, 
+        id: ticket.id, 
         roomId: room ? room.id : ticket.roomId,
         roomName: room ? room.name : ticket.roomName,
         status: 'available'
     });
 
     // Sync to Google Sheets (Central Cloud Database)
-    sendActionToGoogleBackend('resolveMaintenance', { id: ticketId, status: 'completed' });
+    sendActionToGoogleBackend('resolveMaintenance', { id: ticket.id, status: 'completed' });
     if (roomUpdatedToAvailable && room) {
         sendActionToGoogleBackend('updateRoomStatus', { id: room.id, status: 'available' });
     }
@@ -8293,8 +8382,9 @@ function handleEditMaintenanceSubmit(event) {
     ticket.title = newTitle;
     ticket.details = newDetails;
     ticket.resolutionNotes = resolutionNotes;
-    if (newStatus === 'completed' && !ticket.resolvedDate) {
-        ticket.resolvedDate = new Date().toISOString().slice(0, 10);
+    if (newStatus === 'completed') {
+        if (!ticket.resolvedDate) ticket.resolvedDate = new Date().toISOString().slice(0, 10);
+        addResolvedMaintenanceId(ticketId);
     }
 
     const room = findRoomForTicket(ticket);
@@ -9820,6 +9910,7 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
     if (!Array.isArray(rawBookings)) rawBookings = [];
     const prevPendingCount = AppState.bookings.filter(b => b.status === 'pending').length;
     const deletedMntIds = getDeletedMaintenanceIds();
+    const resolvedMntIds = getResolvedMaintenanceIds();
 
     const isMaintenanceRecord = (b) => {
         const strId = String(b.id || '').trim().toUpperCase();
@@ -9837,6 +9928,7 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         const st = String(b.status || '').toLowerCase().trim();
         return st !== 'cancelled' && st !== 'deleted';
     }).map(b => {
+        const strId = String(b.id || '').trim();
         const repDate = parseGasDate(b.date);
         const rawSubj = String(b.subject || b.purpose || 'แจ้งปัญหาอุปกรณ์');
         const catMatch = rawSubj.match(/\[MNT:?([^\]]*)\]/i);
@@ -9847,7 +9939,8 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         }
         const cleanTitle = rawSubj.replace(/\[MNT[^\]]*\]\s*/i, '').trim() || 'แจ้งปัญหาอุปกรณ์';
         const rawStatus = String(b.status || 'open').toLowerCase().trim();
-        const mStatus = (rawStatus === 'approved' || rawStatus === 'completed') ? 'completed' : 'open';
+        const isResolved = resolvedMntIds.has(strId) || resolvedMntIds.has(strId.toLowerCase()) || resolvedMntIds.has(strId.toUpperCase());
+        const mStatus = (isResolved || rawStatus === 'approved' || rawStatus === 'completed') ? 'completed' : 'open';
         const mPriority = (String(b.department || '').toLowerCase().includes('high') || String(b.startTime || '').toLowerCase().includes('high')) ? 'high' : 'medium';
         const roomId = String(b.roomId || b.roomid || '');
         const roomObj = AppState.rooms.find(r => r.id === roomId);
@@ -9877,14 +9970,18 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
             const st = String(m.status || '').toLowerCase().trim();
             return mId !== 'MNT-001' && mId !== 'MNT-002' && st !== 'cancelled' && st !== 'deleted';
         }).map(m => {
+            const mId = String(m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900))).trim();
             const repDate = parseGasDate(m.reportedDate || m.reporteddate || m.date || '');
             const rId = String(m.roomId || m.roomid || '');
             const rObj = AppState.rooms.find(r => r.id === rId);
             const rName = String(m.roomName || m.roomname || (rObj ? rObj.name : rId));
             const dummyTicket = { title: m.title || m.item || '', details: m.details || m.description || '', category: m.category || '', categoryName: m.categoryName || '' };
             const detectedCat = detectMaintenanceCategory(dummyTicket);
+            const rawSt = String(m.status || 'open').toLowerCase().trim();
+            const isResolved = resolvedMntIds.has(mId) || resolvedMntIds.has(mId.toLowerCase()) || resolvedMntIds.has(mId.toUpperCase());
+            const finalStatus = (isResolved || rawSt === 'completed' || rawSt === 'approved') ? 'completed' : rawSt;
             return {
-                id: String(m.id || m.ID || ('MNT-' + Math.floor(100 + Math.random() * 900))),
+                id: mId,
                 roomId: rId,
                 roomName: rName,
                 reportedDate: repDate || new Date().toISOString().slice(0, 10),
@@ -9893,7 +9990,7 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
                 title: String(m.title || m.item || 'แจ้งปัญหาอุปกรณ์'),
                 details: String(m.details || m.description || ''),
                 reporter: String(m.reporter || m.reportedBy || m.reportedby || 'ผู้ใช้งาน'),
-                status: String(m.status || 'open').toLowerCase().trim(),
+                status: finalStatus,
                 priority: String(m.priority || 'medium').toLowerCase().trim()
             };
         });
@@ -9904,9 +10001,28 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
     extractedFromBookings.forEach(m => cloudMntMap.set(m.id, m));
     extractedFromSheet.forEach(m => cloudMntMap.set(m.id, m));
 
+    // ป้องกัน Cloud เก่าย้อนสถานะ completed กลับเป็น open
+    cloudMntMap.forEach(cloudTicket => {
+        const cleanId = String(cloudTicket.id || '').trim();
+        const existing = (AppState.maintenance || []).find(cur => String(cur.id || '').trim().toLowerCase() === cleanId.toLowerCase());
+        const isLocallyResolved = (existing && existing.status === 'completed') || 
+                                  resolvedMntIds.has(cleanId) || 
+                                  resolvedMntIds.has(cleanId.toLowerCase()) || 
+                                  resolvedMntIds.has(cleanId.toUpperCase());
+        if (isLocallyResolved) {
+            cloudTicket.status = 'completed';
+            if (existing && existing.resolvedDate && !cloudTicket.resolvedDate) {
+                cloudTicket.resolvedDate = existing.resolvedDate;
+            }
+            if (existing && existing.resolutionNotes && !cloudTicket.resolutionNotes) {
+                cloudTicket.resolutionNotes = existing.resolutionNotes;
+            }
+        }
+    });
+
     // แจ้งเตือนผู้ใช้หากมีรายการซ่อมที่ได้รับการยืนยันว่าซ่อมเสร็จแล้ว
     cloudMntMap.forEach(cloudTicket => {
-        const existing = AppState.maintenance.find(cur => cur.id === cloudTicket.id);
+        const existing = (AppState.maintenance || []).find(cur => String(cur.id || '').trim().toLowerCase() === String(cloudTicket.id || '').trim().toLowerCase());
         if (existing && existing.status !== 'completed' && cloudTicket.status === 'completed') {
             showToast(`🔧 รายการแจ้งซ่อม ${cloudTicket.id} (${cloudTicket.roomName || ''}) ได้รับการซ่อมเสร็จสิ้นแล้ว!`, 'success', 6000);
         }
