@@ -2707,7 +2707,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v30_room_fms305_update";
+const DATA_VERSION = "v31_fms201_friday_update";
 const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
@@ -3375,6 +3375,19 @@ const DEFAULT_TIMETABLE = [
         "instructor": "อ.พระรักษ์ อมรศักดิ์",
         "group": "กลุ่ม 03 (ชั้นปี 1, 5, 3 รปศ.)",
         "color": "blue"
+    },
+    {
+        "id": "TT-14-1",
+        "roomId": "LAB-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-004-221 สถิติธุรกิจ",
+        "code": "07-004-221",
+        "instructor": "อ.ดร.วีรศักดิ์  โศจิพันธุ์",
+        "group": "กลุ่ม 01",
+        "color": "indigo"
     },
     {
         "id": "TT-15",
@@ -6107,6 +6120,25 @@ function loadData() {
         // ตรวจสอบให้แน่ใจว่าห้อง FMS404 วันจันทร์เป็นห้องว่างทั้งเช้าและบ่าย (ไม่มีคาบเรียนค้าง)
         if (Array.isArray(AppState.timetable)) {
             AppState.timetable = AppState.timetable.filter(s => !(s.roomId === 'R-404' && (s.dayIndex === 1 || s.day === 'จันทร์')));
+
+            // ตรวจสอบและอัปเดตตารางห้อง FMS201 (LAB-1) วันศุกร์ คาบบ่าย 13:20-16:20 เป็นวิชา 07-004-221 สถิติธุรกิจ อ.ดร.วีรศักดิ์ โศจิพันธุ์
+            const hasFriAfternoon = AppState.timetable.some(s => s.roomId === 'LAB-1' && (s.dayIndex === 5 || s.day === 'ศุกร์') && s.startTime === '13:20');
+            if (!hasFriAfternoon) {
+                AppState.timetable = AppState.timetable.filter(s => !(s.roomId === 'LAB-1' && (s.dayIndex === 5 || s.day === 'ศุกร์') && s.startTime >= '12:00'));
+                AppState.timetable.push({
+                    id: "TT-14-1",
+                    roomId: "LAB-1",
+                    day: "ศุกร์",
+                    dayIndex: 5,
+                    startTime: "13:20",
+                    endTime: "16:20",
+                    subject: "07-004-221 สถิติธุรกิจ",
+                    code: "07-004-221",
+                    instructor: "อ.ดร.วีรศักดิ์  โศจิพันธุ์",
+                    group: "กลุ่ม 01",
+                    color: "indigo"
+                });
+            }
         }
 
         // ล้างข้อมูล mock / รายการจำลองเก่าที่อาจค้างอยู่ใน LocalStorage
@@ -8658,6 +8690,22 @@ function syncFromGoogleAppsScript() {
                 AppState.rooms = response.rooms;
                 if (response.timetable && Array.isArray(response.timetable) && response.timetable.length > 0) {
                     AppState.timetable = response.timetable;
+                    const hasFriAfternoon = AppState.timetable.some(s => s.roomId === 'LAB-1' && (s.dayIndex === 5 || s.day === 'ศุกร์') && s.startTime === '13:20');
+                    if (!hasFriAfternoon) {
+                        AppState.timetable.push({
+                            id: "TT-14-1",
+                            roomId: "LAB-1",
+                            day: "ศุกร์",
+                            dayIndex: 5,
+                            startTime: "13:20",
+                            endTime: "16:20",
+                            subject: "07-004-221 สถิติธุรกิจ",
+                            code: "07-004-221",
+                            instructor: "อ.ดร.วีรศักดิ์  โศจิพันธุ์",
+                            group: "กลุ่ม 01",
+                            color: "indigo"
+                        });
+                    }
                 } else if (!AppState.timetable || AppState.timetable.length === 0) {
                     AppState.timetable = DEFAULT_TIMETABLE;
                 }
@@ -8779,6 +8827,22 @@ async function fetchDataFromGoogleSheets(silent = false) {
             }
             if (json.data.timetable && Array.isArray(json.data.timetable) && json.data.timetable.length > 0) {
                 AppState.timetable = json.data.timetable;
+                const hasFriAfternoon = AppState.timetable.some(s => s.roomId === 'LAB-1' && (s.dayIndex === 5 || s.day === 'ศุกร์') && s.startTime === '13:20');
+                if (!hasFriAfternoon) {
+                    AppState.timetable.push({
+                        id: "TT-14-1",
+                        roomId: "LAB-1",
+                        day: "ศุกร์",
+                        dayIndex: 5,
+                        startTime: "13:20",
+                        endTime: "16:20",
+                        subject: "07-004-221 สถิติธุรกิจ",
+                        code: "07-004-221",
+                        instructor: "อ.ดร.วีรศักดิ์  โศจิพันธุ์",
+                        group: "กลุ่ม 01",
+                        color: "indigo"
+                    });
+                }
             } else {
                 if (!AppState.timetable || AppState.timetable.length === 0) {
                     AppState.timetable = DEFAULT_TIMETABLE;

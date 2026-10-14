@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v30_room_fms305_update";
+const DATA_VERSION = "v31_fms201_friday_update";
 const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
@@ -675,6 +675,19 @@ const DEFAULT_TIMETABLE = [
         "instructor": "อ.พระรักษ์ อมรศักดิ์",
         "group": "กลุ่ม 03 (ชั้นปี 1, 5, 3 รปศ.)",
         "color": "blue"
+    },
+    {
+        "id": "TT-14-1",
+        "roomId": "LAB-1",
+        "day": "ศุกร์",
+        "dayIndex": 5,
+        "startTime": "13:20",
+        "endTime": "16:20",
+        "subject": "07-004-221 สถิติธุรกิจ",
+        "code": "07-004-221",
+        "instructor": "อ.ดร.วีรศักดิ์  โศจิพันธุ์",
+        "group": "กลุ่ม 01",
+        "color": "indigo"
     },
     {
         "id": "TT-15",
