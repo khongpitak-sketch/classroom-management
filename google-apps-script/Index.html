@@ -637,9 +637,14 @@ body {
                         </h4>
                         <p class="text-xs text-slate-500 mt-0.5">ห้องเรียนที่มีอาจารย์และนักศึกษาเข้าใช้งานตามคาบเวลา</p>
                     </div>
-                    <button onclick="switchTab('timetable')" class="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1">
-                        เปิดตารางเรียน <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="showAvailableRoomsToday()" class="text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 transition shadow-2xs" title="ดูรายการห้องว่างทั้งหมดวันนี้">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ห้องว่างวันนี้
+                        </button>
+                        <button onclick="switchTab('timetable')" class="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                            เปิดตารางเรียน <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="dash-today-activity" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -762,6 +767,10 @@ body {
                             <!-- Populated by JS -->
                         </select>
                     </div>
+                    <button type="button" id="timetable-vacant-btn" onclick="selectAvailableRoomsSchedule()" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs" title="ดูรายการห้องว่างทั้งหมดวันนี้">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>🟢 รายการห้องว่างทั้งหมดวันนี้</span>
+                    </button>
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-semibold text-slate-600 whitespace-nowrap"><i data-lucide="user" class="w-3.5 h-3.5 inline"></i> เลือกอาจารย์ผู้สอน:</label>
                         <select id="timetable-instructor-selector" class="px-3 py-2 bg-blue-50/50 border border-blue-200 text-blue-900 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[240px]">
@@ -6090,6 +6099,8 @@ const AppState = {
     buildingFilter: 'all',
     selectedRoomForSchedule: 'ALL',
     selectedInstructorForSchedule: 'ALL',
+    vacantPeriodFilter: 'all', // 'all', 'fullday', 'morning', 'afternoon', 'now'
+    vacantTypeFilter: 'all', // 'all', 'general', 'computer_lab', 'meeting_room'
     reportTimeframe: 'all', // 'all', 'month', 'week', 'semester'
     simulatedTime: null, // null = live real-time, or 'HH:MM'
     simulatedDayIndex: null, // 0 = Sunday, 1 = Monday, ...
@@ -7001,12 +7012,28 @@ function renderTimetable() {
         instSelect.value = AppState.selectedInstructorForSchedule;
     }
 
+    const vacantBtn = document.getElementById('timetable-vacant-btn');
+    if (vacantBtn) {
+        if (AppState.selectedRoomForSchedule === 'AVAILABLE_TODAY' || AppState.selectedRoomForSchedule === 'AVAILABLE') {
+            vacantBtn.className = "px-3 py-2 bg-emerald-600 text-white border border-emerald-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm";
+        } else {
+            vacantBtn.className = "px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs";
+        }
+    }
+
     const container = document.getElementById('timetable-content-view');
     if (!container) return;
 
     // If an instructor is selected, render instructor schedule
     if (AppState.selectedInstructorForSchedule && AppState.selectedInstructorForSchedule !== 'ALL') {
         container.innerHTML = renderInstructorSchedule(AppState.selectedInstructorForSchedule);
+        lucide.createIcons();
+        return;
+    }
+
+    // If AVAILABLE_TODAY is selected, render available rooms view
+    if (AppState.selectedRoomForSchedule === 'AVAILABLE_TODAY' || AppState.selectedRoomForSchedule === 'AVAILABLE') {
+        container.innerHTML = renderAvailableRoomsScheduleView();
         lucide.createIcons();
         return;
     }
@@ -7334,6 +7361,477 @@ function renderScheduleListForDay(dayIndex) {
                     `;
                 }).join('')}
             </div>
+        </div>
+    `;
+}
+
+// ----------------------------------------------------
+// AVAILABLE ROOMS (รายการห้องว่างทั้งหมดวันนี้)
+// ----------------------------------------------------
+function selectAvailableRoomsSchedule() {
+    if (AppState.selectedRoomForSchedule === 'AVAILABLE_TODAY' || AppState.selectedRoomForSchedule === 'AVAILABLE') {
+        AppState.selectedRoomForSchedule = 'ALL';
+    } else {
+        const todayIndex = (AppState.simulatedDayIndex !== undefined && AppState.simulatedDayIndex !== null) ? AppState.simulatedDayIndex : new Date().getDay();
+        AppState.selectedDayIndex = todayIndex;
+        AppState.selectedRoomForSchedule = 'AVAILABLE_TODAY';
+        AppState.selectedInstructorForSchedule = 'ALL';
+    }
+    const roomSelect = document.getElementById('timetable-room-selector');
+    if (roomSelect) roomSelect.value = AppState.selectedRoomForSchedule;
+    renderTimetable();
+}
+
+function showAvailableRoomsToday() {
+    const todayIndex = (AppState.simulatedDayIndex !== undefined && AppState.simulatedDayIndex !== null) ? AppState.simulatedDayIndex : new Date().getDay();
+    AppState.selectedDayIndex = todayIndex;
+    AppState.selectedRoomForSchedule = 'AVAILABLE_TODAY';
+    AppState.selectedInstructorForSchedule = 'ALL';
+    switchTab('timetable');
+    const roomSelect = document.getElementById('timetable-room-selector');
+    if (roomSelect) roomSelect.value = 'AVAILABLE_TODAY';
+    renderTimetable();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setVacantPeriodFilter(period) {
+    AppState.vacantPeriodFilter = period;
+    renderTimetable();
+}
+
+function setVacantTypeFilter(type) {
+    AppState.vacantTypeFilter = type;
+    renderTimetable();
+}
+
+function renderAvailableRoomsScheduleView() {
+    const days = [
+        { name: 'จันทร์', index: 1 },
+        { name: 'อังคาร', index: 2 },
+        { name: 'พุธ', index: 3 },
+        { name: 'พฤหัสบดี', index: 4 },
+        { name: 'ศุกร์', index: 5 },
+        { name: 'เสาร์', index: 6 },
+        { name: 'อาทิตย์', index: 0 }
+    ];
+
+    const now = new Date();
+    const todayRealIndex = (AppState.simulatedDayIndex !== undefined && AppState.simulatedDayIndex !== null) ? AppState.simulatedDayIndex : now.getDay();
+    const isViewingToday = (AppState.selectedDayIndex === todayRealIndex);
+
+    const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const fullThaiDays = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];
+    const targetDayName = days.find(d => d.index === AppState.selectedDayIndex)?.name || '';
+    const dateFormatted = `${fullThaiDays[AppState.selectedDayIndex]} (${now.getDate()} ${thaiMonths[now.getMonth()]} ${now.getFullYear() + 543})`;
+
+    // Active maintenance room set
+    const activeMaintenanceRoomIds = new Set();
+    (AppState.maintenance || []).forEach(m => {
+        if (m.status === 'open' || m.status === 'in_progress') {
+            const r = (typeof findRoomForTicket === 'function') ? findRoomForTicket(m) : null;
+            if (r) {
+                activeMaintenanceRoomIds.add(r.id);
+            } else if (m.roomId) {
+                activeMaintenanceRoomIds.add(m.roomId);
+            }
+        }
+    });
+
+    // Analyze vacancy for all rooms on AppState.selectedDayIndex
+    const roomAnalyses = AppState.rooms.map(room => {
+        const isMaintenance = activeMaintenanceRoomIds.has(room.id) || (room.code && activeMaintenanceRoomIds.has(room.code));
+
+        const schedules = (AppState.timetable || [])
+            .filter(s => s.roomId === room.id && s.dayIndex === AppState.selectedDayIndex)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        const bookings = (AppState.bookings || [])
+            .filter(b => b.roomId === room.id && b.status === 'approved' && getDayIndexFromDateStr(b.date) === AppState.selectedDayIndex)
+            .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+        // Check time slots:
+        // Morning: 08:00 - 12:20
+        const morningSchedules = schedules.filter(s => s.startTime < '12:20' && s.endTime > '08:00');
+        const morningBookings = bookings.filter(b => (b.startTime || '00:00') < '12:20' && (b.endTime || '23:59') > '08:00');
+        const isMorningFree = (morningSchedules.length === 0 && morningBookings.length === 0);
+
+        // Afternoon: 12:20 - 17:20
+        const afternoonSchedules = schedules.filter(s => s.startTime < '17:20' && s.endTime > '12:20');
+        const afternoonBookings = bookings.filter(b => (b.startTime || '00:00') < '17:20' && (b.endTime || '23:59') > '12:20');
+        const isAfternoonFree = (afternoonSchedules.length === 0 && afternoonBookings.length === 0);
+
+        // Evening: 17:20 - 21:00
+        const eveningSchedules = schedules.filter(s => s.startTime < '21:00' && s.endTime > '17:20');
+        const eveningBookings = bookings.filter(b => (b.startTime || '00:00') < '21:00' && (b.endTime || '23:59') > '17:20');
+        const isEveningFree = (eveningSchedules.length === 0 && eveningBookings.length === 0);
+
+        // Real-time live status for current time (only if viewing today)
+        const isNowAvailable = isViewingToday && (room.status === 'available');
+
+        // Classification
+        let vacancyCategory = 'fullday'; // 'fullday', 'morning', 'afternoon', 'evening', 'busy', 'maintenance'
+        if (isMaintenance) {
+            vacancyCategory = 'maintenance';
+        } else if (isMorningFree && isAfternoonFree) {
+            vacancyCategory = 'fullday';
+        } else if (isMorningFree && !isAfternoonFree) {
+            vacancyCategory = 'morning';
+        } else if (!isMorningFree && isAfternoonFree) {
+            vacancyCategory = 'afternoon';
+        } else if (isEveningFree) {
+            vacancyCategory = 'evening';
+        } else {
+            vacancyCategory = 'busy';
+        }
+
+        return {
+            room,
+            isMaintenance,
+            schedules,
+            bookings,
+            morningSchedules,
+            morningBookings,
+            isMorningFree,
+            afternoonSchedules,
+            afternoonBookings,
+            isAfternoonFree,
+            eveningSchedules,
+            eveningBookings,
+            isEveningFree,
+            isNowAvailable,
+            vacancyCategory
+        };
+    });
+
+    // Counts for summary pills
+    const totalRooms = AppState.rooms.length;
+    const fulldayCount = roomAnalyses.filter(a => a.vacancyCategory === 'fullday').length;
+    const morningCount = roomAnalyses.filter(a => a.vacancyCategory === 'morning').length;
+    const afternoonCount = roomAnalyses.filter(a => a.vacancyCategory === 'afternoon').length;
+    const nowCount = roomAnalyses.filter(a => a.isNowAvailable).length;
+    const totalAnyVacant = roomAnalyses.filter(a => ['fullday', 'morning', 'afternoon', 'evening'].includes(a.vacancyCategory)).length;
+
+    // Filter by Period
+    const periodFilter = AppState.vacantPeriodFilter || 'all';
+    let filtered = roomAnalyses.filter(a => {
+        if (a.vacancyCategory === 'maintenance') return false;
+        if (periodFilter === 'all') {
+            return ['fullday', 'morning', 'afternoon', 'evening'].includes(a.vacancyCategory);
+        } else if (periodFilter === 'fullday') {
+            return a.vacancyCategory === 'fullday';
+        } else if (periodFilter === 'morning') {
+            return a.vacancyCategory === 'fullday' || a.vacancyCategory === 'morning';
+        } else if (periodFilter === 'afternoon') {
+            return a.vacancyCategory === 'fullday' || a.vacancyCategory === 'afternoon';
+        } else if (periodFilter === 'now') {
+            return a.isNowAvailable;
+        }
+        return true;
+    });
+
+    // Filter by Room Type
+    const typeFilter = AppState.vacantTypeFilter || 'all';
+    if (typeFilter !== 'all') {
+        filtered = filtered.filter(a => {
+            if (typeFilter === 'general') return a.room.type === 'general' || a.room.type === 'lecture';
+            if (typeFilter === 'computer_lab') return a.room.type === 'computer_lab';
+            if (typeFilter === 'meeting_room') return a.room.type === 'meeting_room';
+            return true;
+        });
+    }
+
+    return `
+        <div class="space-y-6">
+            <!-- Day Selector Tabs -->
+            <div class="flex gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
+                ${days.map(d => {
+                    const isToday = (d.index === todayRealIndex);
+                    const isSelected = (AppState.selectedDayIndex === d.index);
+                    return `
+                        <button onclick="setScheduleDay(${d.index})" class="px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
+                            isSelected ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        }">
+                            <span>วัน${d.name}</span>
+                            ${isToday ? `
+                                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isSelected ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-700'}">
+                                    วันนี้
+                                </span>
+                            ` : ''}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+
+            <!-- Banner Card -->
+            <div class="bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 rounded-2xl p-5 sm:p-6 text-white shadow-md">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                ${isViewingToday ? 'สถานะห้องว่างวันนี้' : `สถานะห้องว่างวัน${targetDayName}`}
+                            </span>
+                            <span class="text-xs text-slate-300 font-medium">${dateFormatted}</span>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2.5">
+                            <i data-lucide="door-open" class="w-6 h-6 text-emerald-400"></i>
+                            รายการห้องว่างทั้งหมด (${totalAnyVacant} จาก ${totalRooms} ห้อง)
+                        </h3>
+                        <p class="text-xs sm:text-sm text-emerald-100/80 mt-1 max-w-2xl">
+                            ตรวจสอบห้องเรียน ห้องแล็บคอมพิวเตอร์ และห้องประชุมที่ไม่มีคาบเรียนหรือการจอง พร้อมตรวจสอบช่วงเวลาและกดจองได้ทันที
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center shrink-0">
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 border border-white/15">
+                            <div class="text-[11px] text-emerald-200 font-medium">ว่างตลอดทั้งวัน</div>
+                            <div class="text-lg font-black text-white">${fulldayCount} <span class="text-[11px] font-normal text-emerald-200">ห้อง</span></div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 border border-white/15">
+                            <div class="text-[11px] text-sky-200 font-medium">ว่างช่วงเช้า</div>
+                            <div class="text-lg font-black text-white">${morningCount + fulldayCount} <span class="text-[11px] font-normal text-sky-200">ห้อง</span></div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 border border-white/15">
+                            <div class="text-[11px] text-amber-200 font-medium">ว่างช่วงบ่าย</div>
+                            <div class="text-lg font-black text-white">${afternoonCount + fulldayCount} <span class="text-[11px] font-normal text-amber-200">ห้อง</span></div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 border border-white/15">
+                            <div class="text-[11px] text-emerald-300 font-medium">⚡ ว่างขณะนี้</div>
+                            <div class="text-lg font-black text-emerald-300">${nowCount} <span class="text-[11px] font-normal text-emerald-200">ห้อง</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Bar (Period & Room Category) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- Period Filters -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3.5 h-3.5"></i> ช่วงเวลา:
+                    </span>
+                    <button onclick="setVacantPeriodFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${periodFilter === 'all' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        ทั้งหมด (${totalAnyVacant})
+                    </button>
+                    <button onclick="setVacantPeriodFilter('fullday')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${periodFilter === 'fullday' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        ✨ ว่างตลอดทั้งวัน (${fulldayCount})
+                    </button>
+                    <button onclick="setVacantPeriodFilter('morning')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${periodFilter === 'morning' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        🌤️ ว่างช่วงเช้า (${morningCount + fulldayCount})
+                    </button>
+                    <button onclick="setVacantPeriodFilter('afternoon')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${periodFilter === 'afternoon' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        ⛅ ว่างช่วงบ่าย (${afternoonCount + fulldayCount})
+                    </button>
+                    ${isViewingToday ? `
+                        <button onclick="setVacantPeriodFilter('now')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${periodFilter === 'now' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                            ⚡ ว่างขณะนี้ (${nowCount})
+                        </button>
+                    ` : ''}
+                </div>
+
+                <!-- Type Filters -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i> ประเภทห้อง:
+                    </span>
+                    <button onclick="setVacantTypeFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${typeFilter === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        ทุกประเภท
+                    </button>
+                    <button onclick="setVacantTypeFilter('general')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${typeFilter === 'general' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        📖 ห้องเรียน
+                    </button>
+                    <button onclick="setVacantTypeFilter('computer_lab')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${typeFilter === 'computer_lab' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        💻 แล็บคอม
+                    </button>
+                    <button onclick="setVacantTypeFilter('meeting_room')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${typeFilter === 'meeting_room' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        🏛️ ห้องประชุม
+                    </button>
+                </div>
+            </div>
+
+            <!-- Room Cards Grid -->
+            ${filtered.length === 0 ? `
+                <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                    <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="door-closed" class="w-8 h-8"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 text-base">ไม่พบห้องว่างที่ตรงตามเงื่อนไขที่เลือก</h4>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                        โปรดลองเลือกช่วงเวลาอื่น หรือกดดูทุกประเภทห้องเพื่อตรวจสอบห้องว่างเพิ่มเติม
+                    </p>
+                    <button onclick="setVacantPeriodFilter('all'); setVacantTypeFilter('all');" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition">
+                        แสดงห้องว่างทั้งหมด
+                    </button>
+                </div>
+            ` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    ${filtered.map(a => `
+                        <div class="bg-white rounded-2xl border border-slate-200 hover:border-emerald-400 hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col justify-between group">
+                            <!-- Card Image & Header -->
+                            <div>
+                                <div class="relative h-44 w-full bg-slate-100 overflow-hidden">
+                                    <img src="${a.room.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600'}" alt="${a.room.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/25 to-transparent"></div>
+                                    
+                                    <!-- Category Pill -->
+                                    <div class="absolute top-3 left-3">
+                                        <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold backdrop-blur-md shadow-sm ${
+                                            a.room.type === 'computer_lab' ? 'bg-indigo-600/90 text-white' :
+                                            a.room.type === 'meeting_room' ? 'bg-pink-600/90 text-white' :
+                                            'bg-blue-600/90 text-white'
+                                        }">
+                                            ${a.room.type === 'computer_lab' ? `💻 แล็บคอม (${a.room.pcCount} PCs)` :
+                                              a.room.type === 'meeting_room' ? `🏛️ ห้องประชุม (${a.room.capacity} ที่นั่ง)` :
+                                              `📖 ห้องเรียน (${a.room.capacity} ที่นั่ง)`}
+                                        </span>
+                                    </div>
+
+                                    <!-- Floor / Location -->
+                                    <div class="absolute top-3 right-3">
+                                        <span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md">
+                                            ${a.room.floor || a.room.building}
+                                        </span>
+                                    </div>
+
+                                    <!-- Title & Live status badge -->
+                                    <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+                                        <div>
+                                            <h4 class="text-white font-black text-lg drop-shadow-md leading-tight">${a.room.name}</h4>
+                                            <p class="text-slate-200 text-xs drop-shadow mt-0.5">${a.room.categoryName || ''} • ความจุ ${a.room.capacity} ที่นั่ง</p>
+                                        </div>
+                                        ${isViewingToday ? `
+                                            <div>
+                                                ${a.room.status === 'available' ? `
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white shadow-xs flex items-center gap-1 backdrop-blur-sm">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> ว่างขณะนี้
+                                                    </span>
+                                                ` : a.room.status === 'occupied' ? `
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-xs flex items-center gap-1 backdrop-blur-sm">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span> กำลังเรียน
+                                                    </span>
+                                                ` : `
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500 text-white shadow-xs flex items-center gap-1 backdrop-blur-sm">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span> มีการจอง
+                                                    </span>
+                                                `}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+
+                                <!-- Card Body -->
+                                <div class="p-4 space-y-3">
+                                    <!-- Vacancy Status Pill -->
+                                    <div class="p-2.5 rounded-xl border flex items-center justify-between text-xs font-bold ${
+                                        a.vacancyCategory === 'fullday' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+                                        a.vacancyCategory === 'morning' ? 'bg-sky-50 text-sky-800 border-sky-200' :
+                                        a.vacancyCategory === 'afternoon' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                                        'bg-indigo-50 text-indigo-800 border-indigo-200'
+                                    }">
+                                        <span class="flex items-center gap-1.5">
+                                            <i data-lucide="${a.vacancyCategory === 'fullday' ? 'check-circle' : 'sun'}" class="w-4 h-4"></i>
+                                            ${a.vacancyCategory === 'fullday' ? '✨ ว่างตลอดทั้งวัน (Full Day Free)' :
+                                              a.vacancyCategory === 'morning' ? '🌤️ ว่างช่วงเช้า (08:20 - 12:20 น.)' :
+                                              a.vacancyCategory === 'afternoon' ? '⛅ ว่างช่วงบ่าย (13:20 - 17:20 น.)' :
+                                              '🌙 ว่างช่วงเย็น (17:20 - 21:00 น.)'}
+                                        </span>
+                                        <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-white/70 shadow-xs">
+                                            ${a.vacancyCategory === 'fullday' ? '08:20 - 17:20' : a.vacancyCategory === 'morning' ? '08:20 - 12:20' : '13:20 - 17:20'}
+                                        </span>
+                                    </div>
+
+                                    <!-- Timeslots Breakdown -->
+                                    <div class="space-y-1.5 text-xs">
+                                        <!-- Morning Slot -->
+                                        <div class="p-2 rounded-lg flex items-start justify-between gap-2 ${a.isMorningFree ? 'bg-emerald-50/70 border border-emerald-100' : 'bg-slate-50 border border-slate-100'}">
+                                            <div class="flex items-center gap-1.5 shrink-0 text-slate-600 font-semibold text-[11px]">
+                                                <span>🌅 เช้า</span>
+                                                <span class="text-[10px] text-slate-400 font-normal">08:20-12:20</span>
+                                            </div>
+                                            <div class="text-right flex-1 min-w-0">
+                                                ${a.isMorningFree ? `
+                                                    <span class="text-emerald-700 font-bold flex items-center justify-end gap-1 text-[11px]">
+                                                        <i data-lucide="check" class="w-3.5 h-3.5"></i> ว่าง ไม่มีเรียน
+                                                    </span>
+                                                ` : `
+                                                    <div class="text-slate-700 font-medium text-[11px] truncate" title="${a.morningSchedules.map(s => `${s.subject} (${s.instructor})`).join(', ')}">
+                                                        📚 ${a.morningSchedules.map(s => `${s.code || ''} ${s.subject} (${s.startTime}-${s.endTime})`).join(', ') || 'มีการจอง'}
+                                                    </div>
+                                                `}
+                                            </div>
+                                        </div>
+
+                                        <!-- Afternoon Slot -->
+                                        <div class="p-2 rounded-lg flex items-start justify-between gap-2 ${a.isAfternoonFree ? 'bg-emerald-50/70 border border-emerald-100' : 'bg-slate-50 border border-slate-100'}">
+                                            <div class="flex items-center gap-1.5 shrink-0 text-slate-600 font-semibold text-[11px]">
+                                                <span>☀️ บ่าย</span>
+                                                <span class="text-[10px] text-slate-400 font-normal">13:20-17:20</span>
+                                            </div>
+                                            <div class="text-right flex-1 min-w-0">
+                                                ${a.isAfternoonFree ? `
+                                                    <span class="text-emerald-700 font-bold flex items-center justify-end gap-1 text-[11px]">
+                                                        <i data-lucide="check" class="w-3.5 h-3.5"></i> ว่าง ไม่มีเรียน
+                                                    </span>
+                                                ` : `
+                                                    <div class="text-slate-700 font-medium text-[11px] truncate" title="${a.afternoonSchedules.map(s => `${s.subject} (${s.instructor})`).join(', ')}">
+                                                        📚 ${a.afternoonSchedules.map(s => `${s.code || ''} ${s.subject} (${s.startTime}-${s.endTime})`).join(', ') || 'มีการจอง'}
+                                                    </div>
+                                                `}
+                                            </div>
+                                        </div>
+
+                                        <!-- Evening Slot -->
+                                        <div class="p-2 rounded-lg flex items-start justify-between gap-2 ${a.isEveningFree ? 'bg-emerald-50/40 border border-emerald-50' : 'bg-slate-50 border border-slate-100'}">
+                                            <div class="flex items-center gap-1.5 shrink-0 text-slate-600 font-semibold text-[11px]">
+                                                <span>🌙 เย็น</span>
+                                                <span class="text-[10px] text-slate-400 font-normal">17:20-21:00</span>
+                                            </div>
+                                            <div class="text-right flex-1 min-w-0">
+                                                ${a.isEveningFree ? `
+                                                    <span class="text-emerald-700 font-bold flex items-center justify-end gap-1 text-[11px]">
+                                                        <i data-lucide="check" class="w-3.5 h-3.5"></i> ว่าง
+                                                    </span>
+                                                ` : `
+                                                    <div class="text-slate-700 font-medium text-[11px] truncate">
+                                                        📚 ${a.eveningSchedules.map(s => `${s.subject} (${s.startTime}-${s.endTime})`).join(', ') || 'มีการจอง'}
+                                                    </div>
+                                                `}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Facilities chips -->
+                                    <div class="pt-1 flex flex-wrap gap-1">
+                                        ${(a.room.facilities || []).slice(0, 3).map(f => `
+                                            <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-[10px] font-medium">
+                                                ${f}
+                                            </span>
+                                        `).join('')}
+                                        ${(a.room.facilities || []).length > 3 ? `
+                                            <span class="px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded-md text-[10px]">
+                                                +${(a.room.facilities || []).length - 3}
+                                            </span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Action Buttons -->
+                            <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+                                <button onclick="openBookingModalForRoom('${a.room.id}')" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+                                    <i data-lucide="calendar-plus" class="w-4 h-4"></i> จองห้องนี้
+                                </button>
+                                <button onclick="viewRoomTimetable('${a.room.id}')" class="py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 transition" title="ดูตารางเรียนห้องนี้">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i> ดูตาราง ↗
+                                </button>
+                                <button onclick="openRoomDetailModal('${a.room.id}')" class="p-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-xs transition" title="รายละเอียดห้อง">
+                                    <i data-lucide="info" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `}
         </div>
     `;
 }
@@ -9264,6 +9762,7 @@ function populateRoomOptions(selectElem, includeAll = false) {
     let html = '';
     if (includeAll) {
         html += `<option value="ALL">📌 ภาพรวมทุกห้อง (${AppState.rooms.length} ห้อง)</option>`;
+        html += `<option value="AVAILABLE_TODAY">🟢 รายการห้องว่างทั้งหมดวันนี้</option>`;
     }
 
     const labs = AppState.rooms.filter(r => r.type === 'computer_lab');
@@ -9470,6 +9969,10 @@ function setupEventListeners() {
         scheduleRoomSelect.addEventListener('change', (e) => {
             AppState.selectedRoomForSchedule = e.target.value;
             AppState.selectedInstructorForSchedule = 'ALL';
+            if (e.target.value === 'AVAILABLE_TODAY' || e.target.value === 'AVAILABLE') {
+                const todayIndex = (AppState.simulatedDayIndex !== undefined && AppState.simulatedDayIndex !== null) ? AppState.simulatedDayIndex : new Date().getDay();
+                AppState.selectedDayIndex = todayIndex;
+            }
             renderTimetable();
         });
     }
