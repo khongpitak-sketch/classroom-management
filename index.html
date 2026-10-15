@@ -714,13 +714,24 @@ body {
                     </div>
                 </div>
 
-                <!-- Secondary Filters: Search, Status, Floor -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
-                    <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="room-search-input" placeholder="ค้นหาชื่อห้อง, รหัส, อุปกรณ์, วิชา, อาจารย์..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Secondary Filters: Date, Search, Status, Floor -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+                    <!-- 1. Calendar Date Picker to Search for Room Availability -->
+                    <div class="relative flex items-center">
+                        <i data-lucide="calendar" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none"></i>
+                        <input type="date" id="room-date-filter" class="w-full pl-9 pr-8 py-2 bg-blue-50/40 hover:bg-blue-50/70 border border-blue-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 cursor-pointer shadow-2xs" title="เลือกวันที่เพื่อค้นหาห้องว่าง">
+                        <button type="button" id="clear-room-date-btn" onclick="clearRoomDateFilter()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-md hidden" title="ล้างวันที่">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
                     </div>
 
+                    <!-- 2. Keyword Search -->
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="room-search-input" placeholder="ค้นหาชื่อห้อง, รหัส, อุปกรณ์..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- 3. Status Filter -->
                     <div>
                         <select id="room-status-filter" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="all">🔍 ทุกสถานะ (ว่าง, ใช้งาน, จอง, ปิดปรับปรุง)</option>
@@ -731,12 +742,26 @@ body {
                         </select>
                     </div>
 
+                    <!-- 4. Floor / Zone Filter -->
                     <div>
                         <select id="room-building-filter" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="all">🏢 ทุกชั้น / ทุกโซน</option>
                             <option value="ชั้น 3">ชั้น 3: ห้อง 302, 303, 305, 306, 307, 308 & แล็บคอม 1-2</option>
                             <option value="ชั้น 4">ชั้น 4: ห้อง 401, 402, 403, 404, 405, 406 & แล็บคอม 3-4</option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- Active Date Filter Pill Banner (shows when date is selected) -->
+                <div id="room-date-filter-banner" class="hidden p-2.5 px-3 bg-blue-50/80 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-blue-900">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="calendar-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                        <span id="room-date-filter-label" class="font-semibold">กำลังตรวจสอบห้องว่างสำหรับวันที่: ...</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="setRoomDateFilterToday()" class="text-xs px-2.5 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-semibold transition shadow-2xs">วันนี้</button>
+                        <button type="button" onclick="setRoomDateFilterTomorrow()" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-blue-200 hover:bg-blue-100 font-semibold text-blue-700 transition shadow-2xs">พรุ่งนี้</button>
+                        <button type="button" onclick="clearRoomDateFilter()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-700 transition">ล้างวันที่</button>
                     </div>
                 </div>
             </div>
@@ -6097,6 +6122,7 @@ const AppState = {
     searchQuery: '',
     statusFilter: 'all',
     buildingFilter: 'all',
+    selectedRoomDate: '', // 'YYYY-MM-DD' or '' for all/live
     selectedRoomForSchedule: 'ALL',
     selectedInstructorForSchedule: 'ALL',
     vacantPeriodFilter: 'all', // 'all', 'fullday', 'morning', 'afternoon', 'now'
@@ -6629,22 +6655,176 @@ function renderTodayActivity() {
 // ----------------------------------------------------
 // 2. ROOMS EXPLORER & FILTERING
 // ----------------------------------------------------
+function setRoomDateFilterToday() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    AppState.selectedRoomDate = todayStr;
+    const input = document.getElementById('room-date-filter');
+    if (input) input.value = todayStr;
+    const clearBtn = document.getElementById('clear-room-date-btn');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+    renderRooms();
+}
+
+function setRoomDateFilterTomorrow() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    AppState.selectedRoomDate = tomorrowStr;
+    const input = document.getElementById('room-date-filter');
+    if (input) input.value = tomorrowStr;
+    const clearBtn = document.getElementById('clear-room-date-btn');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+    renderRooms();
+}
+
+function clearRoomDateFilter() {
+    AppState.selectedRoomDate = '';
+    const input = document.getElementById('room-date-filter');
+    if (input) input.value = '';
+    const clearBtn = document.getElementById('clear-room-date-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    const banner = document.getElementById('room-date-filter-banner');
+    if (banner) banner.classList.add('hidden');
+    renderRooms();
+}
+
+function getRoomVacancyForSelectedDate(room, targetDayIndex) {
+    if (!AppState.selectedRoomDate || targetDayIndex === -1) return null;
+
+    // Check active maintenance
+    const isMaint = (AppState.maintenance || []).some(m => 
+        (m.status === 'open' || m.status === 'in_progress') && 
+        (m.roomId === room.id || (room.code && m.roomId === room.code))
+    );
+
+    // Schedules on that day of week
+    const schedules = (AppState.timetable || [])
+        .filter(s => s.roomId === room.id && s.dayIndex === targetDayIndex)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    // Approved bookings on that date
+    const bookings = (AppState.bookings || [])
+        .filter(b => b.roomId === room.id && b.status === 'approved' && b.date === AppState.selectedRoomDate)
+        .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+    const morningSchedules = schedules.filter(s => s.startTime < '12:20' && s.endTime > '08:00');
+    const morningBookings = bookings.filter(b => (b.startTime || '00:00') < '12:20' && (b.endTime || '23:59') > '08:00');
+    const isMorningFree = (morningSchedules.length === 0 && morningBookings.length === 0);
+
+    const afternoonSchedules = schedules.filter(s => s.startTime < '17:20' && s.endTime > '12:20');
+    const afternoonBookings = bookings.filter(b => (b.startTime || '00:00') < '17:20' && (b.endTime || '23:59') > '12:20');
+    const isAfternoonFree = (afternoonSchedules.length === 0 && afternoonBookings.length === 0);
+
+    const eveningSchedules = schedules.filter(s => s.startTime < '21:00' && s.endTime > '17:20');
+    const eveningBookings = bookings.filter(b => (b.startTime || '00:00') < '21:00' && (b.endTime || '23:59') > '17:20');
+    const isEveningFree = (eveningSchedules.length === 0 && eveningBookings.length === 0);
+
+    let vacancyStatus = 'available'; // 'available', 'occupied', 'maintenance', 'reserved'
+    let vacancyType = 'fullday'; // 'fullday', 'morning', 'afternoon', 'evening', 'busy', 'maintenance'
+    let vacancyText = '✨ ว่างตลอดทั้งวัน';
+
+    if (isMaint) {
+        vacancyStatus = 'maintenance';
+        vacancyType = 'maintenance';
+        vacancyText = '🔴 ปิดปรับปรุง';
+    } else if (isMorningFree && isAfternoonFree) {
+        vacancyStatus = 'available';
+        vacancyType = 'fullday';
+        vacancyText = '✨ ว่างตลอดทั้งวัน';
+    } else if (isMorningFree && !isAfternoonFree) {
+        vacancyStatus = 'available';
+        vacancyType = 'morning';
+        vacancyText = '🌤️ ว่างช่วงเช้า (08:20-12:20)';
+    } else if (!isMorningFree && isAfternoonFree) {
+        vacancyStatus = 'available';
+        vacancyType = 'afternoon';
+        vacancyText = '⛅ ว่างช่วงบ่าย (13:20-17:20)';
+    } else if (isEveningFree) {
+        vacancyStatus = 'available';
+        vacancyType = 'evening';
+        vacancyText = '🌙 ว่างช่วงเย็น (17:20+)';
+    } else {
+        vacancyStatus = 'occupied';
+        vacancyType = 'busy';
+        vacancyText = '❌ มีเรียนเต็มวัน';
+    }
+
+    return {
+        isMaint,
+        morningSchedules,
+        morningBookings,
+        isMorningFree,
+        afternoonSchedules,
+        afternoonBookings,
+        isAfternoonFree,
+        eveningSchedules,
+        eveningBookings,
+        isEveningFree,
+        vacancyStatus,
+        vacancyType,
+        vacancyText
+    };
+}
+
 function renderRooms() {
     const grid = document.getElementById('rooms-card-grid');
     if (!grid) return;
+
+    let targetDayIndex = -1;
+    let selectedDateLabel = '';
+    if (AppState.selectedRoomDate) {
+        const parts = AppState.selectedRoomDate.split('-');
+        if (parts.length === 3) {
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            targetDayIndex = d.getDay();
+            const fullThaiDays = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];
+            const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            selectedDateLabel = `${fullThaiDays[targetDayIndex]}ที่ ${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
+        }
+    }
+
+    // Sync banner & date input UI
+    const dateBanner = document.getElementById('room-date-filter-banner');
+    const dateLabelElem = document.getElementById('room-date-filter-label');
+    const clearBtn = document.getElementById('clear-room-date-btn');
+    const dateInput = document.getElementById('room-date-filter');
+    if (dateInput && AppState.selectedRoomDate) dateInput.value = AppState.selectedRoomDate;
+
+    if (AppState.selectedRoomDate && selectedDateLabel) {
+        if (dateBanner) dateBanner.classList.remove('hidden');
+        if (dateLabelElem) dateLabelElem.innerHTML = `กำลังค้นหาห้องว่างสำหรับ: <strong class="text-blue-700">${selectedDateLabel}</strong>`;
+        if (clearBtn) clearBtn.classList.remove('hidden');
+    } else {
+        if (dateBanner) dateBanner.classList.add('hidden');
+        if (clearBtn) clearBtn.classList.add('hidden');
+    }
 
     let filtered = AppState.rooms.filter(room => {
         if (AppState.selectedRoomType !== 'all' && room.type !== AppState.selectedRoomType) {
             return false;
         }
-        if (AppState.statusFilter !== 'all' && room.status !== AppState.statusFilter) {
-            return false;
+
+        // Status Filter
+        if (AppState.selectedRoomDate && targetDayIndex !== -1) {
+            const dateVac = getRoomVacancyForSelectedDate(room, targetDayIndex);
+            if (dateVac) {
+                if (AppState.statusFilter === 'available' && dateVac.vacancyStatus !== 'available') return false;
+                if (AppState.statusFilter === 'occupied' && dateVac.vacancyStatus !== 'occupied') return false;
+                if (AppState.statusFilter === 'maintenance' && dateVac.vacancyStatus !== 'maintenance') return false;
+                if (AppState.statusFilter === 'reserved' && (dateVac.morningBookings.length === 0 && dateVac.afternoonBookings.length === 0)) return false;
+            }
+        } else {
+            if (AppState.statusFilter !== 'all' && room.status !== AppState.statusFilter) {
+                return false;
+            }
         }
+
         if (AppState.buildingFilter !== 'all') {
             const matchFloor = room.floor && room.floor.includes(AppState.buildingFilter);
             const matchBuilding = room.building && room.building.includes(AppState.buildingFilter);
             if (!matchFloor && !matchBuilding) return false;
         }
+
         if (AppState.searchQuery) {
             const query = AppState.searchQuery.toLowerCase();
             const matchName = room.name.toLowerCase().includes(query);
@@ -6659,7 +6839,11 @@ function renderRooms() {
 
     const countBadge = document.getElementById('filtered-room-count');
     if (countBadge) {
-        countBadge.textContent = `พบ ${filtered.length} จากทั้งหมด ${AppState.rooms.length} ห้อง`;
+        if (AppState.selectedRoomDate && selectedDateLabel) {
+            countBadge.innerHTML = `พบ <strong class="text-blue-600 font-bold">${filtered.length}</strong> ห้อง จากทั้งหมด ${AppState.rooms.length} ห้อง ใน<span class="text-slate-700 font-medium">${selectedDateLabel}</span>`;
+        } else {
+            countBadge.textContent = `พบ ${filtered.length} จากทั้งหมด ${AppState.rooms.length} ห้อง`;
+        }
     }
 
     if (filtered.length === 0) {
@@ -6667,7 +6851,7 @@ function renderRooms() {
             <div class="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-200 p-8">
                 <i data-lucide="search-x" class="w-16 h-16 mx-auto text-slate-300 mb-3"></i>
                 <h3 class="text-lg font-bold text-slate-700">ไม่พบห้องเรียนที่ตรงกับเงื่อนไข</h3>
-                <p class="text-slate-500 text-sm mt-1">ลองเปลี่ยนคำค้นหา หรือรีเซ็ตตัวกรองด้านบน</p>
+                <p class="text-slate-500 text-sm mt-1">ลองเปลี่ยนวันที่ คำค้นหา หรือรีเซ็ตตัวกรองด้านบน</p>
                 <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-semibold transition">
                     ล้างตัวกรองทั้งหมด
                 </button>
@@ -6678,6 +6862,28 @@ function renderRooms() {
 
     grid.innerHTML = filtered.map(room => {
         const isLab = room.type === 'computer_lab';
+        const dateVac = (AppState.selectedRoomDate && targetDayIndex !== -1) ? getRoomVacancyForSelectedDate(room, targetDayIndex) : null;
+
+        // Top right status badge
+        let badgeHtml = '';
+        if (dateVac) {
+            if (dateVac.vacancyStatus === 'maintenance') {
+                badgeHtml = `<span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-600 text-white shadow-xs">🔴 ปิดปรับปรุง</span>`;
+            } else if (dateVac.vacancyType === 'fullday') {
+                badgeHtml = `<span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-xs">✨ ว่างทั้งวัน</span>`;
+            } else if (dateVac.vacancyType === 'morning') {
+                badgeHtml = `<span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-sky-600 text-white shadow-xs">🌤️ ว่างเช้า</span>`;
+            } else if (dateVac.vacancyType === 'afternoon') {
+                badgeHtml = `<span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-600 text-white shadow-xs">⛅ ว่างบ่าย</span>`;
+            } else if (dateVac.vacancyType === 'evening') {
+                badgeHtml = `<span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs">🌙 ว่างเย็น</span>`;
+            } else {
+                badgeHtml = `<span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-700 text-white shadow-xs">❌ มีเรียนทั้งวัน</span>`;
+            }
+        } else {
+            badgeHtml = getStatusBadge(room.status);
+        }
+
         return `
             <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm card-hover flex flex-col justify-between">
                 <div>
@@ -6691,7 +6897,7 @@ function renderRooms() {
                             </span>
                         </div>
                         <div class="absolute top-3 right-3">
-                            ${getStatusBadge(room.status)}
+                            ${badgeHtml}
                         </div>
 
                         <div class="absolute bottom-3 left-3 right-3 text-white">
@@ -6723,7 +6929,33 @@ function renderRooms() {
                             </div>
                         </div>
 
-                        ${room.currentClass ? `
+                        <!-- Date Vacancy Breakdown or Current Status -->
+                        ${dateVac ? `
+                            <div class="p-2.5 rounded-xl border space-y-1.5 ${
+                                dateVac.vacancyType === 'fullday' ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' :
+                                dateVac.vacancyType === 'morning' ? 'bg-sky-50/80 border-sky-200 text-sky-900' :
+                                dateVac.vacancyType === 'afternoon' ? 'bg-amber-50/80 border-amber-200 text-amber-900' :
+                                dateVac.vacancyType === 'maintenance' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                'bg-slate-50 border-slate-200 text-slate-800'
+                            }">
+                                <div class="flex items-center justify-between text-xs font-bold">
+                                    <span class="flex items-center gap-1.5 text-slate-700">
+                                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i> ${selectedDateLabel}
+                                    </span>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded font-extrabold uppercase bg-white/90 shadow-2xs">
+                                        ${dateVac.vacancyText}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-1 text-[11px] pt-1 border-t border-slate-200/60">
+                                    <div class="p-1.5 rounded truncate ${dateVac.isMorningFree ? 'bg-emerald-100/70 text-emerald-800 font-semibold' : 'bg-white/80 text-slate-600'}" title="${dateVac.morningSchedules.map(s => s.subject).join(', ')}">
+                                        🌅 เช้า: ${dateVac.isMorningFree ? 'ว่าง ✅' : (dateVac.morningSchedules[0]?.subject ? (dateVac.morningSchedules[0].code || dateVac.morningSchedules[0].subject.split(' ')[0]) : 'มีเรียน')}
+                                    </div>
+                                    <div class="p-1.5 rounded truncate ${dateVac.isAfternoonFree ? 'bg-emerald-100/70 text-emerald-800 font-semibold' : 'bg-white/80 text-slate-600'}" title="${dateVac.afternoonSchedules.map(s => s.subject).join(', ')}">
+                                        ☀️ บ่าย: ${dateVac.isAfternoonFree ? 'ว่าง ✅' : (dateVac.afternoonSchedules[0]?.subject ? (dateVac.afternoonSchedules[0].code || dateVac.afternoonSchedules[0].subject.split(' ')[0]) : 'มีเรียน')}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : room.currentClass ? `
                             <div onclick="viewRoomTimetable('${room.id}')" class="p-2.5 rounded-xl ${room.status === 'reserved' ? 'bg-pink-50/80 hover:bg-pink-100/80 border border-pink-200/70' : 'bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200/70'} text-xs cursor-pointer transition" title="คลิกเพื่อดูตารางห้องนี้">
                                 <div class="font-semibold ${room.status === 'reserved' ? 'text-pink-900' : 'text-amber-900'} flex items-center justify-between">
                                     <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5 ${room.status === 'reserved' ? 'text-pink-600' : 'text-amber-600'}"></i> ${room.currentClass.time}</span>
@@ -6793,6 +7025,7 @@ function renderRooms() {
             </div>
         `;
     }).join('');
+    lucide.createIcons();
 }
 
 // ----------------------------------------------------
@@ -9706,8 +9939,12 @@ function openBookingModalForRoom(roomId) {
     }
 
     const dateInput = document.getElementById('booking-date-input');
-    if (dateInput && !dateInput.value) {
-        dateInput.value = new Date().toISOString().slice(0, 10);
+    if (dateInput) {
+        if (AppState.selectedRoomDate) {
+            dateInput.value = AppState.selectedRoomDate;
+        } else if (!dateInput.value) {
+            dateInput.value = new Date().toISOString().slice(0, 10);
+        }
     }
 
     // Control admin-only auto-approve toggle box
@@ -9940,6 +10177,16 @@ function setupEventListeners() {
         });
     });
 
+    const roomDateInput = document.getElementById('room-date-filter');
+    if (roomDateInput) {
+        roomDateInput.addEventListener('change', (e) => {
+            AppState.selectedRoomDate = e.target.value;
+            const clearBtn = document.getElementById('clear-room-date-btn');
+            if (clearBtn) clearBtn.classList.toggle('hidden', !e.target.value);
+            renderRooms();
+        });
+    }
+
     const searchInput = document.getElementById('room-search-input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -9994,6 +10241,14 @@ function resetFilters() {
     AppState.statusFilter = 'all';
     AppState.buildingFilter = 'all';
     AppState.selectedRoomType = 'all';
+    AppState.selectedRoomDate = '';
+
+    const dateInput = document.getElementById('room-date-filter');
+    if (dateInput) dateInput.value = '';
+    const clearBtn = document.getElementById('clear-room-date-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    const dateBanner = document.getElementById('room-date-filter-banner');
+    if (dateBanner) dateBanner.classList.add('hidden');
 
     const searchInput = document.getElementById('room-search-input');
     if (searchInput) searchInput.value = '';
