@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 1 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v31_fms201_friday_update";
+const DATA_VERSION = "v32_coworking_space_rooms";
 const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
@@ -488,6 +488,61 @@ const DEFAULT_ROOMS = [
             "Zoom Rooms",
             "Microsoft Teams",
             "Wireless Screen Sharing"
+        ],
+        "currentClass": null
+    },
+    {
+        "id": "CONF-4",
+        "code": "CONF-CW1",
+        "name": "ห้องประชุม Co-working Space (1)",
+        "type": "meeting_room",
+        "categoryName": "ห้องประชุม / สัมมนา",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 1",
+        "capacity": 15,
+        "pcCount": 0,
+        "status": "available",
+        "facilities": [
+            "Smart TV (ทีวี 65 นิ้ว) 1 เครื่อง",
+            "เครื่องปรับอากาศ 1 ตัว",
+            "โต๊ะประชุมกลุ่ม Co-working",
+            "กระดาน Whiteboard",
+            "ปลั๊กไฟ & Wi-Fi ความเร็วสูง"
+        ],
+        "description": "ห้องประชุม Co-working Space (1) (Co-workig Space 1) อาคารคณะวิทยาการจัดการ พร้อมทีวี 65 นิ้ว 1 เครื่อง และเครื่องปรับอากาศ 1 ตัว รองรับการประชุมกลุ่มย่อยและการทำงานร่วมกัน",
+        "image": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=600",
+        "specs": {},
+        "software": [
+            "Smart TV Screen Sharing",
+            "Zoom Rooms",
+            "Microsoft Teams"
+        ],
+        "currentClass": null
+    },
+    {
+        "id": "CONF-5",
+        "code": "CONF-CW2",
+        "name": "ห้องประชุม Co-working Space (2) (รับรอง)",
+        "type": "meeting_room",
+        "categoryName": "ห้องประชุม / สัมมนา",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 1",
+        "capacity": 15,
+        "pcCount": 0,
+        "status": "available",
+        "facilities": [
+            "ชุดโซฟารับรอง / โต๊ะประชุมรับรอง",
+            "Smart TV (ทีวี)",
+            "เครื่องปรับอากาศ 1 ตัว",
+            "ปลั๊กไฟ & Wi-Fi ความเร็วสูง"
+        ],
+        "description": "ห้องประชุม Co-working Space (2) (รับรอง) (Co-workig Space 2) อาคารคณะวิทยาการจัดการ สำหรับการประชุมรับรองแขก ผู้บริหาร และการประชุมกลุ่มย่อย",
+        "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=600",
+        "specs": {},
+        "software": [
+            "Smart TV Screen Sharing",
+            "Zoom Rooms",
+            "Microsoft Teams"
         ],
         "currentClass": null
     }
