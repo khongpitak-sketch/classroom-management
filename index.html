@@ -10948,6 +10948,22 @@ function sendActionToGoogleBackend(action, payload) {
             fetch(delUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
         } else if (action === 'saveShiftSwap' && payload.swap) {
             const sw = payload.swap;
+            const cleanParts = [
+                (sw.docNo || '').replace(/[@|]/g, ' '),
+                (sw.applicantPrefix || '').replace(/[@|]/g, ' '),
+                (sw.applicantName || '').replace(/[@|]/g, ' '),
+                (sw.applicantPosition || '').replace(/[@|]/g, ' '),
+                (sw.applicantDept || '').replace(/[@|]/g, ' '),
+                (sw.substitutePrefix || '').replace(/[@|]/g, ' '),
+                (sw.substituteName || '').replace(/[@|]/g, ' '),
+                (sw.substitutePosition || '').replace(/[@|]/g, ' '),
+                (sw.compensateDate || '').replace(/[@|]/g, ' '),
+                (sw.compensatePeriod || '').replace(/[@|]/g, ' '),
+                (sw.reason || '').replace(/[@|]/g, ' '),
+                (sw.notes || '').replace(/[@|]/g, ' ')
+            ];
+            const cleanPurpose = `[SWAP_DATA]${cleanParts.join('@@')}`;
+
             const swapBooking = {
                 id: sw.id,
                 roomId: 'SWAP',
@@ -10956,7 +10972,7 @@ function sendActionToGoogleBackend(action, payload) {
                 startTime: sw.shiftPeriod || 'ช่วงเช้า',
                 endTime: sw.compensatePeriod || 'ช่วงเช้า',
                 subject: `[SWAP] ${sw.docNo || sw.id} | ${sw.applicantPrefix || ''}${sw.applicantName} -> ${sw.substitutePrefix || ''}${sw.substituteName}`,
-                purpose: JSON.stringify(sw),
+                purpose: cleanPurpose,
                 bookerName: `${sw.applicantPrefix || ''}${sw.applicantName}`,
                 reservedBy: `${sw.substitutePrefix || ''}${sw.substituteName}`,
                 department: sw.applicantDept || 'คณะวิทยาการจัดการ',
@@ -10966,17 +10982,6 @@ function sendActionToGoogleBackend(action, payload) {
             const swUrl = new URL(AppState.googleScriptUrl);
             swUrl.searchParams.set('action', 'addBooking');
             swUrl.searchParams.set('booking', JSON.stringify(swapBooking));
-            swUrl.searchParams.set('id', swapBooking.id);
-            swUrl.searchParams.set('roomId', swapBooking.roomId);
-            swUrl.searchParams.set('roomName', swapBooking.roomName);
-            swUrl.searchParams.set('date', swapBooking.date);
-            swUrl.searchParams.set('subject', swapBooking.subject);
-            swUrl.searchParams.set('purpose', swapBooking.purpose);
-            swUrl.searchParams.set('bookerName', swapBooking.bookerName);
-            swUrl.searchParams.set('reservedBy', swapBooking.reservedBy);
-            swUrl.searchParams.set('department', swapBooking.department);
-            swUrl.searchParams.set('phone', swapBooking.phone);
-            swUrl.searchParams.set('status', swapBooking.status);
             fetch(swUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
         } else if (action === 'approveShiftSwap' && payload.id) {
             const appUrl = new URL(AppState.googleScriptUrl);
@@ -11151,12 +11156,26 @@ async function triggerAdaptiveSync(silent = true, force = false) {
     try {
         await fetchDataFromGoogleSheets(silent);
         lastSuccessfulSync = Date.now();
+        autoSyncLocalPendingShiftSwaps();
     } catch(e) {
         console.warn('Sync manager error:', e);
     } finally {
         isSyncInProgress = false;
         scheduleAdaptiveSync();
     }
+}
+
+function autoSyncLocalPendingShiftSwaps() {
+    if (!AppState.googleScriptUrl || !Array.isArray(AppState.shiftSwaps) || !navigator.onLine) return;
+    const now = Date.now();
+    AppState.shiftSwaps.forEach(sw => {
+        if (sw && sw.status === 'pending' && sw.id) {
+            if (!sw._lastSyncedAt || (now - sw._lastSyncedAt > 30000)) {
+                sw._lastSyncedAt = now;
+                sendActionToGoogleBackend('saveShiftSwap', { swap: sw });
+            }
+        }
+    });
 }
 
 /**
@@ -11702,6 +11721,7 @@ function initUI() {
     updateAdminPendingBadge();
     updateAdminShiftSwapBadge();
     updateAdminMaintenanceBadge();
+    autoSyncLocalPendingShiftSwaps();
     switchTab('dashboard');
 }
 
@@ -12411,11 +12431,37 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
             if (rawStatus === 'cancelled' || rawStatus === 'deleted') return;
 
             let swapData = null;
-            try {
-                if (b.purpose && String(b.purpose).trim().startsWith('{')) {
-                    swapData = JSON.parse(b.purpose);
-                }
-            } catch(e) {}
+            const strPurpose = String(b.purpose || '');
+            if (strPurpose.startsWith('[SWAP_DATA]')) {
+                const parts = strPurpose.replace('[SWAP_DATA]', '').split('@@');
+                swapData = {
+                    id: strId,
+                    docNo: parts[0] || (b.docNo || `คำขอ ${strId}`),
+                    docDate: parseGasDate(b.date) || new Date().toISOString().slice(0, 10),
+                    subject: 'ขออนุมัติเปลี่ยนเวรยาม',
+                    applicantPrefix: parts[1] || '',
+                    applicantName: parts[2] || String(b.bookerName || ''),
+                    applicantPosition: parts[3] || '',
+                    applicantDept: parts[4] || String(b.department || 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์'),
+                    substitutePrefix: parts[5] || '',
+                    substituteName: parts[6] || String(b.reservedBy || ''),
+                    substitutePosition: parts[7] || '',
+                    compensateDate: parts[8] || parseGasDate(b.date),
+                    compensatePeriod: parts[9] || String(b.endTime || 'ช่วงเช้า'),
+                    reason: parts[10] || 'ขอเปลี่ยนเวรยาม',
+                    notes: parts[11] || '',
+                    shiftDate: parseGasDate(b.date),
+                    shiftPeriod: String(b.startTime || 'ช่วงเช้า'),
+                    phone: String(b.phone || ''),
+                    applicantPhone: String(b.phone || ''),
+                    status: (rawStatus === 'approved' || rawStatus === 'completed') ? 'approved' : (rawStatus === 'rejected' ? 'rejected' : 'pending'),
+                    createdAt: b.createdAt || new Date().toISOString()
+                };
+            } else if (strPurpose.startsWith('{')) {
+                try {
+                    swapData = JSON.parse(strPurpose);
+                } catch(e) {}
+            }
 
             if (!swapData || typeof swapData !== 'object') {
                 const rawSubj = String(b.subject || '');
