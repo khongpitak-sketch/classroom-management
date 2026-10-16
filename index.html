@@ -10493,12 +10493,12 @@ function renderPrintShiftSwapContent(swap, isBlank) {
     const app = data.approval || {};
     const headOk = (!isBlank && (app.headDecision === 'เห็นควรอนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
     const headOther = (!isBlank && app.headDecision === 'อื่นๆ') ? '&#10003;' : '&nbsp;&nbsp;';
-    const headNotes = (!isBlank && app.headNotes) ? app.headNotes : '...................................................';
+    const headNotes = (!isBlank && app.headNotes) ? app.headNotes : '&nbsp;';
 
     const deanOk = (!isBlank && (app.deanDecision === 'อนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
     const deanNo = (!isBlank && (app.deanDecision === 'ไม่อนุมัติ' || data.status === 'rejected')) ? '&#10003;' : '&nbsp;&nbsp;';
-    const deanNotes = (!isBlank && app.deanNotes) ? app.deanNotes : '...................................................';
-    const buildingNotes = (!isBlank && app.buildingNotes) ? app.buildingNotes : '...................................................................................................................................';
+    const deanNotes = (!isBlank && app.deanNotes) ? app.deanNotes : '&nbsp;';
+    const buildingNotes = (!isBlank && app.buildingNotes) ? app.buildingNotes : '&nbsp;';
 
     const applicantFull = (!isBlank && data.applicantName) ? `${data.applicantPrefix || ''}${data.applicantName}` : '........................................................................';
     const applicantPosition = (!isBlank && data.applicantPosition) ? data.applicantPosition : '........................................................';
@@ -10619,7 +10619,7 @@ function renderPrintShiftSwapContent(swap, isBlank) {
                 <!-- Box 3: บันทึกงานอาคารสถานที่ (Full-width box) -->
                 <div style="border: 1px solid #000; padding: 5pt 7pt;">
                     <div style="font-weight: bold; text-decoration: underline; margin-bottom: 2pt; font-size: 14.5pt;">บันทึกงานอาคารสถานที่:</div>
-                    <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${buildingNotes || 'ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว'}</div>
+                    <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 18pt; margin-bottom: 3pt;">${buildingNotes}</div>
                     <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 16pt;">
                         <div style="text-align: center; padding-right: 20pt;">
                             <div style="margin-bottom: 2pt;">(ลงชื่อ)........................................................................</div>
