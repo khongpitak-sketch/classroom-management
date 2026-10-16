@@ -31,8 +31,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
     <style>
-/* Google Fonts: Prompt & Inter */
-@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+/* Google Fonts: Sarabun, Prompt & Inter */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Prompt:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@font-face {
+    font-family: 'TH Sarabun PSK';
+    src: local('TH Sarabun PSK'), local('THSarabunPSK'), local('TH Sarabun New'), local('THSarabunNew');
+}
 
 :root {
     --font-thai: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -210,25 +215,55 @@ body {
     .timetable-cell {
         border: 1px solid #cbd5e1 !important;
     }
+    body.printing-shift-swap {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     body.printing-shift-swap * {
         visibility: hidden !important;
     }
+    body.printing-shift-swap #modal-print-shift-swap,
     body.printing-shift-swap #print-shift-swap-content,
     body.printing-shift-swap #print-shift-swap-content * {
         visibility: visible !important;
     }
+    body.printing-shift-swap #modal-print-shift-swap {
+        position: static !important;
+        display: block !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+    body.printing-shift-swap #modal-print-shift-swap > div {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: white !important;
+    }
+    body.printing-shift-swap .no-print {
+        display: none !important;
+    }
     body.printing-shift-swap #print-shift-swap-content {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+        position: static !important;
         width: 100% !important;
         max-width: 100% !important;
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         background: white !important;
         color: black !important;
+        font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif !important;
+        font-size: 16pt !important;
+        line-height: 1.25 !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
 }
 
@@ -3231,7 +3266,7 @@ body {
             </div>
 
             <!-- Official Document Container (Formatted for A4 Printing & Preview) -->
-            <div id="print-shift-swap-content" class="bg-white text-slate-900 mx-auto p-8 sm:p-12 border border-slate-200 rounded-xl shadow-sm text-sm" style="font-family: 'Sarabun', 'TH Sarabun New', sans-serif; line-height: 1.7; max-width: 800px; color: #000;">
+            <div id="print-shift-swap-content" class="bg-white text-black mx-auto p-6 sm:p-10 border border-slate-200 rounded-xl shadow-sm" style="font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.25; max-width: 210mm; color: #000; box-sizing: border-box;">
                 <!-- Populated dynamically via renderPrintShiftSwapContent() -->
             </div>
         </div>
@@ -10470,125 +10505,124 @@ function renderPrintShiftSwapContent(swap, isBlank) {
 
     container.innerHTML = `
         <!-- Printable Official Form Page 1/1 -->
-        <div class="relative bg-white text-black p-4 sm:p-6" style="min-height: 1050px; font-size: 15px; line-height: 1.85;">
+        <div class="shift-swap-official-form bg-white text-black" style="font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.25; width: 100%; box-sizing: border-box; color: #000;">
             
             <!-- Header Section: Centered 3 lines (No Garuda, No Arabic box as per user's handwritten mark) -->
-            <div class="text-center pt-1 pb-4 space-y-1 text-black">
-                <div class="font-bold text-xl sm:text-2xl tracking-tight leading-tight">
+            <div class="text-center" style="margin-bottom: 6pt;">
+                <div style="font-size: 18pt; font-weight: bold; line-height: 1.2; margin-bottom: 2pt;">
                     หนังสือขออนุญาตเปลี่ยนเวรยาม
                 </div>
-                <div class="font-bold text-base sm:text-lg">
+                <div style="font-size: 16pt; font-weight: bold; line-height: 1.2; margin-bottom: 4pt;">
                     คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
                 </div>
-                <div class="font-medium text-sm sm:text-base pt-0.5">
+                <div style="font-size: 16pt; line-height: 1.2;">
                     วันที่ <span class="border-b border-dotted border-black px-2 font-bold">${docDateInfo.day}</span>
                     เดือน <span class="border-b border-dotted border-black px-3 font-bold">${docDateInfo.month}</span>
                     พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${docDateInfo.year}</span>
                 </div>
             </div>
 
-            <!-- Subject & Addressee (เรื่อง & เรียน) -->
-            <div class="space-y-1 mb-3 text-black">
-                <div class="flex items-baseline">
-                    <span class="font-bold shrink-0 w-16">เรื่อง</span>
-                    <span class="font-bold pl-1">ขออนุญาตเปลี่ยนวันอยู่เวร</span>
+            <!-- Subject & Addressee (เรื่อง & เรียน) with 6pt spacing -->
+            <div style="margin-bottom: 6pt; font-size: 16pt; line-height: 1.25;">
+                <div style="display: flex; align-items: baseline; margin-bottom: 6pt;">
+                    <span style="font-weight: bold; width: 44pt; flex-shrink: 0;">เรื่อง</span>
+                    <span style="font-weight: bold;">ขออนุญาตเปลี่ยนวันอยู่เวร</span>
                 </div>
-                <div class="flex items-baseline">
-                    <span class="font-bold shrink-0 w-16">เรียน</span>
-                    <span class="pl-1">คณบดีคณะวิทยาการจัดการ</span>
+                <div style="display: flex; align-items: baseline; margin-bottom: 6pt;">
+                    <span style="font-weight: bold; width: 44pt; flex-shrink: 0;">เรียน</span>
+                    <span>คณบดีคณะวิทยาการจัดการ</span>
                 </div>
             </div>
 
-            <!-- Body Paragraphs matching user's exact document -->
-            <div class="text-justify indent-12 space-y-2 mt-2 leading-relaxed text-black">
-                <div>
-                    ข้าพเจ้า ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
-                    <span class="border-b border-dotted border-black px-2 font-bold">${applicantFull}</span>
-                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${applicantPosition}</span>
+            <!-- Body Paragraphs matching user's exact document with 6pt spacing -->
+            <div style="font-size: 16pt; line-height: 1.25; text-align: justify; margin-bottom: 6pt;">
+                <div style="text-indent: 54pt; margin-bottom: 6pt;">
+                    ข้าพเจ้า ( [ <span style="font-weight: bold;">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span style="font-weight: bold;">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span style="font-weight: bold;">${prefMiss}</span> ] นางสาว )
+                    <span class="border-b border-dotted border-black px-1.5 font-bold">${applicantFull}</span>
+                    ตำแหน่ง <span class="border-b border-dotted border-black px-1.5">${applicantPosition}</span>
                     สังกัด <span class="border-b border-dotted border-black px-1 font-medium">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
-                    มีความจำเป็นต้องขอเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.day}</span>
-                    เดือน <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.month}</span>
-                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.year}</span>
-                    ช่วงเวลา ( [ <span class="font-bold">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${shiftNight}</span> ] กลางคืน )
-                    เนื่องจาก <span class="border-b border-dotted border-black px-2">${reasonText}</span>
-                    โดยให้ ( [ <span class="font-bold">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${subMiss}</span> ] นางสาว )
-                    <span class="border-b border-dotted border-black px-2 font-bold">${substituteFull}</span>
-                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${substitutePosition}</span>
+                    มีความจำเป็นต้องขอเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ ในวันที่ <span class="border-b border-dotted border-black px-1.5 font-bold">${shiftDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-1.5 font-bold">${shiftDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-1.5 font-bold">${shiftDateInfo.year}</span>
+                    ช่วงเวลา ( [ <span style="font-weight: bold;">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span style="font-weight: bold;">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span style="font-weight: bold;">${shiftNight}</span> ] กลางคืน )
+                    เนื่องจาก <span class="border-b border-dotted border-black px-1.5">${reasonText}</span>
+                    โดยให้ ( [ <span style="font-weight: bold;">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span style="font-weight: bold;">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span style="font-weight: bold;">${subMiss}</span> ] นางสาว )
+                    <span class="border-b border-dotted border-black px-1.5 font-bold">${substituteFull}</span>
+                    ตำแหน่ง <span class="border-b border-dotted border-black px-1.5">${substitutePosition}</span>
                     มาอยู่เวรแทนข้าพเจ้าในวันดังกล่าว
                 </div>
 
-                <div class="indent-12">
-                    และข้าพเจ้าจะมาอยู่เวรแทนในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
-                    เดือน <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.month}</span>
-                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.year}</span>
-                    ช่วงเวลา ( [ <span class="font-bold">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${compNight}</span> ] กลางคืน )
+                <div style="text-indent: 54pt; margin-bottom: 6pt;">
+                    และข้าพเจ้าจะมาอยู่เวรแทนในวันที่ <span class="border-b border-dotted border-black px-1.5 font-bold">${compDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-1.5 font-bold">${compDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-1.5 font-bold">${compDateInfo.year}</span>
+                    ช่วงเวลา ( [ <span style="font-weight: bold;">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span style="font-weight: bold;">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span style="font-weight: bold;">${compNight}</span> ] กลางคืน )
                 </div>
 
-                <div class="indent-12 pt-1 font-medium">
+                <div style="text-indent: 54pt; margin-bottom: 6pt;">
                     จึงเรียนมาเพื่อโปรดพิจารณา
                 </div>
             </div>
 
             <!-- Signatures Section: Side by Side (Left: ผู้ขอเปลี่ยนเวร, Right: ผู้รับเปลี่ยนเวร) -->
-            <div class="grid grid-cols-2 gap-4 mt-8 pt-2 text-black">
-                <div class="text-center space-y-1">
-                    <div>(ลงชื่อ)........................................................................ ผู้ขอเปลี่ยนเวร</div>
-                    <div>( <span class="px-2 font-medium">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '....................................................................'}</span> )</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; margin-top: 8pt; margin-bottom: 8pt; font-size: 16pt; line-height: 1.25;">
+                <div style="text-align: center;">
+                    <div style="margin-bottom: 3pt;">(ลงชื่อ)........................................................................ ผู้ขอเปลี่ยนเวร</div>
+                    <div>( <span style="padding: 0 4pt; font-weight: 500;">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '....................................................................'}</span> )</div>
                 </div>
-                <div class="text-center space-y-1">
-                    <div>(ลงชื่อ)........................................................................ ผู้รับเปลี่ยนเวร</div>
-                    <div>( <span class="px-2 font-medium">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '....................................................................'}</span> )</div>
+                <div style="text-align: center;">
+                    <div style="margin-bottom: 3pt;">(ลงชื่อ)........................................................................ ผู้รับเปลี่ยนเวร</div>
+                    <div>( <span style="padding: 0 4pt; font-weight: 500;">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '....................................................................'}</span> )</div>
                 </div>
             </div>
 
             <!-- Bottom 3 Official Decision Sections (2 boxes top, 1 full-width bottom as in user's photo) -->
-            <div class="mt-8 pt-4 border-t border-black space-y-4 text-xs sm:text-sm text-black">
-                <div class="grid grid-cols-2 gap-6">
+            <div style="border-top: 1px solid #000; padding-top: 6pt; margin-top: 6pt; font-size: 14pt; line-height: 1.2;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; margin-bottom: 6pt;">
                     
                     <!-- Box 1: ความคิดเห็นของหัวหน้าสำนักงานคณบดี -->
-                    <div class="border border-black p-3.5 space-y-2">
-                        <div class="font-bold text-center underline mb-1">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
-                        <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOk}</span> ] เห็นควรอนุญาต</label>
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOther}</span> ] อื่นๆ</label>
+                    <div style="border: 1px solid #000; padding: 5pt 7pt;">
+                        <div style="font-weight: bold; text-align: center; text-decoration: underline; margin-bottom: 3pt; font-size: 14.5pt;">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
+                        <div style="display: flex; align-items: center; gap: 14pt; margin-bottom: 3pt;">
+                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${headOk}</span> ] เห็นควรอนุญาต</label>
+                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${headOther}</span> ] อื่นๆ</label>
                         </div>
-                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${headNotes}</div>
-                        <div class="text-center pt-3 space-y-0.5">
-                            <div>(ลงชื่อ)........................................................................</div>
-                            <div class="font-bold">(นางสาววิภาดา ทองปิ่น)</div>
-                            <div class="text-[12px]">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี คณะวิทยาการจัดการ</div>
-                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
+                        <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${headNotes}</div>
+                        <div style="text-align: center; margin-top: 4pt;">
+                            <div style="margin-bottom: 1pt;">(ลงชื่อ)........................................................................</div>
+                            <div style="font-weight: bold; margin-bottom: 1pt;">(นางสาววิภาดา ทองปิ่น)</div>
+                            <div style="font-size: 12pt; margin-bottom: 1pt;">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี คณะวิทยาการจัดการ</div>
+                            <div style="font-size: 12pt;">วันที่ ........ / .................... / ................</div>
                         </div>
                     </div>
 
                     <!-- Box 2: คำสั่ง / ความเห็นของคณบดี -->
-                    <div class="border border-black p-3.5 space-y-2">
-                        <div class="font-bold text-center underline mb-1">คำสั่ง / ความเห็นของคณบดี</div>
-                        <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanOk}</span> ] อนุญาต</label>
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
+                    <div style="border: 1px solid #000; padding: 5pt 7pt;">
+                        <div style="font-weight: bold; text-align: center; text-decoration: underline; margin-bottom: 3pt; font-size: 14.5pt;">คำสั่ง / ความเห็นของคณบดี</div>
+                        <div style="display: flex; align-items: center; gap: 14pt; margin-bottom: 3pt;">
+                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${deanOk}</span> ] อนุญาต</label>
+                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${deanNo}</span> ] ไม่อนุญาต</label>
                         </div>
-                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${deanNotes || 'อนุญาตตามเสนอ'}</div>
-                        <div class="text-center pt-3 space-y-0.5">
-                            <div>(ลงชื่อ)........................................................................</div>
-                            <div class="font-bold">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</div>
-                            <div class="text-[12px]">คณบดีคณะวิทยาการจัดการ</div>
-                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
+                        <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${deanNotes || 'อนุญาตตามเสนอ'}</div>
+                        <div style="text-align: center; margin-top: 4pt;">
+                            <div style="margin-bottom: 1pt;">(ลงชื่อ)........................................................................</div>
+                            <div style="font-weight: bold; margin-bottom: 1pt;">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</div>
+                            <div style="font-size: 12pt; margin-bottom: 1pt;">คณบดีคณะวิทยาการจัดการ</div>
+                            <div style="font-size: 12pt;">วันที่ ........ / .................... / ................</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Box 3: บันทึกงานอาคารสถานที่ (Full-width box) -->
-                <div class="border border-black p-3.5 space-y-2">
-                    <div class="font-bold underline">บันทึกงานอาคารสถานที่:</div>
-                    <div class="text-[13px] border-b border-dotted border-black min-h-[24px]">${buildingNotes || 'ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว'}</div>
-                    <div class="flex items-center justify-between pt-2">
-                        <div></div>
-                        <div class="text-center space-y-0.5 pr-8">
-                            <div>(ลงชื่อ)........................................................................</div>
-                            <div class="font-bold">(นายเอกสิทธิ์ คงพิทักษ์)</div>
-                            <div class="text-[12px]">หัวหน้างานอาคารสถานที่</div>
-                            <div class="text-[12px] pt-0.5">วันที่ ........ / .................... / ................</div>
+                <div style="border: 1px solid #000; padding: 5pt 7pt;">
+                    <div style="font-weight: bold; text-decoration: underline; margin-bottom: 2pt; font-size: 14.5pt;">บันทึกงานอาคารสถานที่:</div>
+                    <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${buildingNotes || 'ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว'}</div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 3pt;">
+                        <div style="text-align: center; padding-right: 20pt;">
+                            <div style="margin-bottom: 1pt;">(ลงชื่อ)........................................................................</div>
+                            <div style="font-weight: bold; margin-bottom: 1pt;">(นายเอกสิทธิ์ คงพิทักษ์)</div>
+                            <div style="font-size: 12pt; margin-bottom: 1pt;">หัวหน้างานอาคารสถานที่</div>
+                            <div style="font-size: 12pt;">วันที่ ........ / .................... / ................</div>
                         </div>
                     </div>
                 </div>
