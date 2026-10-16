@@ -6486,6 +6486,22 @@ function addDeletedBookingId(id) {
     safeStorageSet('CMS_DELETED_BOOKING_IDS', Array.from(set));
 }
 
+function getDeletedShiftSwapIds() {
+    try {
+        const raw = localStorage.getItem('CMS_DELETED_SHIFTSWAP_IDS');
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch(e) {
+        return new Set();
+    }
+}
+
+function addDeletedShiftSwapId(id) {
+    if (!id) return;
+    const set = getDeletedShiftSwapIds();
+    set.add(String(id).trim());
+    safeStorageSet('CMS_DELETED_SHIFTSWAP_IDS', Array.from(set));
+}
+
 // Modal State Detector to protect active user typing
 function isAnyModalOpen() {
     const modals = document.querySelectorAll('[id^="modal-"]');
@@ -6663,6 +6679,60 @@ if (syncChannel) {
                 AppState.timetable = AppState.timetable.filter(t => t.id !== data.id);
                 saveData();
                 renderCurrentTab();
+                break;
+            case 'SHIFT_SWAP_UPDATE':
+                if (data.swap) {
+                    const swapIdx = (AppState.shiftSwaps || []).findIndex(s => s.id === data.swap.id);
+                    if (swapIdx !== -1) {
+                        AppState.shiftSwaps[swapIdx] = data.swap;
+                    } else {
+                        AppState.shiftSwaps.unshift(data.swap);
+                    }
+                    saveData();
+                    updateAdminShiftSwapBadge();
+                    if (!isAnyModalOpen()) {
+                        if (AppState.currentTab === 'shift-swap' || AppState.currentTab === 'dashboard') {
+                            renderCurrentTab();
+                        }
+                    }
+                    if (AppState.isAdmin && data.isNew) {
+                        playNotificationSound();
+                        showToast(`📋 มีคำขอเปลี่ยนเวรยามใหม่เข้ามา! จาก <b>${data.applicantName || data.swap.applicantName}</b> (${data.docNo || data.swap.docNo})`, 'warning', 8000);
+                    }
+                }
+                break;
+            case 'SHIFT_SWAP_APPROVE':
+                if (data.id) {
+                    const targetSwap = (AppState.shiftSwaps || []).find(s => s.id === data.id);
+                    if (targetSwap) {
+                        targetSwap.status = data.status;
+                        if (data.approval) targetSwap.approval = data.approval;
+                        saveData();
+                        updateAdminShiftSwapBadge();
+                        if (!isAnyModalOpen()) {
+                            if (AppState.currentTab === 'shift-swap' || AppState.currentTab === 'dashboard') {
+                                renderCurrentTab();
+                            }
+                        }
+                        if (!AppState.isAdmin) {
+                            const stLabel = data.status === 'approved' ? 'อนุมัติแล้ว ✅' : (data.status === 'rejected' ? 'ไม่อนุมัติ ❌' : 'รอพิจารณา 🟡');
+                            showToast(`📋 คำขอเปลี่ยนเวรยาม ${data.docNo || targetSwap.docNo || data.id} ได้รับการพิจารณา: <b>${stLabel}</b>`, data.status === 'approved' ? 'success' : 'info', 7000);
+                        }
+                    }
+                }
+                break;
+            case 'SHIFT_SWAP_DELETE':
+                if (data.id) {
+                    addDeletedShiftSwapId(data.id);
+                    AppState.shiftSwaps = (AppState.shiftSwaps || []).filter(s => s.id !== data.id);
+                    saveData();
+                    updateAdminShiftSwapBadge();
+                    if (!isAnyModalOpen()) {
+                        if (AppState.currentTab === 'shift-swap' || AppState.currentTab === 'dashboard') {
+                            renderCurrentTab();
+                        }
+                    }
+                }
                 break;
         }
     };
@@ -10248,6 +10318,8 @@ function saveShiftSwap(event) {
             item.notes = notes;
             item.updatedAt = new Date().toISOString();
         }
+        item.updatedAt = new Date().toISOString();
+        item._localCreatedAt = Date.now();
         showToast(`แก้ไขแบบฟอร์มคำขอ ${docNo} เรียบร้อยแล้ว`, 'success');
     } else {
         // New Shift Swap
@@ -10256,6 +10328,7 @@ function saveShiftSwap(event) {
             id: newId,
             docNo: docNo,
             docDate: docDate,
+            subject: subject,
             applicantPrefix: applicantPrefix,
             applicantName: applicantName,
             applicantPosition: applicantPosition,
@@ -10273,7 +10346,8 @@ function saveShiftSwap(event) {
             notes: notes,
             status: 'pending',
             createdAt: new Date().toISOString(),
-            approval: null
+            approval: null,
+            _localCreatedAt: Date.now()
         };
         AppState.shiftSwaps.unshift(newSwap);
         playNotificationSound();
@@ -10285,19 +10359,19 @@ function saveShiftSwap(event) {
     updateAdminShiftSwapBadge();
     renderShiftSwaps();
 
-    broadcastDataChange('SHIFT_SWAP_UPDATE', {
-        applicantName: `${applicantPrefix}${applicantName}`,
-        docNo: docNo
-    });
+    const targetSwap = swapId ? item : (AppState.shiftSwaps[0] || null);
+    if (targetSwap) {
+        broadcastDataChange('SHIFT_SWAP_UPDATE', {
+            swap: targetSwap,
+            isNew: !swapId,
+            applicantName: `${applicantPrefix}${applicantName}`,
+            docNo: docNo
+        });
 
-    sendActionToGoogleBackend('saveShiftSwap', {
-        id: swapId || (AppState.shiftSwaps[0] ? AppState.shiftSwaps[0].id : ''),
-        docNo: docNo,
-        applicant: `${applicantPrefix}${applicantName}`,
-        substitute: `${substitutePrefix}${substituteName}`,
-        shiftDate: shiftDate,
-        compensateDate: compensateDate
-    });
+        sendActionToGoogleBackend('saveShiftSwap', {
+            swap: targetSwap
+        });
+    }
 }
 
 function deleteShiftSwap(id) {
@@ -10309,12 +10383,14 @@ function deleteShiftSwap(id) {
     if (!item) return;
 
     if (confirm(`คุณต้องการลบคำขอเปลี่ยนเวรยาม "${item.docNo || item.id}" ของ ${item.applicantName} ใช่หรือไม่?`)) {
+        addDeletedShiftSwapId(id);
         AppState.shiftSwaps = AppState.shiftSwaps.filter(s => s.id !== id);
         saveData();
         updateAdminShiftSwapBadge();
         renderShiftSwaps();
         showToast('ลบรายการคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว', 'success');
-        broadcastDataChange('SHIFT_SWAP_UPDATE', { applicantName: item.applicantName, docNo: item.docNo });
+        broadcastDataChange('SHIFT_SWAP_DELETE', { id: id, applicantName: item.applicantName, docNo: item.docNo });
+        sendActionToGoogleBackend('deleteShiftSwap', { id: id });
     }
 }
 
@@ -10421,8 +10497,18 @@ function saveShiftSwapApproval(event) {
     const statusText = newStatus === 'approved' ? 'อนุมัติเรียบร้อยแล้ว ✅' : (newStatus === 'rejected' ? 'ไม่อนุมัติ ❌' : 'รอพิจารณา 🟡');
     showToast(`บันทึกผลการพิจารณาคำขอ ${item.docNo || item.id} เป็น "${statusText}" เรียบร้อย`, 'success', 5000);
 
-    broadcastDataChange('SHIFT_SWAP_UPDATE', { applicantName: item.applicantName, docNo: item.docNo });
-    sendActionToGoogleBackend('approveShiftSwap', { id: item.id, status: newStatus });
+    broadcastDataChange('SHIFT_SWAP_APPROVE', {
+        id: item.id,
+        status: newStatus,
+        approval: item.approval,
+        applicantName: item.applicantName,
+        docNo: item.docNo
+    });
+    sendActionToGoogleBackend('approveShiftSwap', {
+        id: item.id,
+        status: newStatus,
+        approval: item.approval
+    });
 }
 
 function openPrintShiftSwapModal(id) {
@@ -10756,6 +10842,15 @@ function sendActionToGoogleBackend(action, payload) {
                 case 'deleteTimetable':
                     google.script.run.withSuccessHandler(res => console.log('GAS Delete Timetable:', res)).apiDeleteTimetable(payload.id);
                     break;
+                case 'saveShiftSwap':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Save Shift Swap:', res)).apiSaveShiftSwap(payload.swap);
+                    break;
+                case 'approveShiftSwap':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Approve Shift Swap:', res)).apiApproveShiftSwap(payload.id, payload.status, payload.approval);
+                    break;
+                case 'deleteShiftSwap':
+                    google.script.run.withSuccessHandler(res => console.log('GAS Delete Shift Swap:', res)).apiDeleteShiftSwap(payload.id);
+                    break;
             }
         } catch(e) {
             console.warn("GAS execution failed:", e);
@@ -10837,6 +10932,8 @@ function sendActionToGoogleBackend(action, payload) {
         if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
         if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
         if (payload.timetable) urlObj.searchParams.set('timetable', JSON.stringify(payload.timetable));
+        if (payload.swap) urlObj.searchParams.set('swap', JSON.stringify(payload.swap));
+        if (payload.approval) urlObj.searchParams.set('approval', typeof payload.approval === 'string' ? payload.approval : JSON.stringify(payload.approval));
 
         // Send via GET request
         fetch(urlObj.toString(), { method: 'GET', mode: 'cors' })
@@ -10846,6 +10943,9 @@ function sendActionToGoogleBackend(action, payload) {
                 if (res.success && res.data) {
                     if (res.data.bookings || res.data.maintenance) {
                         mapAndApplyCloudBookings(res.data.bookings || [], res.data.maintenance || []);
+                    }
+                    if (res.data.shiftSwaps) {
+                        mapAndApplyCloudShiftSwaps(res.data.shiftSwaps);
                     }
                 }
             })
@@ -10908,6 +11008,9 @@ function syncFromGoogleAppsScript() {
                 }
                 if (response.bookings || response.maintenance) {
                     mapAndApplyCloudBookings(response.bookings || [], response.maintenance || []);
+                }
+                if (response.shiftSwaps) {
+                    mapAndApplyCloudShiftSwaps(response.shiftSwaps);
                 }
                 AppState.isGoogleConnected = true;
                 saveData();
@@ -11058,6 +11161,9 @@ async function fetchDataFromGoogleSheets(silent = false) {
                     ? json.data.bookings.filter(b => b.id !== 'BK-1001' && b.id !== 'BK-1002' && b.id !== 'BK-1003')
                     : [];
                 mapAndApplyCloudBookings(cleanCloudBk, json.data.maintenance);
+            }
+            if (json.data.shiftSwaps) {
+                mapAndApplyCloudShiftSwaps(json.data.shiftSwaps);
             }
 
             AppState.isGoogleConnected = true;
@@ -12503,6 +12609,113 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
     if (AppState.isAdmin && newPendingCount > prevPendingCount) {
         playNotificationSound();
         showToast(`🔔 มีคำขอจองห้องเรียนใหม่เข้ามา! (${newPendingCount} รายการรออนุมัติ) กรุณาตรวจสอบและอนุมัติ`, 'warning', 8000);
+    }
+}
+
+/**
+ * ซิงก์และปรับปรุงข้อมูลการขอเปลี่ยนเวรยามจาก Cloud / Google Sheets ให้เป็นปัจจุบันเสมอ
+ */
+function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
+    if (!Array.isArray(rawShiftSwaps)) return;
+    const deletedSwapIds = getDeletedShiftSwapIds();
+    const prevPendingCount = (AppState.shiftSwaps || []).filter(s => s.status === 'pending').length;
+
+    const cloudMap = new Map();
+    rawShiftSwaps.forEach(item => {
+        if (!item || !item.id) return;
+        const cleanId = String(item.id).trim();
+        if (deletedSwapIds.has(cleanId)) return;
+
+        let approval = item.approval;
+        if (typeof approval === 'string' && approval) {
+            try { approval = JSON.parse(approval); } catch(e) {}
+        }
+
+        cloudMap.set(cleanId, {
+            id: cleanId,
+            docNo: String(item.docNo || ''),
+            docDate: item.docDate ? parseGasDate(item.docDate) : '',
+            subject: String(item.subject || 'ขออนุมัติเปลี่ยนเวรยาม'),
+            applicantPrefix: String(item.applicantPrefix || ''),
+            applicantName: String(item.applicantName || ''),
+            applicantPosition: String(item.applicantPosition || ''),
+            applicantPhone: String(item.applicantPhone || ''),
+            applicantDept: String(item.applicantDept || ''),
+            shiftDate: item.shiftDate ? parseGasDate(item.shiftDate) : '',
+            shiftPeriod: String(item.shiftPeriod || '16:30 - 08:30 น. (วันรุ่งขึ้น)'),
+            reason: String(item.reason || ''),
+            substitutePrefix: String(item.substitutePrefix || ''),
+            substituteName: String(item.substituteName || ''),
+            substitutePosition: String(item.substitutePosition || ''),
+            substitutePhone: String(item.substitutePhone || ''),
+            compensateDate: item.compensateDate ? parseGasDate(item.compensateDate) : '',
+            compensatePeriod: String(item.compensatePeriod || '16:30 - 08:30 น. (วันรุ่งขึ้น)'),
+            notes: String(item.notes || ''),
+            status: String(item.status || 'pending').toLowerCase().trim(),
+            createdAt: String(item.createdAt || ''),
+            updatedAt: String(item.updatedAt || ''),
+            approval: approval || null
+        });
+    });
+
+    // รักษาคำขอที่เพิ่งสร้างในเครื่องนี้ไม่เกิน 60 วินาทีที่ยังรอ Cloud บันทึก
+    (AppState.shiftSwaps || []).forEach(localSwap => {
+        if (localSwap._localCreatedAt && (Date.now() - localSwap._localCreatedAt < 60000) && !deletedSwapIds.has(localSwap.id) && !cloudMap.has(localSwap.id)) {
+            cloudMap.set(localSwap.id, localSwap);
+        }
+    });
+
+    // แจ้งเตือนผู้ใช้หากคำขอได้รับการอนุมัติหรือไม่อนุมัติจาก Admin
+    if (!AppState.isAdmin) {
+        cloudMap.forEach(cloudSwap => {
+            const existing = (AppState.shiftSwaps || []).find(s => s.id === cloudSwap.id);
+            if (existing && existing.status === 'pending' && cloudSwap.status !== 'pending') {
+                const stText = cloudSwap.status === 'approved' ? 'อนุมัติเรียบร้อยแล้ว ✅' : 'ไม่อนุมัติ ❌';
+                showToast(`📋 คำขอเปลี่ยนเวรยาม ${cloudSwap.docNo || cloudSwap.id} ได้รับการพิจารณา: <b>${stText}</b>`, cloudSwap.status === 'approved' ? 'success' : 'info', 7000);
+            }
+        });
+    }
+
+    const nextShiftSwaps = Array.from(cloudMap.values());
+
+    // จัดเรียง: รายการรอพิจารณา (pending) อยู่บนสุดเสมอ ตามด้วยวันที่ล่าสุด
+    nextShiftSwaps.sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+        return (b.shiftDate || '').localeCompare(a.shiftDate || '');
+    });
+
+    // ตรวจสอบรายการใหม่สำหรับแจ้งเตือน Admin
+    if (!AppState._knownShiftSwapIds) {
+        AppState._knownShiftSwapIds = new Set((AppState.shiftSwaps || []).map(s => s.id));
+    }
+    const trulyNewSwaps = nextShiftSwaps.filter(s => s.status === 'pending' && !AppState._knownShiftSwapIds.has(s.id));
+    trulyNewSwaps.forEach(s => AppState._knownShiftSwapIds.add(s.id));
+
+    // ตรวจสอบความเปลี่ยนแปลงก่อน render
+    const curSig = (AppState.shiftSwaps || []).map(s => `${s.id}:${s.status}:${s.shiftDate}:${s.substituteName}`).join('|');
+    const nextSig = nextShiftSwaps.map(s => `${s.id}:${s.status}:${s.shiftDate}:${s.substituteName}`).join('|');
+    const changed = (curSig !== nextSig);
+
+    if (changed) {
+        AppState.shiftSwaps = nextShiftSwaps;
+        saveData();
+        updateAdminShiftSwapBadge();
+        if (!isAnyModalOpen()) {
+            if (AppState.currentTab === 'shift-swap' || AppState.currentTab === 'dashboard') {
+                renderCurrentTab();
+            }
+        }
+    }
+
+    const newPendingCount = (AppState.shiftSwaps || []).filter(s => s.status === 'pending').length;
+    if (AppState.isAdmin && trulyNewSwaps.length > 0 && newPendingCount > prevPendingCount) {
+        playNotificationSound();
+        const firstOne = trulyNewSwaps[0];
+        showToast(`📋 มีคำขอเปลี่ยนเวรยามใหม่เข้ามา! (${trulyNewSwaps.length} รายการรอพิจารณา) จาก <b>${firstOne.applicantPrefix || ''}${firstOne.applicantName}</b>`, 'warning', 8000);
     }
 }
 

@@ -16,6 +16,7 @@ const SHEET_ROOMS = "Rooms";
 const SHEET_TIMETABLE = "Timetable";
 const SHEET_BOOKINGS = "Bookings";
 const SHEET_MAINTENANCE = "Maintenance";
+const SHEET_SHIFT_SWAPS = "ShiftSwaps";
 
 /**
  * ฟังก์ชันเปิดหน้าเว็บ Web App (เมื่อเปิดผ่าน Google Apps Script URL)
@@ -95,6 +96,18 @@ function doPost(e) {
         break;
       case 'deleteTimetable':
         result = apiDeleteTimetable(requestData.id);
+        break;
+      case 'saveShiftSwap':
+        result = apiSaveShiftSwap(requestData.swap || requestData.data || requestData);
+        break;
+      case 'approveShiftSwap':
+        result = apiApproveShiftSwap(requestData.id, requestData.status, requestData.approval);
+        break;
+      case 'deleteShiftSwap':
+        result = apiDeleteShiftSwap(requestData.id);
+        break;
+      case 'getShiftSwaps':
+        result = { success: true, data: apiGetShiftSwaps() };
         break;
       case 'initDatabase':
         result = setupDatabase();
@@ -226,6 +239,25 @@ function handleApiGet(params) {
     } else if (action === 'deleteTimetable') {
       responseData = apiDeleteTimetable(params.id);
       if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'saveShiftSwap') {
+      let swap = {};
+      if (params.swap) swap = typeof params.swap === 'string' ? JSON.parse(params.swap) : params.swap;
+      else if (params.data) swap = typeof params.data === 'string' ? JSON.parse(params.data) : params.data;
+      else swap = params;
+      responseData = apiSaveShiftSwap(swap);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'approveShiftSwap') {
+      let approval = params.approval;
+      if (typeof approval === 'string') {
+        try { approval = JSON.parse(approval); } catch(e) {}
+      }
+      responseData = apiApproveShiftSwap(params.id, params.status, approval);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'deleteShiftSwap') {
+      responseData = apiDeleteShiftSwap(params.id);
+      if (responseData.success) responseData.data = apiGetData();
+    } else if (action === 'getShiftSwaps') {
+      responseData = { success: true, data: apiGetShiftSwaps() };
     } else if (action === 'init') {
       responseData = setupDatabase();
     } else {
@@ -341,11 +373,14 @@ function apiGetData() {
     }
   }
 
+  const shiftSwaps = apiGetShiftSwaps();
+
   return {
     rooms: rooms,
     timetable: timetable,
     bookings: bookings,
-    maintenance: maintenance
+    maintenance: maintenance,
+    shiftSwaps: shiftSwaps
   };
 }
 
@@ -988,7 +1023,25 @@ function setupDatabase() {
     mntSheet.getRange(2, 1, defaultMnt.length, defaultMnt[0].length).setValues(defaultMnt);
   }
 
-  return { success: true, message: "สร้างฐานข้อมูล Google Sheets 4 แผ่นงานเรียบร้อยแล้ว!" };
+  // 5. สร้าง Sheet "ShiftSwaps" (สำหรับข้อมูลการสลับเวรยาม)
+  let swapSheet = ss.getSheetByName(SHEET_SHIFT_SWAPS);
+  if (!swapSheet) {
+    swapSheet = ss.insertSheet(SHEET_SHIFT_SWAPS);
+  } else {
+    swapSheet.clear();
+  }
+  const swapHeaders = [
+    "id", "docNo", "docDate", "applicantPrefix", "applicantName",
+    "applicantPosition", "applicantPhone", "applicantDept",
+    "shiftDate", "shiftPeriod", "reason",
+    "substitutePrefix", "substituteName", "substitutePosition", "substitutePhone",
+    "compensateDate", "compensatePeriod", "notes", "status",
+    "createdAt", "updatedAt", "approval"
+  ];
+  swapSheet.appendRow(swapHeaders);
+  formatHeaderRow(swapSheet, "#047857");
+
+  return { success: true, message: "สร้างฐานข้อมูล Google Sheets 5 แผ่นงานเรียบร้อยแล้ว!" };
 }
 
 /**
@@ -1064,3 +1117,162 @@ function apiRejectBooking(bookingId) {
     return { success: false, message: e.toString() };
   }
 }
+
+/**
+ * =========================================================================
+ * SHIFT SWAPS API (ระบบขออนุญาตเปลี่ยนเวรยาม - เชื่อมโยง Admin & User แบบเรียลไทม์)
+ * =========================================================================
+ */
+
+/**
+ * คืนค่าแผ่นงาน ShiftSwaps (ถ้ายังไม่มีในสเปรดชีต จะสร้างให้อัตโนมัติพร้อมหัวตาราง)
+ */
+function getShiftSwapsSheet(ss) {
+  if (!ss) ss = getDb();
+  let sheet = ss.getSheetByName(SHEET_SHIFT_SWAPS);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_SHIFT_SWAPS);
+    const headers = [
+      "id", "docNo", "docDate", "applicantPrefix", "applicantName",
+      "applicantPosition", "applicantPhone", "applicantDept",
+      "shiftDate", "shiftPeriod", "reason",
+      "substitutePrefix", "substituteName", "substitutePosition", "substitutePhone",
+      "compensateDate", "compensatePeriod", "notes", "status",
+      "createdAt", "updatedAt", "approval"
+    ];
+    sheet.appendRow(headers);
+    formatHeaderRow(sheet, "#047857");
+  }
+  return sheet;
+}
+
+/**
+ * ดึงรายการคำขอเปลี่ยนเวรยามทั้งหมดจาก Google Sheets
+ */
+function apiGetShiftSwaps() {
+  try {
+    const ss = getDb();
+    const sheet = getShiftSwapsSheet(ss);
+    const items = getSheetObjects(sheet);
+    items.forEach(item => {
+      if (typeof item.approval === 'string' && item.approval) {
+        try { item.approval = JSON.parse(item.approval); } catch(e) {}
+      }
+    });
+    return items;
+  } catch(e) {
+    return [];
+  }
+}
+
+/**
+ * บันทึกหรือแก้ไขคำขอเปลี่ยนเวรยาม
+ */
+function apiSaveShiftSwap(swap) {
+  try {
+    if (!swap || !swap.id) return { success: false, message: "ข้อมูลคำขอไม่สมบูรณ์" };
+    const ss = getDb();
+    const sheet = getShiftSwapsSheet(ss);
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+
+    const approvalStr = swap.approval ? (typeof swap.approval === 'string' ? swap.approval : JSON.stringify(swap.approval)) : "";
+    const updatedAt = new Date().toISOString();
+    if (!swap.createdAt) swap.createdAt = updatedAt;
+
+    let rowIndex = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(swap.id)) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+
+    const row = [];
+    for (let c = 0; c < headers.length; c++) {
+      const h = String(headers[c]).trim();
+      if (h === 'approval') {
+        row.push(approvalStr);
+      } else if (h === 'updatedAt') {
+        row.push(updatedAt);
+      } else if (swap[h] !== undefined && swap[h] !== null) {
+        row.push(swap[h]);
+      } else {
+        row.push("");
+      }
+    }
+
+    if (rowIndex > 0) {
+      sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+      return { success: true, message: "อัปเดตคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว", id: swap.id };
+    } else {
+      sheet.appendRow(row);
+      return { success: true, message: "บันทึกคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว", id: swap.id };
+    }
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * บันทึกผลการพิจารณาคำขอเปลี่ยนเวรยาม (อนุมัติ / ไม่อนุมัติ)
+ */
+function apiApproveShiftSwap(swapId, status, approval) {
+  try {
+    if (!swapId) return { success: false, message: "ไม่ระบุรหัสคำขอ" };
+    const ss = getDb();
+    const sheet = getShiftSwapsSheet(ss);
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { success: false, message: "ไม่มีข้อมูล" };
+
+    const headers = data[0];
+    let statusCol = -1;
+    let approvalCol = -1;
+    let updatedCol = -1;
+
+    for (let c = 0; c < headers.length; c++) {
+      const h = String(headers[c]).trim().toLowerCase();
+      if (h === 'status') statusCol = c + 1;
+      else if (h === 'approval') approvalCol = c + 1;
+      else if (h === 'updatedat') updatedCol = c + 1;
+    }
+
+    const approvalStr = approval ? (typeof approval === 'string' ? approval : JSON.stringify(approval)) : "";
+    const nowIso = new Date().toISOString();
+
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(swapId)) {
+        const rowNum = i + 1;
+        if (statusCol > 0 && status) sheet.getRange(rowNum, statusCol).setValue(status);
+        if (approvalCol > 0 && approvalStr) sheet.getRange(rowNum, approvalCol).setValue(approvalStr);
+        if (updatedCol > 0) sheet.getRange(rowNum, updatedCol).setValue(nowIso);
+        return { success: true, message: "บันทึกผลการพิจารณาคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสคำขอ: " + swapId };
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * ลบคำขอเปลี่ยนเวรยาม
+ */
+function apiDeleteShiftSwap(swapId) {
+  try {
+    if (!swapId) return { success: false, message: "ไม่ระบุรหัสคำขอ" };
+    const ss = getDb();
+    const sheet = getShiftSwapsSheet(ss);
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === String(swapId)) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: "ลบคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว" };
+      }
+    }
+    return { success: false, message: "ไม่พบรหัสคำขอ: " + swapId };
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
