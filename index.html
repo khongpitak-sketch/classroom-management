@@ -10587,8 +10587,8 @@ function renderPrintShiftSwapContent(swap, isBlank) {
                     <div style="border: 1px solid #000; padding: 5pt 7pt;">
                         <div style="font-weight: bold; text-align: center; text-decoration: underline; margin-bottom: 3pt; font-size: 14.5pt;">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
                         <div style="display: flex; align-items: center; gap: 14pt; margin-bottom: 3pt;">
-                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${headOk}</span> ] เห็นควรอนุญาต</label>
-                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${headOther}</span> ] อื่นๆ</label>
+                            <label style="display: flex; align-items: center; gap: 3pt;">[&nbsp;&nbsp;] เห็นควรอนุญาต</label>
+                            <label style="display: flex; align-items: center; gap: 3pt;">[&nbsp;&nbsp;] อื่นๆ</label>
                         </div>
                         <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${headNotes}</div>
                         <div style="text-align: center; margin-top: 24pt;">
@@ -10603,10 +10603,10 @@ function renderPrintShiftSwapContent(swap, isBlank) {
                     <div style="border: 1px solid #000; padding: 5pt 7pt;">
                         <div style="font-weight: bold; text-align: center; text-decoration: underline; margin-bottom: 3pt; font-size: 14.5pt;">คำสั่ง / ความเห็นของคณบดี</div>
                         <div style="display: flex; align-items: center; gap: 14pt; margin-bottom: 3pt;">
-                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${deanOk}</span> ] อนุญาต</label>
-                            <label style="display: flex; align-items: center; gap: 3pt;">[ <span style="font-weight: bold;">${deanNo}</span> ] ไม่อนุญาต</label>
+                            <label style="display: flex; align-items: center; gap: 3pt;">[&nbsp;&nbsp;] อนุญาต</label>
+                            <label style="display: flex; align-items: center; gap: 3pt;">[&nbsp;&nbsp;] ไม่อนุญาต</label>
                         </div>
-                        <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${deanNotes || 'อนุญาตตามเสนอ'}</div>
+                        <div style="font-size: 13pt; border-bottom: 1px dotted #000; min-height: 16pt; margin-bottom: 3pt;">${deanNotes}</div>
                         <div style="text-align: center; margin-top: 24pt;">
                             <div style="margin-bottom: 2pt;">(ลงชื่อ)........................................................................</div>
                             <div style="font-weight: bold; margin-bottom: 2pt;">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</div>
