@@ -1104,7 +1104,7 @@ body {
                             </span>
                             <span class="text-xs text-slate-400">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
                         </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์</h3>
+                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">หนังสือขออนุญาตเปลี่ยนเวรยาม</h3>
                         <p class="text-xs text-slate-500 mt-0.5">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ (แบบฟอร์มราชการทางการ A4)</p>
                     </div>
                 </div>
@@ -2915,7 +2915,7 @@ body {
                         <i data-lucide="calendar-sync" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h3 id="modal-shift-swap-title" class="text-lg font-black text-slate-800">หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์</h3>
+                        <h3 id="modal-shift-swap-title" class="text-lg font-black text-slate-800">หนังสือขออนุญาตเปลี่ยนเวรยาม</h3>
                         <p class="text-xs text-slate-500 font-medium">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</p>
                     </div>
                 </div>
@@ -3210,7 +3210,7 @@ body {
                         <i data-lucide="printer" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-black text-slate-800">พิมพ์เอกสารราชการ: หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์ (A4)</h3>
+                        <h3 class="text-base font-black text-slate-800">พิมพ์เอกสารราชการ: หนังสือขออนุญาตเปลี่ยนเวรยาม (A4)</h3>
                         <p class="text-[11px] text-slate-500">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ (ตรงตามแบบฟอร์มทางการ 100%)</p>
                     </div>
                 </div>
@@ -6262,33 +6262,33 @@ const DEFAULT_MAINTENANCE = [
 const DEFAULT_SHIFT_SWAPS = [
     {
         id: "SWAP-2569-001",
-        docNo: "อว 0608.04/ว.0142",
-        docDate: "2026-10-14",
+        docNo: "อว 0608.04/ว.001",
+        docDate: "2026-10-16",
         applicantPrefix: "นาย",
-        applicantName: "สมชาย รักษาการ",
-        applicantPosition: "เจ้าหน้าที่บริการ",
+        applicantName: "เอกสิทธิ์ คงพิทักษ์",
+        applicantPosition: "เทคนิค",
         applicantPhone: "081-456-7890",
         applicantDept: "คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์",
         shiftDate: "2026-10-18",
-        shiftPeriod: "ช่วงเช้า",
-        reason: "ติดภารกิจครอบครัวจำเป็นเร่งด่วนต่างจังหวัด",
+        shiftPeriod: "ช่วงบ่าย",
+        reason: "ติดธุระ",
         substitutePrefix: "นาย",
-        substituteName: "อภิสิทธิ์ ใจดี",
-        substitutePosition: "เจ้าหน้าที่บริการ",
+        substituteName: "อิริส อารี",
+        substitutePosition: "วิชาการ",
         substitutePhone: "089-123-4567",
-        compensateDate: "2026-10-25",
+        compensateDate: "2026-10-23",
         compensatePeriod: "ช่วงเช้า",
-        notes: "ได้ประสานงานและตกลงแลกเปลี่ยนเวรเรียบร้อยแล้ว",
+        notes: "มาอยู่เวรแทนข้าพเจ้าในวันดังกล่าว",
         status: "approved",
-        createdAt: "2026-10-14T08:30:00.000Z",
+        createdAt: "2026-10-16T08:30:00.000Z",
         approval: {
             status: "approved",
             headDecision: "เห็นควรอนุญาต",
-            headNotes: "ตรวจสอบความเหมาะสมแล้ว เห็นควรอนุญาตให้เปลี่ยนเวรได้",
+            headNotes: "",
             deanDecision: "อนุญาต",
             deanNotes: "อนุญาตตามเสนอ",
-            buildingNotes: "ปรับปรุงตารางเวรยามประจำเดือนตุลาคมเรียบร้อยแล้ว",
-            approvedAt: "2026-10-14T11:20:00.000Z"
+            buildingNotes: "ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว",
+            approvedAt: "2026-10-16T11:20:00.000Z"
         }
     },
     {
@@ -6869,6 +6869,15 @@ function loadData() {
                     }
                 }
             });
+        }
+
+        // อัปเดตข้อมูลตัวอย่างคำขอเปลี่ยนเวรยามให้ตรงกับแบบฟอร์มเอกสารจริงของคณะฯ
+        if (Array.isArray(AppState.shiftSwaps)) {
+            const oldSample = AppState.shiftSwaps.find(s => s.id === 'SWAP-2569-001' && s.applicantName === 'สมชาย รักษาการ');
+            if (oldSample && DEFAULT_SHIFT_SWAPS[0]) {
+                Object.assign(oldSample, DEFAULT_SHIFT_SWAPS[0]);
+                saveData();
+            }
         }
 
         // Safety guarantee: Timetable must always contain the 184 semester classes
@@ -10098,7 +10107,7 @@ function openShiftSwapModal(id) {
             showToast('ไม่พบรายการคำขอนี้', 'warning');
             return;
         }
-        if (titleEl) titleEl.textContent = 'แก้ไขหนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์';
+        if (titleEl) titleEl.textContent = 'แก้ไขหนังสือขออนุญาตเปลี่ยนเวรยาม';
         document.getElementById('shift-swap-id').value = item.id;
         document.getElementById('swap-doc-date').value = item.docDate || '';
         document.getElementById('swap-doc-no').value = item.docNo || '';
@@ -10124,7 +10133,7 @@ function openShiftSwapModal(id) {
 
         document.getElementById('swap-notes').value = item.notes || '';
     } else {
-        if (titleEl) titleEl.textContent = 'หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์';
+        if (titleEl) titleEl.textContent = 'หนังสือขออนุญาตเปลี่ยนเวรยาม';
         document.getElementById('shift-swap-id').value = '';
         const todayStr = new Date().toISOString().slice(0, 10);
         document.getElementById('swap-doc-date').value = todayStr;
@@ -10458,163 +10467,128 @@ function renderPrintShiftSwapContent(swap, isBlank) {
     const substituteFull = (!isBlank && data.substituteName) ? `${data.substitutePrefix || ''}${data.substituteName}` : '........................................................................';
     const substitutePosition = (!isBlank && data.substitutePosition) ? data.substitutePosition : '........................................................';
     const reasonText = (!isBlank && data.reason) ? data.reason : '..........................................................................................................................................................';
-    const docNoText = (!isBlank && data.docNo) ? data.docNo : '...................................................';
 
     container.innerHTML = `
         <!-- Printable Official Form Page 1/1 -->
-        <div class="relative bg-white text-black p-4 sm:p-6" style="min-height: 1050px; font-size: 15px; line-height: 1.8;">
+        <div class="relative bg-white text-black p-4 sm:p-6" style="min-height: 1050px; font-size: 15px; line-height: 1.85;">
             
-            <!-- Header Section: Garuda (Left), Title (Center), Arabic Box (Right) -->
-            <div class="relative flex items-start justify-between min-h-[95px] mb-3">
-                <!-- Garuda Emblem (Top Left) -->
-                <div class="w-24 shrink-0 pt-1">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Garuda_Emblem_of_Thailand.svg/240px-Garuda_Emblem_of_Thailand.svg.png" 
-                         alt="ตราครุฑ" 
-                         class="h-20 sm:h-24 w-auto object-contain"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div style="display:none;" class="w-16 h-16 text-center font-bold text-[10px] border border-slate-300 rounded p-1">
-                        [ตราครุฑ]
-                    </div>
+            <!-- Header Section: Centered 3 lines (No Garuda, No Arabic box as per user's handwritten mark) -->
+            <div class="text-center pt-1 pb-4 space-y-1 text-black">
+                <div class="font-bold text-xl sm:text-2xl tracking-tight leading-tight">
+                    หนังสือขออนุญาตเปลี่ยนเวรยาม
                 </div>
-
-                <!-- Center Title (ตรงกลาง): บรรทัดที่ 1 & บรรทัดที่ 2 -->
-                <div class="flex-1 text-center pt-1 px-1">
-                    <div class="font-bold text-lg sm:text-xl text-black leading-snug tracking-tight">
-                        หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์
-                    </div>
-                    <div class="font-bold text-sm sm:text-base text-black mt-1">
-                        คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
-                    </div>
+                <div class="font-bold text-base sm:text-lg">
+                    คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
                 </div>
-
-                <!-- Box: เขียนตัวเลขอารบิคเท่านั้น (Top Right) -->
-                <div class="w-32 shrink-0 text-right">
-                    <div class="inline-block border-2 border-black px-2.5 py-1 font-bold text-center text-xs tracking-wider">
-                        เขียนตัวเลขอารบิคเท่านั้น
-                    </div>
+                <div class="font-medium text-sm sm:text-base pt-0.5">
+                    วันที่ <span class="border-b border-dotted border-black px-2 font-bold">${docDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-3 font-bold">${docDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${docDateInfo.year}</span>
                 </div>
             </div>
 
-            <!-- Official Header Fields -->
-            <div class="space-y-1 mb-3">
+            <!-- Subject & Addressee (เรื่อง & เรียน) -->
+            <div class="space-y-1 mb-3 text-black">
                 <div class="flex items-baseline">
-                    <span class="font-bold shrink-0 w-28">ส่วนราชการ</span>
-                    <span class="border-b border-dotted border-black flex-1 font-medium pl-1">งานอาคารสถานที่ คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
-                </div>
-                <div class="flex items-baseline justify-between">
-                    <div class="flex items-baseline flex-1">
-                        <span class="font-bold shrink-0 w-12">ที่</span>
-                        <span class="border-b border-dotted border-black flex-1 font-medium pl-1">${docNoText}</span>
-                    </div>
-                    <div class="flex items-baseline w-64 pl-4">
-                        <span class="font-bold shrink-0 w-14">วันที่</span>
-                        <span class="border-b border-dotted border-black flex-1 font-medium text-center">${docDateInfo.full}</span>
-                    </div>
+                    <span class="font-bold shrink-0 w-16">เรื่อง</span>
+                    <span class="font-bold pl-1">ขออนุญาตเปลี่ยนวันอยู่เวร</span>
                 </div>
                 <div class="flex items-baseline">
-                    <span class="font-bold shrink-0 w-14">เรื่อง</span>
-                    <span class="font-bold pl-1">ขออนุญาตเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ</span>
-                </div>
-                <div class="flex items-baseline">
-                    <span class="font-bold shrink-0 w-14">เรียน</span>
+                    <span class="font-bold shrink-0 w-16">เรียน</span>
                     <span class="pl-1">คณบดีคณะวิทยาการจัดการ</span>
                 </div>
             </div>
 
-            <!-- Body Paragraphs matching real official form -->
-            <div class="text-justify indent-12 space-y-2 mt-3 leading-relaxed">
+            <!-- Body Paragraphs matching user's exact document -->
+            <div class="text-justify indent-12 space-y-2 mt-2 leading-relaxed text-black">
                 <div>
-                    ด้วยข้าพเจ้า ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
+                    ข้าพเจ้า ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
                     <span class="border-b border-dotted border-black px-2 font-bold">${applicantFull}</span>
-                    ไม่สามารถจะมาอยู่เวร ( [ <span class="font-bold">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${shiftNight}</span> ] กลางคืน )
-                    ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.day}</span>
+                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${applicantPosition}</span>
+                    สังกัด <span class="border-b border-dotted border-black px-1 font-medium">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
+                    มีความจำเป็นต้องขอเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.day}</span>
                     เดือน <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.month}</span>
                     พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.year}</span>
-                    ตามกำหนดได้เนื่องจาก <span class="border-b border-dotted border-black px-2">${reasonText}</span>
-                </div>
-
-                <div class="indent-12">
-                    ข้าพเจ้าได้เปลี่ยนเวรกับ ( [ <span class="font-bold">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${subMiss}</span> ] นางสาว )
+                    ช่วงเวลา ( [ <span class="font-bold">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${shiftNight}</span> ] กลางคืน )
+                    เนื่องจาก <span class="border-b border-dotted border-black px-2">${reasonText}</span>
+                    โดยให้ ( [ <span class="font-bold">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${subMiss}</span> ] นางสาว )
                     <span class="border-b border-dotted border-black px-2 font-bold">${substituteFull}</span>
-                    ซึ่งอยู่เวรใน ( [ <span class="font-bold">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${compNight}</span> ] กลางคืน )
-                    ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
-                    เดือน <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.month}</span>
-                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.year}</span>
-                    มาอยู่แทนข้าพเจ้า
+                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${substitutePosition}</span>
+                    มาอยู่เวรแทนข้าพเจ้าในวันดังกล่าว
                 </div>
 
                 <div class="indent-12">
-                    และข้าพเจ้าจะมาอยู่แทน ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
-                    <span class="border-b border-dotted border-black px-2 font-bold">${applicantFull}</span>
-                    ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
+                    และข้าพเจ้าจะมาอยู่เวรแทนในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
                     เดือน <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.month}</span>
                     พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.year}</span>
+                    ช่วงเวลา ( [ <span class="font-bold">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${compNight}</span> ] กลางคืน )
                 </div>
 
                 <div class="indent-12 pt-1 font-medium">
-                    จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต
+                    จึงเรียนมาเพื่อโปรดพิจารณา
                 </div>
             </div>
 
-            <!-- Signatures Section -->
-            <div class="mt-6 flex flex-col items-end pr-4 sm:pr-8 space-y-3">
-                <div class="w-72 text-center font-medium">
-                    ขอแสดงความนับถือ
+            <!-- Signatures Section: Side by Side (Left: ผู้ขอเปลี่ยนเวร, Right: ผู้รับเปลี่ยนเวร) -->
+            <div class="grid grid-cols-2 gap-4 mt-8 pt-2 text-black">
+                <div class="text-center space-y-1">
+                    <div>(ลงชื่อ)........................................................................ ผู้ขอเปลี่ยนเวร</div>
+                    <div>( <span class="px-2 font-medium">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '....................................................................'}</span> )</div>
                 </div>
-                <div class="w-72 text-center space-y-0.5">
-                    <div>ลงชื่อ ................................................................</div>
-                    <div>( <span class="px-1 font-medium">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '..........................................................'}</span> ) ผู้ขอเปลี่ยน</div>
-                </div>
-                <div class="w-72 text-center space-y-0.5 pt-1">
-                    <div>ลงชื่อ ................................................................</div>
-                    <div>( <span class="px-1 font-medium">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '..........................................................'}</span> ) ผู้รับเปลี่ยน</div>
+                <div class="text-center space-y-1">
+                    <div>(ลงชื่อ)........................................................................ ผู้รับเปลี่ยนเวร</div>
+                    <div>( <span class="px-2 font-medium">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '....................................................................'}</span> )</div>
                 </div>
             </div>
 
-            <!-- Bottom 2 Decision Sections with Dotted Border & Building Box on left -->
-            <div class="mt-6 pt-3 border-t border-dotted border-black space-y-4 text-xs sm:text-sm">
-                <!-- Row 1: ความคิดเห็นของหัวหน้าสำนักงานคณบดี -->
-                <div class="flex items-start justify-between">
-                    <div class="font-bold pt-1 w-64 shrink-0">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
-                    <div class="flex-1 pl-4 space-y-2">
-                        <div class="flex flex-col gap-1.5 pl-6">
-                            <label class="flex items-center gap-2">[ <span class="font-bold">${headOk}</span> ] อนุญาต / มอบหมายงานอาคารสถานที่</label>
-                            <label class="flex items-center gap-2">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
-                            <label class="flex items-center gap-2">[ <span class="font-bold">${headOther}</span> ] อื่นๆ <span class="border-b border-dotted border-black px-2 flex-1">${headNotes}</span></label>
+            <!-- Bottom 3 Official Decision Sections (2 boxes top, 1 full-width bottom as in user's photo) -->
+            <div class="mt-8 pt-4 border-t border-black space-y-4 text-xs sm:text-sm text-black">
+                <div class="grid grid-cols-2 gap-6">
+                    
+                    <!-- Box 1: ความคิดเห็นของหัวหน้าสำนักงานคณบดี -->
+                    <div class="border border-black p-3.5 space-y-2">
+                        <div class="font-bold text-center underline mb-1">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOk}</span> ] เห็นควรอนุญาต</label>
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOther}</span> ] อื่นๆ</label>
                         </div>
-                        <div class="text-center pt-2 space-y-0.5">
+                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${headNotes}</div>
+                        <div class="text-center pt-3 space-y-0.5">
                             <div>(ลงชื่อ)........................................................................</div>
                             <div class="font-bold">(นางสาววิภาดา ทองปิ่น)</div>
-                            <div class="text-[12px]">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี</div>
-                            <div class="text-[12px]">คณะวิทยาการจัดการ</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Row 2: ความเห็นของผู้บังคับบัญชา & Box งานอาคารสถานที่ on bottom left -->
-                <div class="pt-3 border-t border-dotted border-black flex items-start justify-between">
-                    <div class="w-60 shrink-0">
-                        <div class="font-bold mb-3">ความเห็นของผู้บังคับบัญชา</div>
-                        
-                        <!-- Box งานอาคารสถานที่ (Bottom Left as in photo) -->
-                        <div class="border border-black p-3 text-center space-y-1 rounded-sm w-56">
-                            <div class="font-bold underline text-xs">งานอาคารสถานที่</div>
-                            <div class="pt-4 text-xs">(ลงชื่อ)....................................................</div>
-                            <div class="font-bold text-xs">(นายเอกสิทธิ์ คงพิทักษ์)</div>
-                            <div class="text-[11px]">หัวหน้างานอาคารสถานที่</div>
+                            <div class="text-[12px]">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี คณะวิทยาการจัดการ</div>
+                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
                         </div>
                     </div>
 
-                    <div class="flex-1 pl-4 space-y-2">
-                        <div class="flex flex-col gap-1.5 pl-6">
-                            <label class="flex items-center gap-2">[ <span class="font-bold">${deanOk}</span> ] อนุญาต / มอบหมายงานอาคารสถานที่</label>
-                            <label class="flex items-center gap-2">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
-                            <label class="flex items-center gap-2">[ <span class="font-bold">${headOther}</span> ] อื่นๆ <span class="border-b border-dotted border-black px-2 flex-1">${deanNotes}</span></label>
+                    <!-- Box 2: คำสั่ง / ความเห็นของคณบดี -->
+                    <div class="border border-black p-3.5 space-y-2">
+                        <div class="font-bold text-center underline mb-1">คำสั่ง / ความเห็นของคณบดี</div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanOk}</span> ] อนุญาต</label>
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
                         </div>
+                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${deanNotes || 'อนุญาตตามเสนอ'}</div>
                         <div class="text-center pt-3 space-y-0.5">
                             <div>(ลงชื่อ)........................................................................</div>
                             <div class="font-bold">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</div>
                             <div class="text-[12px]">คณบดีคณะวิทยาการจัดการ</div>
+                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box 3: บันทึกงานอาคารสถานที่ (Full-width box) -->
+                <div class="border border-black p-3.5 space-y-2">
+                    <div class="font-bold underline">บันทึกงานอาคารสถานที่:</div>
+                    <div class="text-[13px] border-b border-dotted border-black min-h-[24px]">${buildingNotes || 'ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว'}</div>
+                    <div class="flex items-center justify-between pt-2">
+                        <div></div>
+                        <div class="text-center space-y-0.5 pr-8">
+                            <div>(ลงชื่อ)........................................................................</div>
+                            <div class="font-bold">(นายเอกสิทธิ์ คงพิทักษ์)</div>
+                            <div class="text-[12px]">หัวหน้างานอาคารสถานที่</div>
+                            <div class="text-[12px] pt-0.5">วันที่ ........ / .................... / ................</div>
                         </div>
                     </div>
                 </div>
