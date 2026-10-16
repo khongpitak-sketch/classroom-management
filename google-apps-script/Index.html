@@ -2962,7 +2962,7 @@ body {
                 </button>
             </div>
 
-            <form id="form-shift-swap" onsubmit="saveShiftSwap(event)" class="space-y-5 text-xs">
+            <form id="form-shift-swap" novalidate onsubmit="saveShiftSwap(event); return false;" class="space-y-5 text-xs">
                 <input type="hidden" id="shift-swap-id" name="id" value="">
 
                 <!-- วันที่เอกสาร & เลขที่ -->
@@ -3121,7 +3121,7 @@ body {
                     <button type="button" onclick="closeModal('modal-shift-swap')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
                         ยกเลิก
                     </button>
-                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-semibold rounded-xl shadow-md shadow-amber-300 transition flex items-center gap-2">
+                    <button type="button" onclick="saveShiftSwap(event)" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-semibold rounded-xl shadow-md shadow-amber-300 transition flex items-center gap-2">
                         <i data-lucide="send" class="w-4 h-4"></i>
                         <span>บันทึกและส่งคำขอ</span>
                     </button>
@@ -10222,116 +10222,159 @@ function openShiftSwapModal(id) {
 }
 
 function saveShiftSwap(event) {
-    event.preventDefault();
-    const form = event.target;
-    const swapId = document.getElementById('shift-swap-id').value.trim();
-
-    const docDate = form.docDate.value;
-    const docNo = form.docNo.value.trim() || `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
-    const applicantPrefix = form.applicantPrefix.value;
-    const applicantName = form.applicantName.value.trim();
-    const applicantPosition = form.applicantPosition.value.trim();
-    const applicantPhone = form.applicantPhone.value.trim();
-    const applicantDept = form.applicantDept.value.trim();
-    const shiftDate = form.shiftDate.value;
-    const shiftPeriod = form.shiftPeriod.value;
-    const reason = form.reason.value.trim();
-    const substitutePrefix = form.substitutePrefix.value;
-    const substituteName = form.substituteName.value.trim();
-    const substitutePosition = form.substitutePosition.value.trim();
-    const substitutePhone = form.substitutePhone.value.trim();
-    const compensateDate = form.compensateDate.value;
-    const compensatePeriod = form.compensatePeriod.value;
-    const notes = form.notes.value.trim();
-
-    if (!applicantName || !substituteName || !shiftDate || !compensateDate || !reason) {
-        showToast('กรุณากรอกข้อมูลสำคัญให้ครบถ้วน', 'warning');
-        return;
+    if (event) {
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
     }
 
-    const subject = 'ขออนุมัติเปลี่ยนเวรยาม';
-    if (!Array.isArray(AppState.shiftSwaps)) {
-        AppState.shiftSwaps = [];
-    }
+    try {
+        const form = document.getElementById('form-shift-swap');
+        const swapIdEl = document.getElementById('shift-swap-id');
+        const swapId = swapIdEl ? swapIdEl.value.trim() : '';
 
-    let targetSwap = null;
-    if (swapId) {
-        // Edit Existing
-        const item = AppState.shiftSwaps.find(s => s.id === swapId);
-        if (item) {
-            item.docDate = docDate;
-            item.docNo = docNo;
-            item.subject = subject;
-            item.applicantPrefix = applicantPrefix;
-            item.applicantName = applicantName;
-            item.applicantPosition = applicantPosition;
-            item.applicantPhone = applicantPhone;
-            item.applicantDept = applicantDept;
-            item.shiftDate = shiftDate;
-            item.shiftPeriod = shiftPeriod;
-            item.reason = reason;
-            item.substitutePrefix = substitutePrefix;
-            item.substituteName = substituteName;
-            item.substitutePosition = substitutePosition;
-            item.substitutePhone = substitutePhone;
-            item.compensateDate = compensateDate;
-            item.compensatePeriod = compensatePeriod;
-            item.notes = notes;
-            item.updatedAt = new Date().toISOString();
-            item._localCreatedAt = Date.now();
-            targetSwap = item;
+        const docDate = (document.getElementById('swap-doc-date')?.value || new Date().toISOString().slice(0, 10)).trim();
+        const docNo = (document.getElementById('swap-doc-no')?.value || '').trim() || `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
+        const subject = 'ขออนุมัติเปลี่ยนเวรยาม';
+        const applicantPrefix = document.getElementById('swap-applicant-prefix')?.value || 'นาย';
+        const applicantName = (document.getElementById('swap-applicant-name')?.value || '').trim();
+        const applicantPosition = (document.getElementById('swap-applicant-position')?.value || '').trim();
+        const applicantPhone = (document.getElementById('swap-applicant-phone')?.value || '').trim();
+        const applicantDept = (document.getElementById('swap-applicant-dept')?.value || 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์').trim();
+        const shiftDate = (document.getElementById('swap-shift-date')?.value || '').trim();
+        
+        const shiftPeriodEl = form ? form.querySelector('input[name="shiftPeriod"]:checked') : null;
+        const shiftPeriod = shiftPeriodEl ? shiftPeriodEl.value : 'ช่วงเช้า';
+        
+        const reason = (document.getElementById('swap-reason')?.value || '').trim();
+        const substitutePrefix = document.getElementById('swap-substitute-prefix')?.value || 'นาย';
+        const substituteName = (document.getElementById('swap-substitute-name')?.value || '').trim();
+        const substitutePosition = (document.getElementById('swap-substitute-position')?.value || '').trim();
+        const substitutePhone = (document.getElementById('swap-substitute-phone')?.value || '').trim();
+        const compensateDate = (document.getElementById('swap-compensate-date')?.value || '').trim();
+        
+        const compPeriodEl = form ? form.querySelector('input[name="compensatePeriod"]:checked') : null;
+        const compensatePeriod = compPeriodEl ? compPeriodEl.value : 'ช่วงเช้า';
+        
+        const notes = (document.getElementById('swap-notes')?.value || '').trim();
+
+        // Validation with specific, helpful feedback and auto-focus
+        if (!applicantName) {
+            showToast('กรุณากรอกชื่อ - สกุล ผู้ขอเปลี่ยนเวร', 'warning');
+            const el = document.getElementById('swap-applicant-name');
+            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
         }
-        showToast(`แก้ไขแบบฟอร์มคำขอ ${docNo} เรียบร้อยแล้ว`, 'success');
-    } else {
-        // New Shift Swap
-        const newId = `SWAP-${new Date().getFullYear() + 543}-${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
-        const newSwap = {
-            id: newId,
-            docNo: docNo,
-            docDate: docDate,
-            subject: subject,
-            applicantPrefix: applicantPrefix,
-            applicantName: applicantName,
-            applicantPosition: applicantPosition,
-            applicantPhone: applicantPhone,
-            applicantDept: applicantDept,
-            shiftDate: shiftDate,
-            shiftPeriod: shiftPeriod,
-            reason: reason,
-            substitutePrefix: substitutePrefix,
-            substituteName: substituteName,
-            substitutePosition: substitutePosition,
-            substitutePhone: substitutePhone,
-            compensateDate: compensateDate,
-            compensatePeriod: compensatePeriod,
-            notes: notes,
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            approval: null,
-            _localCreatedAt: Date.now()
-        };
-        AppState.shiftSwaps.unshift(newSwap);
-        targetSwap = newSwap;
-        playNotificationSound();
-        showToast(`บันทึกคำขอเปลี่ยนเวรยาม ${docNo} สำเร็จแล้ว`, 'success', 5000);
-    }
+        if (!shiftDate) {
+            showToast('กรุณาเลือกวันที่อยู่เวรเดิม', 'warning');
+            const el = document.getElementById('swap-shift-date');
+            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
+        if (!reason) {
+            showToast('กรุณาระบุเหตุผลความจำเป็นในการขอเปลี่ยนเวร', 'warning');
+            const el = document.getElementById('swap-reason');
+            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
+        if (!substituteName) {
+            showToast('กรุณากรอกชื่อ - สกุล ผู้รับเปลี่ยนเวร (มาแทน)', 'warning');
+            const el = document.getElementById('swap-substitute-name');
+            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
+        if (!compensateDate) {
+            showToast('กรุณาเลือกวันที่มาอยู่เวรแทนชดเชย', 'warning');
+            const el = document.getElementById('swap-compensate-date');
+            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
 
-    saveData();
-    closeModal('modal-shift-swap');
-    updateAdminShiftSwapBadge();
-    renderShiftSwaps();
+        if (!Array.isArray(AppState.shiftSwaps)) {
+            AppState.shiftSwaps = [];
+        }
 
-    if (targetSwap) {
-        broadcastDataChange('SHIFT_SWAP_UPDATE', {
-            swap: targetSwap,
-            isNew: !swapId,
-            applicantName: `${applicantPrefix}${applicantName}`,
-            docNo: docNo
-        });
+        let targetSwap = null;
+        if (swapId) {
+            // Edit Existing
+            const item = AppState.shiftSwaps.find(s => s.id === swapId);
+            if (item) {
+                item.docDate = docDate;
+                item.docNo = docNo;
+                item.subject = subject;
+                item.applicantPrefix = applicantPrefix;
+                item.applicantName = applicantName;
+                item.applicantPosition = applicantPosition;
+                item.applicantPhone = applicantPhone;
+                item.applicantDept = applicantDept;
+                item.shiftDate = shiftDate;
+                item.shiftPeriod = shiftPeriod;
+                item.reason = reason;
+                item.substitutePrefix = substitutePrefix;
+                item.substituteName = substituteName;
+                item.substitutePosition = substitutePosition;
+                item.substitutePhone = substitutePhone;
+                item.compensateDate = compensateDate;
+                item.compensatePeriod = compensatePeriod;
+                item.notes = notes;
+                item.updatedAt = new Date().toISOString();
+                item._localCreatedAt = Date.now();
+                targetSwap = item;
+            }
+            showToast(`แก้ไขแบบฟอร์มคำขอ ${docNo} เรียบร้อยแล้ว`, 'success');
+        } else {
+            // New Shift Swap
+            const newId = `SWAP-${new Date().getFullYear() + 543}-${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
+            const newSwap = {
+                id: newId,
+                docNo: docNo,
+                docDate: docDate,
+                subject: subject,
+                applicantPrefix: applicantPrefix,
+                applicantName: applicantName,
+                applicantPosition: applicantPosition,
+                applicantPhone: applicantPhone,
+                applicantDept: applicantDept,
+                shiftDate: shiftDate,
+                shiftPeriod: shiftPeriod,
+                reason: reason,
+                substitutePrefix: substitutePrefix,
+                substituteName: substituteName,
+                substitutePosition: substitutePosition,
+                substitutePhone: substitutePhone,
+                compensateDate: compensateDate,
+                compensatePeriod: compensatePeriod,
+                notes: notes,
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                approval: null,
+                _localCreatedAt: Date.now()
+            };
+            AppState.shiftSwaps.unshift(newSwap);
+            targetSwap = newSwap;
+            playNotificationSound();
+            showToast(`บันทึกคำขอเปลี่ยนเวรยาม ${docNo} สำเร็จแล้ว`, 'success', 5000);
+        }
 
-        sendActionToGoogleBackend('saveShiftSwap', {
-            swap: targetSwap
-        });
+        saveData();
+        closeModal('modal-shift-swap');
+        updateAdminShiftSwapBadge();
+        renderShiftSwaps();
+
+        if (targetSwap) {
+            broadcastDataChange('SHIFT_SWAP_UPDATE', {
+                swap: targetSwap,
+                isNew: !swapId,
+                applicantName: `${applicantPrefix}${applicantName}`,
+                docNo: docNo
+            });
+
+            sendActionToGoogleBackend('saveShiftSwap', {
+                swap: targetSwap
+            });
+        }
+    } catch(err) {
+        console.error('Error in saveShiftSwap:', err);
+        showToast('เกิดข้อผิดพลาดในการบันทึกคำขอ: ' + (err.message || err), 'error', 6000);
     }
 }
 
