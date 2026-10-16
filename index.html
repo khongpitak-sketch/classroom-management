@@ -210,6 +210,26 @@ body {
     .timetable-cell {
         border: 1px solid #cbd5e1 !important;
     }
+    body.printing-shift-swap * {
+        visibility: hidden !important;
+    }
+    body.printing-shift-swap #print-shift-swap-content,
+    body.printing-shift-swap #print-shift-swap-content * {
+        visibility: visible !important;
+    }
+    body.printing-shift-swap #print-shift-swap-content {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        color: black !important;
+    }
 }
 
 /* Navigation Icon Tooltips (UX/UI Enhancement) */
@@ -324,6 +344,13 @@ body {
                         <span class="nav-tooltip">แจ้งซ่อมอุปกรณ์</span>
                     </button>
 
+                    <!-- 5.1 แบบฟอร์มขอเปลี่ยนเวรยาม -->
+                    <button onclick="switchTab('shift-swap')" data-tab="shift-swap" class="nav-link relative group p-2 lg:p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-200 flex items-center justify-center hover:scale-105 active:scale-95" title="แบบฟอร์มขอเปลี่ยนเวรยาม">
+                        <i data-lucide="calendar-sync" class="w-5 h-5"></i>
+                        <span class="shift-swap-pending-badge absolute -top-1 -right-1 px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[9px] font-extrabold shadow-xs hidden">0</span>
+                        <span class="nav-tooltip">แบบฟอร์มขอเปลี่ยนเวรยาม</span>
+                    </button>
+
                     <!-- 6. รายงาน & สถิติ (Admin Only) -->
                     <button onclick="switchTab('reports')" data-tab="reports" class="nav-link admin-only-nav hidden relative group p-2 lg:p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-200 flex items-center justify-center hover:scale-105 active:scale-95" title="รายงานและสถิติ">
                         <i data-lucide="bar-chart-3" class="w-5 h-5 text-emerald-400"></i>
@@ -387,6 +414,10 @@ body {
             <button onclick="switchTab('maintenance')" data-tab="maintenance" class="mobile-nav-link relative p-1.5 sm:p-2 text-slate-400 hover:text-slate-200 active:bg-slate-800/50 rounded-xl transition flex flex-col items-center gap-1 shrink-0">
                 <i data-lucide="wrench" class="w-4 h-4"></i> <span class="whitespace-nowrap">แจ้งซ่อม</span>
                 <span class="maintenance-pending-badge absolute top-1 right-2 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] font-extrabold hidden">0</span>
+            </button>
+            <button onclick="switchTab('shift-swap')" data-tab="shift-swap" class="mobile-nav-link relative p-1.5 sm:p-2 text-slate-400 hover:text-slate-200 active:bg-slate-800/50 rounded-xl transition flex flex-col items-center gap-1 shrink-0">
+                <i data-lucide="calendar-sync" class="w-4 h-4"></i> <span class="whitespace-nowrap">เปลี่ยนเวร</span>
+                <span class="shift-swap-pending-badge absolute top-1 right-2 px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[9px] font-extrabold hidden">0</span>
             </button>
             <button onclick="switchTab('reports')" data-tab="reports" class="mobile-nav-link admin-only-nav hidden relative p-1.5 sm:p-2 text-slate-400 hover:text-slate-200 active:bg-slate-800/50 rounded-xl transition flex flex-col items-center gap-1 shrink-0">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> <span class="whitespace-nowrap">รายงาน</span>
@@ -1049,6 +1080,132 @@ body {
                             </tr>
                         </thead>
                         <tbody id="maintenance-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 5.1: SHIFT SWAP MANAGEMENT (แบบฟอร์มขอเปลี่ยนเวรยาม) -->
+        <!-- ============================================== -->
+        <section id="view-shift-swap" class="view-section hidden space-y-6">
+            <!-- Header Card -->
+            <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="p-3 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl shadow-md shadow-amber-200 shrink-0">
+                        <i data-lucide="calendar-sync" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
+                                งานอาคารสถานที่
+                            </span>
+                            <span class="text-xs text-slate-400">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">ระบบยื่นคำขอ ติดตามสถานะการอนุมัติ และพิมพ์เอกสารราชการขอเปลี่ยนเวรยาม (A4)</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <button type="button" onclick="openPrintShiftSwapModal(null)" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs flex items-center gap-2 border border-slate-200 transition">
+                        <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i>
+                        <span>พิมพ์แบบฟอร์มเปล่า (A4)</span>
+                    </button>
+                    <button type="button" onclick="openShiftSwapModal()" class="px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-md shadow-amber-300 transition hover:scale-[1.02] active:scale-[0.98]">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>+ ยื่นคำขอเปลี่ยนเวร</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats KPI Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
+                        <i data-lucide="files" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">คำขอทั้งหมด</div>
+                        <div id="swap-stat-total" class="text-xl font-black text-slate-800">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl shrink-0">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">รอพิจารณาอนุมัติ</div>
+                        <div id="swap-stat-pending" class="text-xl font-black text-amber-600">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl shrink-0">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">อนุมัติแล้ว</div>
+                        <div id="swap-stat-approved" class="text-xl font-black text-emerald-600">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5">
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-xl shrink-0">
+                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">ไม่อนุมัติ</div>
+                        <div id="swap-stat-rejected" class="text-xl font-black text-rose-600">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table & Filter Card -->
+            <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <!-- Status Filter Tabs -->
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button type="button" onclick="setShiftSwapStatusFilter('all')" id="swap-filter-all" class="swap-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 text-white shadow-xs transition">
+                            ทั้งหมด
+                        </button>
+                        <button type="button" onclick="setShiftSwapStatusFilter('pending')" id="swap-filter-pending" class="swap-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                            🟡 รอพิจารณา
+                        </button>
+                        <button type="button" onclick="setShiftSwapStatusFilter('approved')" id="swap-filter-approved" class="swap-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                            🟢 อนุมัติแล้ว
+                        </button>
+                        <button type="button" onclick="setShiftSwapStatusFilter('rejected')" id="swap-filter-rejected" class="swap-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                            🔴 ไม่อนุมัติ
+                        </button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative min-w-[240px]">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="swap-search-input" oninput="handleShiftSwapSearch(this.value)" placeholder="ค้นหาชื่อผู้ขอ, ผู้รับเปลี่ยน, เหตุผล..." class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <!-- Shift Swap Requests List / Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50/70">
+                                <th class="p-3 text-center w-12">ลำดับ</th>
+                                <th class="p-3">เลขที่เอกสาร / วันที่ยื่น</th>
+                                <th class="p-3">ผู้ขอเปลี่ยนเวร & ผลัดเดิม</th>
+                                <th class="p-3">ผู้รับเปลี่ยนเวร (มาแทน)</th>
+                                <th class="p-3">วันที่มาอยู่แทนชดเชย</th>
+                                <th class="p-3">เหตุผลความจำเป็น</th>
+                                <th class="p-3 text-center">สถานะ</th>
+                                <th class="p-3 text-right min-w-[190px]">จัดการ / พิมพ์</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shift-swap-table-body" class="divide-y divide-slate-100">
                             <!-- Populated dynamically -->
                         </tbody>
                     </table>
@@ -2744,6 +2901,339 @@ body {
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: SHIFT SWAP REQUEST FORM (แบบฟอร์มขอเปลี่ยนเวรยาม) -->
+    <!-- ============================================== -->
+    <div id="modal-shift-swap" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto my-auto animate-scale-up">
+            <div class="flex items-start justify-between pb-4 border-b border-slate-100 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-amber-50 text-amber-700 rounded-2xl border border-amber-200">
+                        <i data-lucide="calendar-sync" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-shift-swap-title" class="text-lg font-black text-slate-800">แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม</h3>
+                        <p class="text-xs text-slate-500 font-medium">งานอาคารสถานที่ คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeModal('modal-shift-swap')" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-shift-swap" onsubmit="saveShiftSwap(event)" class="space-y-5 text-xs">
+                <input type="hidden" id="shift-swap-id" name="id" value="">
+
+                <!-- วันที่เอกสาร & เลขที่ -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">วันที่ยื่นเรื่อง <span class="text-rose-500">*</span></label>
+                        <input type="date" id="swap-doc-date" name="docDate" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">เลขที่เอกสาร (หนังสือภายใน)</label>
+                        <input type="text" id="swap-doc-no" name="docNo" placeholder="เช่น อว 0608.04/..." class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <!-- ส่วนที่ 1: ข้อมูลผู้ขอเปลี่ยนเวร -->
+                <div class="p-4 bg-amber-50/50 rounded-2xl border border-amber-100 space-y-3">
+                    <div class="flex items-center gap-2 text-amber-800 font-bold text-sm">
+                        <i data-lucide="user-check" class="w-4 h-4"></i>
+                        <span>1. ข้อมูลผู้ขอเปลี่ยนเวร</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">คำนำหน้า <span class="text-rose-500">*</span></label>
+                            <select id="swap-applicant-prefix" name="applicantPrefix" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                                <option value="นาย">นาย</option>
+                                <option value="นาง">นาง</option>
+                                <option value="นางสาว">นางสาว</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block font-semibold text-slate-700 mb-1">ชื่อ - สกุล ผู้ขอเปลี่ยน <span class="text-rose-500">*</span></label>
+                            <input type="text" id="swap-applicant-name" name="applicantName" required placeholder="ระบุชื่อและนามสกุล" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">ตำแหน่ง <span class="text-rose-500">*</span></label>
+                            <input type="text" id="swap-applicant-position" name="applicantPosition" required placeholder="เช่น พนักงานธุรการ / อาจารย์ / เจ้าหน้าที่" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อ</label>
+                            <input type="tel" id="swap-applicant-phone" name="applicantPhone" placeholder="เช่น 081-234-5678" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">สังกัด</label>
+                        <input type="text" id="swap-applicant-dept" name="applicantDept" value="คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <!-- ส่วนที่ 2: รายละเอียดการขอเปลี่ยนเวร & เหตุผล -->
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="flex items-center gap-2 text-slate-800 font-bold text-sm">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>2. วันที่และผลัดเวรเดิมที่มีความจำเป็นต้องขอเปลี่ยน</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">วันที่อยู่เวรเดิม <span class="text-rose-500">*</span></label>
+                            <input type="date" id="swap-shift-date" name="shiftDate" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">ช่วงเวลา / ผลัดเวร <span class="text-rose-500">*</span></label>
+                            <div class="grid grid-cols-3 gap-2 mt-1">
+                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-amber-50">
+                                    <input type="radio" name="shiftPeriod" value="ช่วงเช้า" checked class="text-amber-600 focus:ring-amber-500">
+                                    <span class="font-medium text-slate-700">ช่วงเช้า</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-amber-50">
+                                    <input type="radio" name="shiftPeriod" value="ช่วงบ่าย" class="text-amber-600 focus:ring-amber-500">
+                                    <span class="font-medium text-slate-700">ช่วงบ่าย</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-amber-50">
+                                    <input type="radio" name="shiftPeriod" value="กลางคืน" class="text-amber-600 focus:ring-amber-500">
+                                    <span class="font-medium text-slate-700">กลางคืน</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">เนื่องจาก (เหตุผลความจำเป็น) <span class="text-rose-500">*</span></label>
+                        <textarea id="swap-reason" name="reason" rows="2" required placeholder="ระบุเหตุผลความจำเป็น เช่น ติดราชการเร่งด่วน, ภารกิจส่วนตัวจำเป็น, ป่วย ฯลฯ" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- ส่วนที่ 3: ข้อมูลผู้รับเปลี่ยนเวร (มาแทน) & วันที่จะมาอยู่แทนชดเชย -->
+                <div class="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-3">
+                    <div class="flex items-center gap-2 text-blue-800 font-bold text-sm">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>3. ข้อมูลผู้รับเปลี่ยนเวร (มาแทน) และวันชดเชย</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">คำนำหน้า <span class="text-rose-500">*</span></label>
+                            <select id="swap-substitute-prefix" name="substitutePrefix" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                                <option value="นาย">นาย</option>
+                                <option value="นาง">นาง</option>
+                                <option value="นางสาว">นางสาว</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block font-semibold text-slate-700 mb-1">ชื่อ - สกุล ผู้รับเปลี่ยนเวร (มาแทน) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="swap-substitute-name" name="substituteName" required placeholder="ระบุชื่อและนามสกุลผู้มาแทน" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">ตำแหน่ง ผู้รับเปลี่ยน <span class="text-rose-500">*</span></label>
+                            <input type="text" id="swap-substitute-position" name="substitutePosition" required placeholder="เช่น พนักงานธุรการ / อาจารย์ / เจ้าหน้าที่" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ ผู้รับเปลี่ยน</label>
+                            <input type="tel" id="swap-substitute-phone" name="substitutePhone" placeholder="เช่น 089-876-5432" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-blue-100">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">ข้าพเจ้าจะมาอยู่เวรแทนชดเชยในวันที่ <span class="text-rose-500">*</span></label>
+                            <input type="date" id="swap-compensate-date" name="compensateDate" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">ช่วงเวลา / ผลัดเวรชดเชย <span class="text-rose-500">*</span></label>
+                            <div class="grid grid-cols-3 gap-2 mt-1">
+                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                                    <input type="radio" name="compensatePeriod" value="ช่วงเช้า" checked class="text-blue-600 focus:ring-blue-500">
+                                    <span class="font-medium text-slate-700">ช่วงเช้า</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                                    <input type="radio" name="compensatePeriod" value="ช่วงบ่าย" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="font-medium text-slate-700">ช่วงบ่าย</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                                    <input type="radio" name="compensatePeriod" value="กลางคืน" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="font-medium text-slate-700">กลางคืน</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- หมายเหตุ -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">หมายเหตุเพิ่มเติม</label>
+                    <input type="text" id="swap-notes" name="notes" placeholder="หมายเหตุหรือข้อมูลเพิ่มเติม (ถ้ามี)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2 justify-end">
+                    <button type="button" onclick="closeModal('modal-shift-swap')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-semibold rounded-xl shadow-md shadow-amber-300 transition flex items-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>บันทึกและส่งคำขอ</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: SHIFT SWAP APPROVAL WORKFLOW -->
+    <!-- ============================================== -->
+    <div id="modal-shift-swap-approval" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto my-auto animate-scale-up">
+            <div class="flex items-start justify-between pb-4 border-b border-slate-100 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200">
+                        <i data-lucide="check-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">พิจารณาอนุมัติคำขอเปลี่ยนเวรยาม</h3>
+                        <p class="text-xs text-slate-500 font-medium">สำหรับหัวหน้าสำนักงานคณบดี / คณบดี / งานอาคารสถานที่</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeModal('modal-shift-swap-approval')" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Summary Card -->
+            <div id="approval-summary-card" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs space-y-2 mb-5">
+                <!-- Injected dynamically -->
+            </div>
+
+            <form id="form-shift-swap-approval" onsubmit="saveShiftSwapApproval(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="approval-swap-id" name="id" value="">
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">ผลการพิจารณาคำขอ <span class="text-rose-500">*</span></label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center gap-2 p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl cursor-pointer hover:bg-amber-100">
+                            <input type="radio" name="approvalStatus" value="pending" class="text-amber-600 focus:ring-amber-500">
+                            <span class="font-bold text-amber-800">🟡 รอพิจารณา</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl cursor-pointer hover:bg-emerald-100">
+                            <input type="radio" name="approvalStatus" value="approved" checked class="text-emerald-600 focus:ring-emerald-500">
+                            <span class="font-bold text-emerald-800">🟢 อนุมัติ</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-rose-50/70 border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-100">
+                            <input type="radio" name="approvalStatus" value="rejected" class="text-rose-600 focus:ring-rose-500">
+                            <span class="font-bold text-rose-800">🔴 ไม่อนุมัติ</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 1. ความเห็นหัวหน้าสำนักงานคณบดี -->
+                <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between font-bold text-slate-800">
+                        <span>1. ความคิดเห็นของหัวหน้าสำนักงานคณบดี</span>
+                        <span class="text-slate-500 font-normal text-[11px]">(นางสาววิภาดา ทองปิ่น)</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="headDecision" value="เห็นควรอนุญาต" checked class="text-blue-600">
+                            <span class="font-medium text-slate-700">เห็นควรอนุญาต</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="headDecision" value="อื่นๆ" class="text-blue-600">
+                            <span class="font-medium text-slate-700">อื่นๆ</span>
+                        </label>
+                    </div>
+                    <input type="text" id="approval-head-notes" name="headNotes" placeholder="ความเห็นเพิ่มเติม (ถ้ามี)" class="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- 2. คำสั่ง/ความเห็นคณบดี -->
+                <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between font-bold text-slate-800">
+                        <span>2. คำสั่ง / ความเห็นของคณบดี</span>
+                        <span class="text-slate-500 font-normal text-[11px]">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="deanDecision" value="อนุญาต" checked class="text-emerald-600">
+                            <span class="font-medium text-slate-700">อนุญาต</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="deanDecision" value="ไม่อนุมัติ" class="text-rose-600">
+                            <span class="font-medium text-slate-700">ไม่อนุมัติ</span>
+                        </label>
+                    </div>
+                    <input type="text" id="approval-dean-notes" name="deanNotes" placeholder="ข้อสั่งการหรือเหตุผลประกอบ" class="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <!-- 3. บันทึกงานอาคารสถานที่ -->
+                <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between font-bold text-slate-800">
+                        <span>3. บันทึกงานอาคารสถานที่</span>
+                        <span class="text-slate-500 font-normal text-[11px]">(นายเอกสิทธิ์ คงพิทักษ์)</span>
+                    </div>
+                    <input type="text" id="approval-building-notes" name="buildingNotes" value="ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว" class="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-500">
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex gap-2 justify-end">
+                    <button type="button" onclick="closeModal('modal-shift-swap-approval')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>บันทึกผลการพิจารณา</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: PRINT OFFICIAL SHIFT SWAP FORM (A4) -->
+    <!-- ============================================== -->
+    <div id="modal-print-shift-swap" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl border border-slate-100 max-h-[96vh] overflow-y-auto my-auto animate-scale-up">
+            <!-- Modal Header / Controls (Hidden when printed) -->
+            <div class="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-amber-50 text-amber-700 rounded-xl border border-amber-200">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-800">พิมพ์เอกสารราชการ: แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม (A4)</h3>
+                        <p class="text-[11px] text-slate-500">ตรงตามแบบฟอร์มทางการของคณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ 100%</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 self-end sm:self-auto">
+                    <button type="button" id="btn-toggle-print-blank" onclick="togglePrintBlankForm()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-600"></i>
+                        <span id="label-toggle-blank">สลับเป็นแบบฟอร์มเปล่า</span>
+                    </button>
+                    <button type="button" onclick="printShiftSwapDocument()" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-300 transition flex items-center gap-1.5">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>สั่งพิมพ์เอกสาร A4</span>
+                    </button>
+                    <button type="button" onclick="closeModal('modal-print-shift-swap')" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Official Document Container (Formatted for A4 Printing & Preview) -->
+            <div id="print-shift-swap-content" class="bg-white text-slate-900 mx-auto p-8 sm:p-12 border border-slate-200 rounded-xl shadow-sm text-sm" style="font-family: 'Sarabun', 'TH Sarabun New', sans-serif; line-height: 1.7; max-width: 800px; color: #000;">
+                <!-- Populated dynamically via renderPrintShiftSwapContent() -->
+            </div>
         </div>
     </div>
 
@@ -5769,6 +6259,63 @@ const DEFAULT_MAINTENANCE = [
     }
 ];
 
+const DEFAULT_SHIFT_SWAPS = [
+    {
+        id: "SWAP-2569-001",
+        docNo: "อว 0608.04/ว.0142",
+        docDate: "2026-10-14",
+        applicantPrefix: "นาย",
+        applicantName: "สมชาย รักษาการ",
+        applicantPosition: "เจ้าหน้าที่บริการ",
+        applicantPhone: "081-456-7890",
+        applicantDept: "คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์",
+        shiftDate: "2026-10-18",
+        shiftPeriod: "ช่วงเช้า",
+        reason: "ติดภารกิจครอบครัวจำเป็นเร่งด่วนต่างจังหวัด",
+        substitutePrefix: "นาย",
+        substituteName: "อภิสิทธิ์ ใจดี",
+        substitutePosition: "เจ้าหน้าที่บริการ",
+        substitutePhone: "089-123-4567",
+        compensateDate: "2026-10-25",
+        compensatePeriod: "ช่วงเช้า",
+        notes: "ได้ประสานงานและตกลงแลกเปลี่ยนเวรเรียบร้อยแล้ว",
+        status: "approved",
+        createdAt: "2026-10-14T08:30:00.000Z",
+        approval: {
+            status: "approved",
+            headDecision: "เห็นควรอนุญาต",
+            headNotes: "ตรวจสอบความเหมาะสมแล้ว เห็นควรอนุญาตให้เปลี่ยนเวรได้",
+            deanDecision: "อนุญาต",
+            deanNotes: "อนุญาตตามเสนอ",
+            buildingNotes: "ปรับปรุงตารางเวรยามประจำเดือนตุลาคมเรียบร้อยแล้ว",
+            approvedAt: "2026-10-14T11:20:00.000Z"
+        }
+    },
+    {
+        id: "SWAP-2569-002",
+        docNo: "อว 0608.04/ว.0155",
+        docDate: "2026-10-16",
+        applicantPrefix: "นางสาว",
+        applicantName: "วิไลพร มณีรัตน์",
+        applicantPosition: "พนักงานธุรการ",
+        applicantPhone: "086-789-0123",
+        applicantDept: "คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์",
+        shiftDate: "2026-10-20",
+        shiftPeriod: "กลางคืน",
+        reason: "มีนัดหมายพบแพทย์เฉพาะทางตามใบนัดของโรงพยาบาล",
+        substitutePrefix: "นาย",
+        substituteName: "ธนากร สุขเกษม",
+        substitutePosition: "พนักงานบริการ",
+        substitutePhone: "082-345-6789",
+        compensateDate: "2026-10-27",
+        compensatePeriod: "กลางคืน",
+        notes: "ขอความอนุเคราะห์พิจารณาอนุมัติ",
+        status: "pending",
+        createdAt: "2026-10-16T09:15:00.000Z",
+        approval: null
+    }
+];
+
 // ----------------------------------------------------
 // REAL-TIME INTER-TAB & MULTI-DEVICE SYNC ENGINE
 // ----------------------------------------------------
@@ -6100,6 +6647,10 @@ window.addEventListener('storage', (e) => {
         } else if (e.key === 'CMS_TIMETABLE' && e.newValue) {
             AppState.timetable = JSON.parse(e.newValue);
             renderCurrentTab();
+        } else if (e.key === 'CMS_SHIFT_SWAPS' && e.newValue) {
+            AppState.shiftSwaps = JSON.parse(e.newValue);
+            updateAdminShiftSwapBadge();
+            renderCurrentTab();
         }
     } catch(err) {}
 });
@@ -6117,6 +6668,7 @@ const AppState = {
     timetable: [],
     bookings: [],
     maintenance: [],
+    shiftSwaps: [],
     currentTab: 'dashboard',
     selectedRoomType: 'all', // 'all', 'general', 'computer_lab'
     searchQuery: '',
@@ -6139,7 +6691,11 @@ const AppState = {
     bookingSortField: 'default',
     bookingSortDir: 'asc',
     bookingPage: 1,
-    bookingPageSize: 10
+    bookingPageSize: 10,
+    shiftSwapFilterStatus: 'all',
+    shiftSwapSearchQuery: '',
+    _currentPrintSwapId: null,
+    _isPrintBlank: false
 };
 
 // Initialize Application
@@ -6203,6 +6759,7 @@ function loadData() {
         const savedTimetable = localStorage.getItem('CMS_TIMETABLE');
         const savedBookings = localStorage.getItem('CMS_BOOKINGS');
         const savedMaintenance = localStorage.getItem('CMS_MAINTENANCE');
+        const savedShiftSwaps = localStorage.getItem('CMS_SHIFT_SWAPS');
 
         // Check if version changed -> auto migrate to new room names and reset timetable
         if (savedVersion !== DATA_VERSION || !savedRooms) {
@@ -6218,6 +6775,11 @@ function loadData() {
             } catch(e) {
                 AppState.maintenance = DEFAULT_MAINTENANCE;
             }
+            try {
+                AppState.shiftSwaps = savedShiftSwaps ? JSON.parse(savedShiftSwaps) : DEFAULT_SHIFT_SWAPS;
+            } catch(e) {
+                AppState.shiftSwaps = DEFAULT_SHIFT_SWAPS;
+            }
             saveData();
             localStorage.setItem('CMS_VERSION', DATA_VERSION);
         } else {
@@ -6227,6 +6789,7 @@ function loadData() {
             AppState.timetable = (parsedTt && Array.isArray(parsedTt) && parsedTt.length > 0) ? parsedTt : DEFAULT_TIMETABLE;
             AppState.bookings = savedBookings ? JSON.parse(savedBookings) : DEFAULT_BOOKINGS;
             AppState.maintenance = savedMaintenance ? JSON.parse(savedMaintenance) : DEFAULT_MAINTENANCE;
+            AppState.shiftSwaps = savedShiftSwaps ? JSON.parse(savedShiftSwaps) : DEFAULT_SHIFT_SWAPS;
         }
 
         // ตรวจสอบให้แน่ใจว่าห้อง FMS404 วันจันทร์เป็นห้องว่างทั้งเช้าและบ่าย (ไม่มีคาบเรียนค้าง)
@@ -6319,6 +6882,7 @@ function loadData() {
         AppState.timetable = DEFAULT_TIMETABLE;
         AppState.bookings = DEFAULT_BOOKINGS;
         AppState.maintenance = DEFAULT_MAINTENANCE;
+        AppState.shiftSwaps = DEFAULT_SHIFT_SWAPS;
     }
 }
 
@@ -6330,6 +6894,7 @@ function saveData() {
         localStorage.setItem('CMS_TIMETABLE', JSON.stringify(AppState.timetable));
         localStorage.setItem('CMS_BOOKINGS', JSON.stringify(AppState.bookings));
         localStorage.setItem('CMS_MAINTENANCE', JSON.stringify(AppState.maintenance));
+        localStorage.setItem('CMS_SHIFT_SWAPS', JSON.stringify(AppState.shiftSwaps || []));
     } catch (e) {
         console.error("Failed to save data:", e);
     }
@@ -6343,6 +6908,7 @@ function resetData() {
         localStorage.removeItem('CMS_TIMETABLE');
         localStorage.removeItem('CMS_BOOKINGS');
         localStorage.removeItem('CMS_MAINTENANCE');
+        localStorage.removeItem('CMS_SHIFT_SWAPS');
         loadData();
         renderCurrentTab();
         showToast('รีเซ็ตข้อมูลห้องเรียนเรียบร้อยแล้ว', 'success');
@@ -6387,7 +6953,7 @@ function switchTab(tabId) {
         targetSection.classList.remove('hidden');
     }
 
-    if (tabId === 'bookings' || tabId === 'maintenance' || tabId === 'dashboard' || tabId === 'reports' || AppState.isAdmin) {
+    if (tabId === 'bookings' || tabId === 'maintenance' || tabId === 'dashboard' || tabId === 'reports' || tabId === 'shift-swap' || AppState.isAdmin) {
         if (AppState.googleScriptUrl) {
             fetchDataFromGoogleSheets(true);
         }
@@ -6400,6 +6966,7 @@ function switchTab(tabId) {
 function renderCurrentTab() {
     updateAdminPendingBadge();
     updateAdminMaintenanceBadge();
+    updateAdminShiftSwapBadge();
     lucide.createIcons();
     switch (AppState.currentTab) {
         case 'dashboard':
@@ -6416,6 +6983,9 @@ function renderCurrentTab() {
             break;
         case 'maintenance':
             renderMaintenance();
+            break;
+        case 'shift-swap':
+            renderShiftSwaps();
             break;
         case 'reports':
             renderReportsView();
@@ -9281,6 +9851,767 @@ function handleEditMaintenanceSubmit(event) {
     if (newStatus === 'completed') {
         sendActionToGoogleBackend('resolveMaintenance', { id: ticketId, status: 'completed' });
     }
+}
+
+// ----------------------------------------------------
+// 5.1 DUTY SHIFT SWAP SYSTEM (ระบบขอเปลี่ยนเวรยาม)
+// ----------------------------------------------------
+function updateAdminShiftSwapBadge() {
+    const list = Array.isArray(AppState.shiftSwaps) ? AppState.shiftSwaps : [];
+    const pendingCount = list.filter(s => s.status === 'pending').length;
+    
+    // Desktop badge
+    const deskBadge = document.getElementById('shift-swap-pending-badge');
+    if (deskBadge) {
+        if (pendingCount > 0) {
+            deskBadge.textContent = pendingCount;
+            deskBadge.classList.remove('hidden');
+        } else {
+            deskBadge.classList.add('hidden');
+        }
+    }
+
+    // Mobile badge
+    const mobileBadges = document.querySelectorAll('.shift-swap-pending-badge-mobile');
+    mobileBadges.forEach(badge => {
+        if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    });
+}
+
+function setShiftSwapStatusFilter(status) {
+    AppState.shiftSwapFilterStatus = status;
+    document.querySelectorAll('.swap-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-600', 'text-white', 'shadow-xs');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+    });
+    const activeBtn = document.getElementById(`swap-filter-${status}`);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        activeBtn.classList.add('bg-amber-600', 'text-white', 'shadow-xs');
+    }
+    renderShiftSwaps();
+}
+
+function handleShiftSwapSearch(query) {
+    AppState.shiftSwapSearchQuery = String(query || '').toLowerCase().trim();
+    renderShiftSwaps();
+}
+
+function formatThaiFullOfficialDate(dateInput) {
+    if (!dateInput) return { day: '.....', month: '........................', year: '...........', full: '............................................' };
+    try {
+        let dateStr = String(dateInput).slice(0, 10);
+        let year, month, day;
+        if (dateStr.includes('-')) {
+            const parts = dateStr.split('-');
+            year = parseInt(parts[0]);
+            month = parseInt(parts[1]) - 1;
+            day = parseInt(parts[2]);
+        } else {
+            return { day: '.....', month: '........................', year: '...........', full: dateStr };
+        }
+        const thaiMonthsFull = [
+            'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+            'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        ];
+        const thaiYear = year > 2400 ? year : year + 543;
+        const monthName = thaiMonthsFull[month] || '';
+        return {
+            day: String(day),
+            month: monthName,
+            year: String(thaiYear),
+            full: `${day} ${monthName} ${thaiYear}`
+        };
+    } catch(e) {
+        return { day: '.....', month: '........................', year: '...........', full: '-' };
+    }
+}
+
+function renderShiftSwaps() {
+    const tableBody = document.getElementById('shift-swap-table-body');
+    if (!tableBody) return;
+
+    const list = Array.isArray(AppState.shiftSwaps) ? [...AppState.shiftSwaps] : [];
+
+    // KPI Counters
+    const totalCount = list.length;
+    const pendingCount = list.filter(s => s.status === 'pending').length;
+    const approvedCount = list.filter(s => s.status === 'approved').length;
+    const rejectedCount = list.filter(s => s.status === 'rejected').length;
+
+    const elTotal = document.getElementById('swap-stat-total');
+    const elPending = document.getElementById('swap-stat-pending');
+    const elApproved = document.getElementById('swap-stat-approved');
+    const elRejected = document.getElementById('swap-stat-rejected');
+
+    if (elTotal) elTotal.textContent = totalCount;
+    if (elPending) elPending.textContent = pendingCount;
+    if (elApproved) elApproved.textContent = approvedCount;
+    if (elRejected) elRejected.textContent = rejectedCount;
+
+    // Filter by Status
+    let filtered = list;
+    if (AppState.shiftSwapFilterStatus && AppState.shiftSwapFilterStatus !== 'all') {
+        filtered = filtered.filter(s => s.status === AppState.shiftSwapFilterStatus);
+    }
+
+    // Filter by Search Query
+    if (AppState.shiftSwapSearchQuery) {
+        const q = AppState.shiftSwapSearchQuery;
+        filtered = filtered.filter(s => {
+            const applicant = `${s.applicantPrefix || ''}${s.applicantName || ''}`.toLowerCase();
+            const substitute = `${s.substitutePrefix || ''}${s.substituteName || ''}`.toLowerCase();
+            const reason = (s.reason || '').toLowerCase();
+            const docNo = (s.docNo || '').toLowerCase();
+            const shiftDate = (s.shiftDate || '').toLowerCase();
+            return applicant.includes(q) || substitute.includes(q) || reason.includes(q) || docNo.includes(q) || shiftDate.includes(q);
+        });
+    }
+
+    // Sort: Pending first, then by createdAt / docDate descending
+    filtered.sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+        return (b.docDate || '').localeCompare(a.docDate || '');
+    });
+
+    if (filtered.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="p-8 text-center text-slate-400">
+                    <div class="flex flex-col items-center justify-center gap-2">
+                        <div class="p-3 bg-amber-50 rounded-2xl text-amber-500">
+                            <i data-lucide="calendar-sync" class="w-8 h-8"></i>
+                        </div>
+                        <span class="font-medium text-slate-600">ไม่พบรายการคำขอเปลี่ยนเวรยาม</span>
+                        <p class="text-[11px] text-slate-400">คลิกปุ่ม "+ ยื่นคำขอเปลี่ยนเวร" เพื่อสร้างเอกสารขอเปลี่ยนเวรใหม่</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        lucide.createIcons();
+        return;
+    }
+
+    tableBody.innerHTML = filtered.map((swap, index) => {
+        let statusBadge = '';
+        if (swap.status === 'approved') {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> อนุมัติแล้ว
+            </span>`;
+        } else if (swap.status === 'rejected') {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> ไม่อนุมัติ
+            </span>`;
+        } else {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i> รอพิจารณา
+            </span>`;
+        }
+
+        const adminButtons = AppState.isAdmin ? `
+            <button type="button" onclick="openShiftSwapApprovalModal('${swap.id}')" title="พิจารณาอนุมัติคำขอ" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition border border-emerald-200">
+                <i data-lucide="check-check" class="w-4 h-4"></i>
+            </button>
+            <button type="button" onclick="openShiftSwapModal('${swap.id}')" title="แก้ไขคำขอ" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition border border-blue-200">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+            </button>
+            <button type="button" onclick="deleteShiftSwap('${swap.id}')" title="ลบคำขอ" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition border border-rose-200">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        ` : '';
+
+        return `
+            <tr class="hover:bg-slate-50/80 transition group">
+                <td class="p-3 text-center font-bold text-slate-400">${index + 1}</td>
+                <td class="p-3">
+                    <div class="font-bold text-slate-800">${swap.docNo || 'หนังสือภายใน'}</div>
+                    <div class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                        <i data-lucide="calendar" class="w-3 h-3"></i>
+                        <span>ยื่น: ${formatThaiDate(swap.docDate)}</span>
+                    </div>
+                </td>
+                <td class="p-3">
+                    <div class="font-bold text-slate-800">${swap.applicantPrefix || ''}${swap.applicantName || '-'}</div>
+                    <div class="text-[11px] text-slate-500">${swap.applicantPosition || '-'}</div>
+                    <div class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                        <i data-lucide="calendar-days" class="w-3 h-3 text-amber-600"></i>
+                        <span>${formatThaiDate(swap.shiftDate)} (${swap.shiftPeriod})</span>
+                    </div>
+                </td>
+                <td class="p-3">
+                    <div class="font-bold text-slate-800">${swap.substitutePrefix || ''}${swap.substituteName || '-'}</div>
+                    <div class="text-[11px] text-slate-500">${swap.substitutePosition || '-'}</div>
+                </td>
+                <td class="p-3">
+                    <div class="font-medium text-blue-800 bg-blue-50 px-2 py-1 rounded-md border border-blue-200/60 inline-flex items-center gap-1 text-[11px]">
+                        <i data-lucide="clock" class="w-3 h-3 text-blue-600"></i>
+                        <span>${formatThaiDate(swap.compensateDate)} (${swap.compensatePeriod})</span>
+                    </div>
+                </td>
+                <td class="p-3 max-w-[200px]">
+                    <div class="text-slate-700 truncate" title="${swap.reason || ''}">${swap.reason || '-'}</div>
+                    ${swap.approval && swap.approval.deanNotes ? `
+                        <div class="text-[10px] text-slate-500 mt-1 truncate" title="ความเห็นคณบดี: ${swap.approval.deanNotes}">
+                            <span class="font-semibold text-slate-600">คณบดี:</span> ${swap.approval.deanNotes}
+                        </div>
+                    ` : ''}
+                </td>
+                <td class="p-3 text-center">
+                    ${statusBadge}
+                </td>
+                <td class="p-3 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                        <button type="button" onclick="openPrintShiftSwapModal('${swap.id}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-[11px] flex items-center gap-1 border border-slate-200 transition" title="พิมพ์แบบฟอร์มทางการ A4">
+                            <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-600"></i>
+                            <span>พิมพ์ (A4)</span>
+                        </button>
+                        ${adminButtons}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    lucide.createIcons();
+}
+
+function openShiftSwapModal(id) {
+    const modal = document.getElementById('modal-shift-swap');
+    const form = document.getElementById('form-shift-swap');
+    const titleEl = document.getElementById('modal-shift-swap-title');
+    if (!modal || !form) return;
+
+    form.reset();
+
+    if (id) {
+        const item = (AppState.shiftSwaps || []).find(s => s.id === id);
+        if (!item) {
+            showToast('ไม่พบรายการคำขอนี้', 'warning');
+            return;
+        }
+        if (titleEl) titleEl.textContent = 'แก้ไขแบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม';
+        document.getElementById('shift-swap-id').value = item.id;
+        document.getElementById('swap-doc-date').value = item.docDate || '';
+        document.getElementById('swap-doc-no').value = item.docNo || '';
+        document.getElementById('swap-applicant-prefix').value = item.applicantPrefix || 'นาย';
+        document.getElementById('swap-applicant-name').value = item.applicantName || '';
+        document.getElementById('swap-applicant-position').value = item.applicantPosition || '';
+        document.getElementById('swap-applicant-phone').value = item.applicantPhone || '';
+        document.getElementById('swap-applicant-dept').value = item.applicantDept || 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์';
+        document.getElementById('swap-shift-date').value = item.shiftDate || '';
+        
+        const shiftRadios = form.querySelectorAll('input[name="shiftPeriod"]');
+        shiftRadios.forEach(r => { if (r.value === item.shiftPeriod) r.checked = true; });
+
+        document.getElementById('swap-reason').value = item.reason || '';
+        document.getElementById('swap-substitute-prefix').value = item.substitutePrefix || 'นาย';
+        document.getElementById('swap-substitute-name').value = item.substituteName || '';
+        document.getElementById('swap-substitute-position').value = item.substitutePosition || '';
+        document.getElementById('swap-substitute-phone').value = item.substitutePhone || '';
+        document.getElementById('swap-compensate-date').value = item.compensateDate || '';
+
+        const compRadios = form.querySelectorAll('input[name="compensatePeriod"]');
+        compRadios.forEach(r => { if (r.value === item.compensatePeriod) r.checked = true; });
+
+        document.getElementById('swap-notes').value = item.notes || '';
+    } else {
+        if (titleEl) titleEl.textContent = 'แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม';
+        document.getElementById('shift-swap-id').value = '';
+        const todayStr = new Date().toISOString().slice(0, 10);
+        document.getElementById('swap-doc-date').value = todayStr;
+        const autoNo = `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
+        document.getElementById('swap-doc-no').value = autoNo;
+        document.getElementById('swap-applicant-dept').value = 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์';
+    }
+
+    openModal('modal-shift-swap');
+    lucide.createIcons();
+}
+
+function saveShiftSwap(event) {
+    event.preventDefault();
+    const form = event.target;
+    const swapId = document.getElementById('shift-swap-id').value.trim();
+
+    const docDate = form.docDate.value;
+    const docNo = form.docNo.value.trim() || `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
+    const applicantPrefix = form.applicantPrefix.value;
+    const applicantName = form.applicantName.value.trim();
+    const applicantPosition = form.applicantPosition.value.trim();
+    const applicantPhone = form.applicantPhone.value.trim();
+    const applicantDept = form.applicantDept.value.trim();
+    const shiftDate = form.shiftDate.value;
+    const shiftPeriod = form.shiftPeriod.value;
+    const reason = form.reason.value.trim();
+    const substitutePrefix = form.substitutePrefix.value;
+    const substituteName = form.substituteName.value.trim();
+    const substitutePosition = form.substitutePosition.value.trim();
+    const substitutePhone = form.substitutePhone.value.trim();
+    const compensateDate = form.compensateDate.value;
+    const compensatePeriod = form.compensatePeriod.value;
+    const notes = form.notes.value.trim();
+
+    if (!applicantName || !substituteName || !shiftDate || !compensateDate || !reason) {
+        showToast('กรุณากรอกข้อมูลสำคัญให้ครบถ้วน', 'warning');
+        return;
+    }
+
+    if (!Array.isArray(AppState.shiftSwaps)) {
+        AppState.shiftSwaps = [];
+    }
+
+    if (swapId) {
+        // Edit Existing
+        const item = AppState.shiftSwaps.find(s => s.id === swapId);
+        if (item) {
+            item.docDate = docDate;
+            item.docNo = docNo;
+            item.applicantPrefix = applicantPrefix;
+            item.applicantName = applicantName;
+            item.applicantPosition = applicantPosition;
+            item.applicantPhone = applicantPhone;
+            item.applicantDept = applicantDept;
+            item.shiftDate = shiftDate;
+            item.shiftPeriod = shiftPeriod;
+            item.reason = reason;
+            item.substitutePrefix = substitutePrefix;
+            item.substituteName = substituteName;
+            item.substitutePosition = substitutePosition;
+            item.substitutePhone = substitutePhone;
+            item.compensateDate = compensateDate;
+            item.compensatePeriod = compensatePeriod;
+            item.notes = notes;
+            item.updatedAt = new Date().toISOString();
+        }
+        showToast(`แก้ไขแบบฟอร์มคำขอ ${docNo} เรียบร้อยแล้ว`, 'success');
+    } else {
+        // New Shift Swap
+        const newId = `SWAP-${new Date().getFullYear() + 543}-${String((AppState.shiftSwaps.length + 1)).padStart(3, '0')}`;
+        const newSwap = {
+            id: newId,
+            docNo: docNo,
+            docDate: docDate,
+            applicantPrefix: applicantPrefix,
+            applicantName: applicantName,
+            applicantPosition: applicantPosition,
+            applicantPhone: applicantPhone,
+            applicantDept: applicantDept,
+            shiftDate: shiftDate,
+            shiftPeriod: shiftPeriod,
+            reason: reason,
+            substitutePrefix: substitutePrefix,
+            substituteName: substituteName,
+            substitutePosition: substitutePosition,
+            substitutePhone: substitutePhone,
+            compensateDate: compensateDate,
+            compensatePeriod: compensatePeriod,
+            notes: notes,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            approval: null
+        };
+        AppState.shiftSwaps.unshift(newSwap);
+        playNotificationSound();
+        showToast(`บันทึกคำขอเปลี่ยนเวรยาม ${docNo} สำเร็จแล้ว`, 'success', 5000);
+    }
+
+    saveData();
+    closeModal('modal-shift-swap');
+    updateAdminShiftSwapBadge();
+    renderShiftSwaps();
+
+    broadcastDataChange('SHIFT_SWAP_UPDATE', {
+        applicantName: `${applicantPrefix}${applicantName}`,
+        docNo: docNo
+    });
+
+    sendActionToGoogleBackend('saveShiftSwap', {
+        id: swapId || (AppState.shiftSwaps[0] ? AppState.shiftSwaps[0].id : ''),
+        docNo: docNo,
+        applicant: `${applicantPrefix}${applicantName}`,
+        substitute: `${substitutePrefix}${substituteName}`,
+        shiftDate: shiftDate,
+        compensateDate: compensateDate
+    });
+}
+
+function deleteShiftSwap(id) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const item = (AppState.shiftSwaps || []).find(s => s.id === id);
+    if (!item) return;
+
+    if (confirm(`คุณต้องการลบคำขอเปลี่ยนเวรยาม "${item.docNo || item.id}" ของ ${item.applicantName} ใช่หรือไม่?`)) {
+        AppState.shiftSwaps = AppState.shiftSwaps.filter(s => s.id !== id);
+        saveData();
+        updateAdminShiftSwapBadge();
+        renderShiftSwaps();
+        showToast('ลบรายการคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว', 'success');
+        broadcastDataChange('SHIFT_SWAP_UPDATE', { applicantName: item.applicantName, docNo: item.docNo });
+    }
+}
+
+function openShiftSwapApprovalModal(id) {
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const item = (AppState.shiftSwaps || []).find(s => s.id === id);
+    if (!item) {
+        showToast('ไม่พบรายการคำขอนี้', 'warning');
+        return;
+    }
+
+    document.getElementById('approval-swap-id').value = item.id;
+
+    // Render Summary Card
+    const summaryCard = document.getElementById('approval-summary-card');
+    if (summaryCard) {
+        summaryCard.innerHTML = `
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span class="font-bold text-slate-800 text-sm">${item.docNo || 'หนังสือภายใน'}</span>
+                <span class="text-slate-500">ยื่นเมื่อ: ${formatThaiDate(item.docDate)}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                    <span class="text-slate-500 block text-[11px]">ผู้ขอเปลี่ยนเวร:</span>
+                    <b class="text-slate-800">${item.applicantPrefix || ''}${item.applicantName}</b> (${item.applicantPosition || '-'})
+                    <div class="text-amber-800 font-semibold mt-0.5">เวรเดิม: ${formatThaiDate(item.shiftDate)} (${item.shiftPeriod})</div>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-[11px]">ผู้รับเปลี่ยนเวร (มาแทน):</span>
+                    <b class="text-slate-800">${item.substitutePrefix || ''}${item.substituteName}</b> (${item.substitutePosition || '-'})
+                    <div class="text-blue-800 font-semibold mt-0.5">ชดเชย: ${formatThaiDate(item.compensateDate)} (${item.compensatePeriod})</div>
+                </div>
+            </div>
+            <div class="pt-2 border-t border-slate-200 text-slate-700">
+                <span class="font-semibold text-slate-600">เหตุผลความจำเป็น:</span> ${item.reason}
+            </div>
+        `;
+    }
+
+    // Set Radios & Input Values
+    const form = document.getElementById('form-shift-swap-approval');
+    if (form) {
+        const statusRadios = form.querySelectorAll('input[name="approvalStatus"]');
+        statusRadios.forEach(r => {
+            if (r.value === (item.status === 'pending' ? 'approved' : item.status)) r.checked = true;
+        });
+
+        const app = item.approval || {};
+        const headRadios = form.querySelectorAll('input[name="headDecision"]');
+        headRadios.forEach(r => {
+            if (r.value === (app.headDecision || 'เห็นควรอนุญาต')) r.checked = true;
+        });
+        document.getElementById('approval-head-notes').value = app.headNotes || '';
+
+        const deanRadios = form.querySelectorAll('input[name="deanDecision"]');
+        deanRadios.forEach(r => {
+            if (r.value === (app.deanDecision || 'อนุญาต')) r.checked = true;
+        });
+        document.getElementById('approval-dean-notes').value = app.deanNotes || 'อนุญาตตามเสนอ';
+        document.getElementById('approval-building-notes').value = app.buildingNotes || 'ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว';
+    }
+
+    openModal('modal-shift-swap-approval');
+    lucide.createIcons();
+}
+
+function saveShiftSwapApproval(event) {
+    event.preventDefault();
+    if (!AppState.isAdmin) {
+        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
+        return;
+    }
+    const form = event.target;
+    const swapId = document.getElementById('approval-swap-id').value;
+    const item = (AppState.shiftSwaps || []).find(s => s.id === swapId);
+    if (!item) return;
+
+    const newStatus = form.approvalStatus.value;
+    const headDecision = form.headDecision.value;
+    const headNotes = form.headNotes.value.trim();
+    const deanDecision = form.deanDecision.value;
+    const deanNotes = form.deanNotes.value.trim();
+    const buildingNotes = form.buildingNotes.value.trim();
+
+    item.status = newStatus;
+    item.approval = {
+        status: newStatus,
+        headDecision: headDecision,
+        headNotes: headNotes,
+        deanDecision: deanDecision,
+        deanNotes: deanNotes,
+        buildingNotes: buildingNotes,
+        approvedAt: new Date().toISOString()
+    };
+
+    saveData();
+    closeModal('modal-shift-swap-approval');
+    updateAdminShiftSwapBadge();
+    renderShiftSwaps();
+
+    const statusText = newStatus === 'approved' ? 'อนุมัติเรียบร้อยแล้ว ✅' : (newStatus === 'rejected' ? 'ไม่อนุมัติ ❌' : 'รอพิจารณา 🟡');
+    showToast(`บันทึกผลการพิจารณาคำขอ ${item.docNo || item.id} เป็น "${statusText}" เรียบร้อย`, 'success', 5000);
+
+    broadcastDataChange('SHIFT_SWAP_UPDATE', { applicantName: item.applicantName, docNo: item.docNo });
+    sendActionToGoogleBackend('approveShiftSwap', { id: item.id, status: newStatus });
+}
+
+function openPrintShiftSwapModal(id) {
+    AppState._currentPrintSwapId = id || null;
+    AppState._isPrintBlank = (id === null);
+
+    const toggleLabel = document.getElementById('label-toggle-blank');
+    if (toggleLabel) {
+        toggleLabel.textContent = AppState._isPrintBlank ? 'สลับเป็นแบบฟอร์มมีข้อมูล' : 'สลับเป็นแบบฟอร์มเปล่า';
+    }
+
+    const swapItem = id ? (AppState.shiftSwaps || []).find(s => s.id === id) : null;
+    renderPrintShiftSwapContent(swapItem, AppState._isPrintBlank);
+
+    openModal('modal-print-shift-swap');
+    lucide.createIcons();
+}
+
+function togglePrintBlankForm() {
+    AppState._isPrintBlank = !AppState._isPrintBlank;
+    const toggleLabel = document.getElementById('label-toggle-blank');
+    if (toggleLabel) {
+        toggleLabel.textContent = AppState._isPrintBlank ? 'สลับเป็นแบบฟอร์มมีข้อมูล' : 'สลับเป็นแบบฟอร์มเปล่า';
+    }
+
+    const swapItem = AppState._currentPrintSwapId ? (AppState.shiftSwaps || []).find(s => s.id === AppState._currentPrintSwapId) : null;
+    renderPrintShiftSwapContent(swapItem, AppState._isPrintBlank);
+}
+
+function renderPrintShiftSwapContent(swap, isBlank) {
+    const container = document.getElementById('print-shift-swap-content');
+    if (!container) return;
+
+    const data = (!isBlank && swap) ? swap : {
+        docNo: '',
+        docDate: '',
+        applicantPrefix: '',
+        applicantName: '',
+        applicantPosition: '',
+        applicantDept: 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์',
+        shiftDate: '',
+        shiftPeriod: '',
+        reason: '',
+        substitutePrefix: '',
+        substituteName: '',
+        substitutePosition: '',
+        compensateDate: '',
+        compensatePeriod: '',
+        approval: null
+    };
+
+    const docDateInfo = formatThaiFullOfficialDate(data.docDate);
+    const shiftDateInfo = formatThaiFullOfficialDate(data.shiftDate);
+    const compDateInfo = formatThaiFullOfficialDate(data.compensateDate);
+
+    // Prefix checkboxes
+    const prefMr = (!isBlank && data.applicantPrefix === 'นาย') ? '&#10003;' : '&nbsp;&nbsp;';
+    const prefMrs = (!isBlank && data.applicantPrefix === 'นาง') ? '&#10003;' : '&nbsp;&nbsp;';
+    const prefMiss = (!isBlank && data.applicantPrefix === 'นางสาว') ? '&#10003;' : '&nbsp;&nbsp;';
+
+    // Shift period checkboxes
+    const shiftMorn = (!isBlank && data.shiftPeriod === 'ช่วงเช้า') ? '&#10003;' : '&nbsp;&nbsp;';
+    const shiftAft = (!isBlank && data.shiftPeriod === 'ช่วงบ่าย') ? '&#10003;' : '&nbsp;&nbsp;';
+    const shiftNight = (!isBlank && data.shiftPeriod === 'กลางคืน') ? '&#10003;' : '&nbsp;&nbsp;';
+
+    // Substitute prefix checkboxes
+    const subMr = (!isBlank && data.substitutePrefix === 'นาย') ? '&#10003;' : '&nbsp;&nbsp;';
+    const subMrs = (!isBlank && data.substitutePrefix === 'นาง') ? '&#10003;' : '&nbsp;&nbsp;';
+    const subMiss = (!isBlank && data.substitutePrefix === 'นางสาว') ? '&#10003;' : '&nbsp;&nbsp;';
+
+    // Compensate period checkboxes
+    const compMorn = (!isBlank && data.compensatePeriod === 'ช่วงเช้า') ? '&#10003;' : '&nbsp;&nbsp;';
+    const compAft = (!isBlank && data.compensatePeriod === 'ช่วงบ่าย') ? '&#10003;' : '&nbsp;&nbsp;';
+    const compNight = (!isBlank && data.compensatePeriod === 'กลางคืน') ? '&#10003;' : '&nbsp;&nbsp;';
+
+    // Approval checks
+    const app = data.approval || {};
+    const headOk = (!isBlank && (app.headDecision === 'เห็นควรอนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
+    const headOther = (!isBlank && app.headDecision === 'อื่นๆ') ? '&#10003;' : '&nbsp;&nbsp;';
+    const headNotes = (!isBlank && app.headNotes) ? app.headNotes : '...................................................';
+
+    const deanOk = (!isBlank && (app.deanDecision === 'อนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
+    const deanNo = (!isBlank && (app.deanDecision === 'ไม่อนุมัติ' || data.status === 'rejected')) ? '&#10003;' : '&nbsp;&nbsp;';
+    const deanNotes = (!isBlank && app.deanNotes) ? app.deanNotes : '...................................................';
+    const buildingNotes = (!isBlank && app.buildingNotes) ? app.buildingNotes : '...................................................................................................................................';
+
+    const applicantFull = (!isBlank && data.applicantName) ? `${data.applicantPrefix || ''}${data.applicantName}` : '........................................................................';
+    const applicantPosition = (!isBlank && data.applicantPosition) ? data.applicantPosition : '........................................................';
+    const substituteFull = (!isBlank && data.substituteName) ? `${data.substitutePrefix || ''}${data.substituteName}` : '........................................................................';
+    const substitutePosition = (!isBlank && data.substitutePosition) ? data.substitutePosition : '........................................................';
+    const reasonText = (!isBlank && data.reason) ? data.reason : '..........................................................................................................................................................';
+    const docNoText = (!isBlank && data.docNo) ? data.docNo : '...................................................';
+
+    container.innerHTML = `
+        <!-- Printable Official Form Page 1/1 -->
+        <div class="relative bg-white text-black p-4 sm:p-6" style="min-height: 1050px; font-size: 15px; line-height: 1.8;">
+            
+            <!-- Box: เขียนตัวเลขอารบิคเท่านั้น (Top Right) -->
+            <div class="absolute right-4 top-4 border-2 border-black px-3 py-1 font-bold text-center text-xs tracking-wider" style="letter-spacing: 0.5px;">
+                เขียนตัวเลขอารบิคเท่านั้น
+            </div>
+
+            <!-- Garuda Emblem (Centered Top) -->
+            <div class="text-center pt-2 pb-4">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Garuda_Emblem_of_Thailand.svg/240px-Garuda_Emblem_of_Thailand.svg.png" 
+                     alt="ตราครุฑ" 
+                     class="mx-auto h-24 w-auto object-contain"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div style="display:none;" class="mx-auto w-20 h-20 text-center font-bold text-xs border border-slate-300 rounded p-1">
+                    [ตราครุฑ]
+                </div>
+            </div>
+
+            <!-- Official Header Fields -->
+            <div class="space-y-1 mb-4">
+                <div class="flex items-baseline">
+                    <span class="font-bold shrink-0 w-28">ส่วนราชการ</span>
+                    <span class="border-b border-dotted border-black flex-1 font-medium pl-1">งานอาคารสถานที่ คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                    <div class="flex items-baseline flex-1">
+                        <span class="font-bold shrink-0 w-12">ที่</span>
+                        <span class="border-b border-dotted border-black flex-1 font-medium pl-1">${docNoText}</span>
+                    </div>
+                    <div class="flex items-baseline w-64 pl-4">
+                        <span class="font-bold shrink-0 w-14">วันที่</span>
+                        <span class="border-b border-dotted border-black flex-1 font-medium text-center">${docDateInfo.full}</span>
+                    </div>
+                </div>
+                <div class="flex items-baseline">
+                    <span class="font-bold shrink-0 w-14">เรื่อง</span>
+                    <span class="font-bold pl-1">ขออนุญาตเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ</span>
+                </div>
+                <div class="flex items-baseline">
+                    <span class="font-bold shrink-0 w-14">เรียน</span>
+                    <span class="pl-1">คณบดีคณะวิทยาการจัดการ</span>
+                </div>
+            </div>
+
+            <!-- Body Paragraph 1 -->
+            <div class="text-justify indent-12 space-y-2 mt-4 leading-relaxed">
+                <div>
+                    ข้าพเจ้า ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
+                    <span class="border-b border-dotted border-black px-2 font-bold">${applicantFull}</span>
+                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${applicantPosition}</span>
+                    สังกัด <span class="border-b border-dotted border-black px-1 font-medium">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
+                    มีความจำเป็นต้องขอเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.year}</span>
+                    ช่วงเวลา ( [ <span class="font-bold">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${shiftNight}</span> ] กลางคืน )
+                    เนื่องจาก <span class="border-b border-dotted border-black px-2">${reasonText}</span>
+                    โดยให้ ( [ <span class="font-bold">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${subMiss}</span> ] นางสาว )
+                    <span class="border-b border-dotted border-black px-2 font-bold">${substituteFull}</span>
+                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${substitutePosition}</span> มาอยู่เวรแทน
+                </div>
+
+                <!-- Body Paragraph 2 -->
+                <div class="indent-12">
+                    และข้าพเจ้าจะมาอยู่เวรแทนในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.year}</span>
+                    ช่วงเวลา ( [ <span class="font-bold">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${compNight}</span> ] กลางคืน )
+                </div>
+
+                <!-- Body Paragraph 3 -->
+                <div class="indent-12 pt-1">
+                    จึงเรียนมาเพื่อโปรดพิจารณา
+                </div>
+            </div>
+
+            <!-- Signatures Section -->
+            <div class="grid grid-cols-2 gap-4 mt-8 pt-4">
+                <div class="text-center space-y-1">
+                    <div>(ลงชื่อ)........................................................................ ผู้ขอเปลี่ยนเวร</div>
+                    <div>( <span class="px-2 font-medium">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '....................................................................'}</span> )</div>
+                </div>
+                <div class="text-center space-y-1">
+                    <div>(ลงชื่อ)........................................................................ ผู้รับเปลี่ยนเวร</div>
+                    <div>( <span class="px-2 font-medium">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '....................................................................'}</span> )</div>
+                </div>
+            </div>
+
+            <!-- Bottom 3 Official Decision Sections -->
+            <div class="mt-8 pt-4 border-t border-black space-y-4 text-xs sm:text-sm">
+                <div class="grid grid-cols-2 gap-6">
+                    
+                    <!-- Box 1: ความคิดเห็นของหัวหน้าสำนักงานคณบดี -->
+                    <div class="border border-black p-3.5 space-y-2">
+                        <div class="font-bold text-center underline mb-1">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOk}</span> ] เห็นควรอนุญาต</label>
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOther}</span> ] อื่นๆ</label>
+                        </div>
+                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${headNotes}</div>
+                        <div class="text-center pt-3 space-y-0.5">
+                            <div>(ลงชื่อ)........................................................................</div>
+                            <div class="font-bold">(นางสาววิภาดา ทองปิ่น)</div>
+                            <div class="text-[12px]">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี คณะวิทยาการจัดการ</div>
+                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
+                        </div>
+                    </div>
+
+                    <!-- Box 2: คำสั่ง / ความเห็นของคณบดี -->
+                    <div class="border border-black p-3.5 space-y-2">
+                        <div class="font-bold text-center underline mb-1">คำสั่ง / ความเห็นของคณบดี</div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanOk}</span> ] อนุญาต</label>
+                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
+                        </div>
+                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${deanNotes}</div>
+                        <div class="text-center pt-3 space-y-0.5">
+                            <div>(ลงชื่อ)........................................................................</div>
+                            <div class="font-bold">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</div>
+                            <div class="text-[12px]">คณบดีคณะวิทยาการจัดการ</div>
+                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box 3: บันทึกงานอาคารสถานที่ -->
+                <div class="border border-black p-3 space-y-2">
+                    <div class="font-bold underline">บันทึกงานอาคารสถานที่:</div>
+                    <div class="text-[13px] border-b border-dotted border-black min-h-[24px]">${buildingNotes}</div>
+                    <div class="flex items-center justify-between pt-2">
+                        <div></div>
+                        <div class="text-center space-y-0.5 pr-8">
+                            <div>(ลงชื่อ)........................................................................</div>
+                            <div class="font-bold">(นายเอกสิทธิ์ คงพิทักษ์)</div>
+                            <div class="text-[12px]">หัวหน้างานอาคารสถานที่</div>
+                            <div class="text-[12px] pt-0.5">วันที่ ........ / .................... / ................</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    `;
+}
+
+function printShiftSwapDocument() {
+    document.body.classList.add('printing-shift-swap');
+    window.print();
+    setTimeout(() => {
+        document.body.classList.remove('printing-shift-swap');
+    }, 1000);
 }
 
 // ----------------------------------------------------
