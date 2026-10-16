@@ -563,6 +563,8 @@ body {
             <div id="dash-pending-alert-container"></div>
             <!-- Admin Maintenance Alert Banner -->
             <div id="dash-maintenance-alert-container"></div>
+            <!-- Admin Shift Swap Alert Banner -->
+            <div id="dash-shift-swap-alert-container"></div>
 
             <!-- Quick Status Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -8803,6 +8805,8 @@ function renderBookings() {
             adminPendingBadge.classList.add('hidden');
         }
     }
+    updateAdminShiftSwapBadge();
+    updateAdminMaintenanceBadge();
 
     let displayedBookings = (AppState.bookings || []).filter(b => b.id && b.date && b.startTime);
     if (AppState.bookingFilterStatus === 'approved') {
@@ -9937,20 +9941,9 @@ function updateAdminShiftSwapBadge() {
     const list = Array.isArray(AppState.shiftSwaps) ? AppState.shiftSwaps : [];
     const pendingCount = list.filter(s => s.status === 'pending').length;
     
-    // Desktop badge
-    const deskBadge = document.getElementById('shift-swap-pending-badge');
-    if (deskBadge) {
-        if (pendingCount > 0) {
-            deskBadge.textContent = pendingCount;
-            deskBadge.classList.remove('hidden');
-        } else {
-            deskBadge.classList.add('hidden');
-        }
-    }
-
-    // Mobile badge
-    const mobileBadges = document.querySelectorAll('.shift-swap-pending-badge-mobile');
-    mobileBadges.forEach(badge => {
+    // Desktop and Mobile navbar badges
+    const badges = document.querySelectorAll('.shift-swap-pending-badge, #shift-swap-pending-badge, .shift-swap-pending-badge-mobile');
+    badges.forEach(badge => {
         if (pendingCount > 0) {
             badge.textContent = pendingCount;
             badge.classList.remove('hidden');
@@ -9958,6 +9951,22 @@ function updateAdminShiftSwapBadge() {
             badge.classList.add('hidden');
         }
     });
+
+    // Admin Header Shift Swap Badge
+    const headerBadge = document.getElementById('admin-shift-swap-header-badge');
+    if (headerBadge) {
+        if (AppState.isAdmin && pendingCount > 0) {
+            headerBadge.textContent = pendingCount;
+            headerBadge.classList.remove('hidden');
+        } else {
+            headerBadge.classList.add('hidden');
+        }
+    }
+
+    // Dashboard Pending Alert Banner
+    if (typeof updateDashboardShiftSwapAlert === 'function') {
+        updateDashboardShiftSwapAlert(pendingCount);
+    }
 }
 
 function setShiftSwapStatusFilter(status) {
@@ -10937,6 +10946,49 @@ function sendActionToGoogleBackend(action, payload) {
             delUrl.searchParams.set('action', 'cancelBooking');
             delUrl.searchParams.set('id', payload.id);
             fetch(delUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        } else if (action === 'saveShiftSwap' && payload.swap) {
+            const sw = payload.swap;
+            const swapBooking = {
+                id: sw.id,
+                roomId: 'SWAP',
+                roomName: 'คำขอเปลี่ยนเวรยาม',
+                date: sw.shiftDate || new Date().toISOString().slice(0, 10),
+                startTime: sw.shiftPeriod || 'ช่วงเช้า',
+                endTime: sw.compensatePeriod || 'ช่วงเช้า',
+                subject: `[SWAP] ${sw.docNo || sw.id} | ${sw.applicantPrefix || ''}${sw.applicantName} -> ${sw.substitutePrefix || ''}${sw.substituteName}`,
+                purpose: JSON.stringify(sw),
+                bookerName: `${sw.applicantPrefix || ''}${sw.applicantName}`,
+                reservedBy: `${sw.substitutePrefix || ''}${sw.substituteName}`,
+                department: sw.applicantDept || 'คณะวิทยาการจัดการ',
+                phone: sw.applicantPhone || '',
+                status: sw.status || 'pending'
+            };
+            const swUrl = new URL(AppState.googleScriptUrl);
+            swUrl.searchParams.set('action', 'addBooking');
+            swUrl.searchParams.set('booking', JSON.stringify(swapBooking));
+            swUrl.searchParams.set('id', swapBooking.id);
+            swUrl.searchParams.set('roomId', swapBooking.roomId);
+            swUrl.searchParams.set('roomName', swapBooking.roomName);
+            swUrl.searchParams.set('date', swapBooking.date);
+            swUrl.searchParams.set('subject', swapBooking.subject);
+            swUrl.searchParams.set('purpose', swapBooking.purpose);
+            swUrl.searchParams.set('bookerName', swapBooking.bookerName);
+            swUrl.searchParams.set('reservedBy', swapBooking.reservedBy);
+            swUrl.searchParams.set('department', swapBooking.department);
+            swUrl.searchParams.set('phone', swapBooking.phone);
+            swUrl.searchParams.set('status', swapBooking.status);
+            fetch(swUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        } else if (action === 'approveShiftSwap' && payload.id) {
+            const appUrl = new URL(AppState.googleScriptUrl);
+            appUrl.searchParams.set('action', 'approveBooking');
+            appUrl.searchParams.set('id', payload.id);
+            appUrl.searchParams.set('status', payload.status || 'approved');
+            fetch(appUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        } else if (action === 'deleteShiftSwap' && payload.id) {
+            const delUrl = new URL(AppState.googleScriptUrl);
+            delUrl.searchParams.set('action', 'cancelBooking');
+            delUrl.searchParams.set('id', payload.id);
+            fetch(delUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
         }
         if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
         if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
@@ -11647,6 +11699,9 @@ function importDataJSON(event) {
 // ----------------------------------------------------
 function initUI() {
     updateAdminHeaderUI();
+    updateAdminPendingBadge();
+    updateAdminShiftSwapBadge();
+    updateAdminMaintenanceBadge();
     switchTab('dashboard');
 }
 
@@ -12194,6 +12249,7 @@ function handleAdminLogin(event) {
         updateAdminHeaderUI();
         updateAdminPendingBadge();
         updateAdminMaintenanceBadge();
+        updateAdminShiftSwapBadge();
         renderCurrentTab();
         showToast('เข้าสู่ระบบผู้ดูแล (Admin Mode) สำเร็จ!', 'success');
         if (AppState.googleScriptUrl) {
@@ -12226,12 +12282,17 @@ function updateAdminHeaderUI() {
                         <i data-lucide="shield-check" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400"></i>
                         <span class="hidden sm:inline">Admin</span>
                     </span>
-                    <span id="admin-pending-count-badge" class="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden">0</span>
+                    <span id="admin-pending-count-badge" class="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-extrabold hidden cursor-pointer hover:scale-110 transition" onclick="switchTab('bookings')" title="การจองห้องรออนุมัติ">0</span>
+                    <span id="admin-shift-swap-header-badge" class="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-extrabold hidden cursor-pointer hover:scale-110 transition" onclick="switchTab('shift-swap')" title="คำขอเปลี่ยนเวรยามรอพิจารณา">0</span>
                     <button onclick="logoutAdmin()" class="text-[11px] text-slate-300 hover:text-rose-300 ml-0.5 sm:ml-1 font-medium underline" title="ออกจากระบบ Admin">
                         ออก
                     </button>
                 </div>
             `;
+            updateAdminPendingBadge();
+            updateAdminShiftSwapBadge();
+            updateAdminMaintenanceBadge();
+            lucide.createIcons();
         } else {
             adminContainer.innerHTML = `
                 <button onclick="openAdminLoginModal()" class="relative group p-2 sm:p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition-all duration-200 border border-slate-700 flex items-center justify-center hover:scale-105 active:scale-95 shadow-xs" title="สำหรับ Admin">
@@ -12239,6 +12300,7 @@ function updateAdminHeaderUI() {
                     <span class="nav-tooltip">เข้าสู่ระบบสำหรับ Admin</span>
                 </button>
             `;
+            lucide.createIcons();
         }
     }
 
@@ -12329,6 +12391,71 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
         const strDept = String(b.department || '');
         return strId.startsWith('MNT-') || strSubj.includes('[MNT') || strDept.includes('แจ้งซ่อม');
     };
+
+    const isShiftSwapRecord = (b) => {
+        const strId = String(b.id || '').trim().toUpperCase();
+        const strSubj = String(b.subject || b.purpose || '');
+        const strRoom = String(b.roomId || b.roomid || '').toUpperCase();
+        return strId.startsWith('SWAP-') || strSubj.includes('[SWAP') || strRoom === 'SWAP';
+    };
+
+    // Separate shift swap records that were synced through the cloud bookings channel
+    const swapRows = rawBookings.filter(isShiftSwapRecord);
+    if (swapRows.length > 0) {
+        const extractedSwaps = [];
+        const deletedSwapIds = getDeletedShiftSwapIds();
+        swapRows.forEach(b => {
+            const strId = String(b.id || '').trim();
+            if (deletedSwapIds.has(strId)) return;
+            const rawStatus = String(b.status || 'pending').toLowerCase().trim();
+            if (rawStatus === 'cancelled' || rawStatus === 'deleted') return;
+
+            let swapData = null;
+            try {
+                if (b.purpose && String(b.purpose).trim().startsWith('{')) {
+                    swapData = JSON.parse(b.purpose);
+                }
+            } catch(e) {}
+
+            if (!swapData || typeof swapData !== 'object') {
+                const rawSubj = String(b.subject || '');
+                const docNoMatch = rawSubj.match(/\[SWAP\]\s*([^\|]+)/i);
+                const docNo = docNoMatch ? docNoMatch[1].trim() : (b.docNo || `คำขอ ${strId}`);
+                swapData = {
+                    id: strId,
+                    docNo: docNo,
+                    docDate: parseGasDate(b.date) || new Date().toISOString().slice(0, 10),
+                    subject: 'ขออนุมัติเปลี่ยนเวรยาม',
+                    applicantPrefix: '',
+                    applicantName: String(b.bookerName || b.reservedBy || ''),
+                    applicantPosition: '',
+                    applicantPhone: String(b.phone || ''),
+                    applicantDept: String(b.department || 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์'),
+                    shiftDate: parseGasDate(b.date),
+                    shiftPeriod: String(b.startTime || 'ช่วงเช้า'),
+                    reason: 'ขอเปลี่ยนเวรยาม',
+                    substitutePrefix: '',
+                    substituteName: String(b.reservedBy || ''),
+                    substitutePosition: '',
+                    substitutePhone: '',
+                    compensateDate: parseGasDate(b.date),
+                    compensatePeriod: String(b.endTime || 'ช่วงเช้า'),
+                    notes: '',
+                    status: (rawStatus === 'approved' || rawStatus === 'completed') ? 'approved' : (rawStatus === 'rejected' ? 'rejected' : 'pending'),
+                    createdAt: b.createdAt || new Date().toISOString()
+                };
+            }
+            if (swapData && swapData.id) {
+                if (rawStatus === 'approved' || rawStatus === 'completed') swapData.status = 'approved';
+                else if (rawStatus === 'rejected') swapData.status = 'rejected';
+                extractedSwaps.push(swapData);
+            }
+        });
+
+        if (extractedSwaps.length > 0) {
+            mapAndApplyCloudShiftSwaps(extractedSwaps);
+        }
+    }
 
     // 1. Separate maintenance records that were synced through the cloud bookings channel
     const mntRows = rawBookings.filter(isMaintenanceRecord);
@@ -12511,14 +12638,14 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
 
     const deletedBkIds = getDeletedBookingIds();
 
-    // 2. Pure classroom bookings (excluding MNT records, empty items, and deleted/cancelled items)
+    // 2. Pure classroom bookings (excluding MNT records, SWAP records, empty items, and deleted/cancelled items)
     const pureBookings = rawBookings.filter(b => {
         const strId = String(b.id || b.ID || '').trim();
         if (deletedBkIds.has(strId)) return false;
         const st = String(b.status || '').toLowerCase().trim();
         if (st === 'cancelled' || st === 'deleted') return false;
         const hasInfo = Boolean(b.roomId || b.roomid || b.date || b.subject || b.purpose || b.reservedBy || b.reservedby);
-        return !isMaintenanceRecord(b) && hasInfo;
+        return !isMaintenanceRecord(b) && !isShiftSwapRecord(b) && hasInfo;
     });
 
     // Deduplicate bookings by ID: If cloud returns duplicate rows, keep the latest valid record
@@ -12834,6 +12961,43 @@ function updateDashboardMaintenanceAlert(openCount) {
                 </div>
                 <button onclick="switchTab('maintenance')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
                     <i data-lucide="wrench" class="w-4 h-4"></i> จัดการรายการแจ้งซ่อม (${openCount})
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+    } else {
+        container.innerHTML = '';
+    }
+}
+
+/**
+ * แสดงกล่องแจ้งเตือนคำขอเปลี่ยนเวรยามรอพิจารณาอนุมัติบนหน้า Dashboard สำหรับ Admin
+ */
+function updateDashboardShiftSwapAlert(pendingSwapCount) {
+    const container = document.getElementById('dash-shift-swap-alert-container');
+    if (!container) return;
+
+    if (AppState.isAdmin && pendingSwapCount > 0) {
+        const pendingSwaps = (AppState.shiftSwaps || []).filter(s => s.status === 'pending');
+        const firstSwap = pendingSwaps[0] || {};
+        container.innerHTML = `
+            <div class="mb-4 p-4 bg-gradient-to-r from-amber-500/15 via-orange-400/10 to-amber-500/15 border-2 border-amber-500/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
+                        <i data-lucide="calendar-sync" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-amber-950 text-sm flex items-center gap-2">
+                            <span>มีคำขออนุญาตเปลี่ยนเวรยามรอการพิจารณาอนุมัติ</span>
+                            <span class="px-2 py-0.5 bg-amber-600 text-white rounded-full text-[11px] font-extrabold">${pendingSwapCount} รายการ</span>
+                        </h4>
+                        <p class="text-xs text-amber-900 mt-0.5">
+                            ล่าสุด: <b>${firstSwap.applicantPrefix || ''}${firstSwap.applicantName || '-'}</b> (${firstSwap.docNo || 'หนังสือภายใน'}) ขอเปลี่ยนเวรวันที่ ${formatThaiDate(firstSwap.shiftDate)}
+                        </p>
+                    </div>
+                </div>
+                <button onclick="switchTab('shift-swap')" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm shrink-0">
+                    <i data-lucide="check-check" class="w-4 h-4"></i> ตรวจสอบและอนุมัติคำขอ (${pendingSwapCount})
                 </button>
             </div>
         `;
