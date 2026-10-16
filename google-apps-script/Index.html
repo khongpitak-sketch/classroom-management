@@ -69,7 +69,7 @@ body {
     .view-section {
         display: none !important;
     }
-    #view-reports {
+    body:not(.printing-shift-swap) #view-reports {
         display: block !important;
     }
     .print-only {
@@ -215,18 +215,17 @@ body {
     .timetable-cell {
         border: 1px solid #cbd5e1 !important;
     }
+    @page {
+        size: A4 portrait;
+        margin: 15mm 20mm 15mm 25mm;
+    }
     body.printing-shift-swap {
         background: white !important;
         margin: 0 !important;
         padding: 0 !important;
     }
-    body.printing-shift-swap * {
-        visibility: hidden !important;
-    }
-    body.printing-shift-swap #modal-print-shift-swap,
-    body.printing-shift-swap #print-shift-swap-content,
-    body.printing-shift-swap #print-shift-swap-content * {
-        visibility: visible !important;
+    body.printing-shift-swap > *:not(#modal-print-shift-swap) {
+        display: none !important;
     }
     body.printing-shift-swap #modal-print-shift-swap {
         position: static !important;
@@ -235,6 +234,8 @@ body {
         padding: 0 !important;
         margin: 0 !important;
         overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     body.printing-shift-swap #modal-print-shift-swap > div {
         max-width: 100% !important;
@@ -264,6 +265,8 @@ body {
         line-height: 1.25 !important;
         page-break-after: avoid !important;
         break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 }
 
@@ -10565,14 +10568,14 @@ function renderPrintShiftSwapContent(swap, isBlank) {
             </div>
 
             <!-- Signatures Section: Side by Side (Left: ผู้ขอเปลี่ยนเวร, Right: ผู้รับเปลี่ยนเวร) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; margin-top: 8pt; margin-bottom: 8pt; font-size: 16pt; line-height: 1.25;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; margin-top: 8pt; margin-bottom: 8pt; font-size: 16pt; line-height: 1.25;">
                 <div style="text-align: center;">
-                    <div style="margin-bottom: 3pt;">(ลงชื่อ)........................................................................ ผู้ขอเปลี่ยนเวร</div>
-                    <div>( <span style="padding: 0 4pt; font-weight: 500;">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '....................................................................'}</span> )</div>
+                    <div style="margin-bottom: 3pt; white-space: nowrap;">(ลงชื่อ).................................................... ผู้ขอเปลี่ยนเวร</div>
+                    <div style="white-space: nowrap;">( <span style="padding: 0 4pt; font-weight: 500;">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '..................................................'}</span> )</div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="margin-bottom: 3pt;">(ลงชื่อ)........................................................................ ผู้รับเปลี่ยนเวร</div>
-                    <div>( <span style="padding: 0 4pt; font-weight: 500;">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '....................................................................'}</span> )</div>
+                    <div style="margin-bottom: 3pt; white-space: nowrap;">(ลงชื่อ).................................................... ผู้รับเปลี่ยนเวร</div>
+                    <div style="white-space: nowrap;">( <span style="padding: 0 4pt; font-weight: 500;">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '..................................................'}</span> )</div>
                 </div>
             </div>
 
@@ -10633,11 +10636,89 @@ function renderPrintShiftSwapContent(swap, isBlank) {
 }
 
 function printShiftSwapDocument() {
-    document.body.classList.add('printing-shift-swap');
-    window.print();
+    const content = document.getElementById('print-shift-swap-content');
+    if (!content) return;
+
+    // Use an isolated hidden iframe for guaranteed single-page A4 printing in official Thai format
+    let printIframe = document.getElementById('shift-swap-print-frame');
+    if (printIframe) {
+        printIframe.remove();
+    }
+
+    printIframe = document.createElement('iframe');
+    printIframe.id = 'shift-swap-print-frame';
+    printIframe.style.position = 'fixed';
+    printIframe.style.right = '0';
+    printIframe.style.bottom = '0';
+    printIframe.style.width = '0';
+    printIframe.style.height = '0';
+    printIframe.style.border = '0';
+    printIframe.style.zIndex = '-9999';
+    document.body.appendChild(printIframe);
+
+    const doc = printIframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>หนังสือขออนุญาตเปลี่ยนเวรยาม</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm 20mm 15mm 25mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: #000000;
+            font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif;
+            font-size: 16pt;
+            line-height: 1.25;
+            -webkit-font-smoothing: antialiased;
+        }
+        .shift-swap-official-form {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+        }
+        .shift-swap-official-form * {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+    </style>
+</head>
+<body>
+    ${content.innerHTML}
+</body>
+</html>`);
+    doc.close();
+
+    // Allow browser time to render fonts and styles before triggering print
     setTimeout(() => {
-        document.body.classList.remove('printing-shift-swap');
-    }, 1000);
+        try {
+            printIframe.contentWindow.focus();
+            printIframe.contentWindow.print();
+        } catch (e) {
+            console.warn('Iframe print fallback to window.print', e);
+            document.body.classList.add('printing-shift-swap');
+            window.print();
+            setTimeout(() => document.body.classList.remove('printing-shift-swap'), 1000);
+        }
+    }, 300);
 }
 
 // ----------------------------------------------------
