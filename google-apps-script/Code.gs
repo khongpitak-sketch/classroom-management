@@ -1155,12 +1155,10 @@ function apiGetShiftSwaps() {
     const sheet = getShiftSwapsSheet(ss);
     const items = getSheetObjects(sheet);
     const testIds = ["SWAP-2569-001", "SWAP-2569-002", "SWAP-2569-003", "SWAP-2569-004"];
-    const testDocNos = ["อว 0608.04/ว.001", "อว 0608.04/ว.003", "อว 0608.04/ว.004", "อว 0608.04/ว.0155"];
 
     const filtered = items.filter(item => {
       const idStr = String(item.id || '').trim();
-      const docStr = String(item.docNo || '').trim();
-      return !testIds.includes(idStr) && !testDocNos.includes(docStr);
+      return !testIds.includes(idStr);
     });
 
     filtered.forEach(item => {

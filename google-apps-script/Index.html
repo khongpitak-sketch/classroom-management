@@ -6434,14 +6434,9 @@ function addDeletedBookingId(id) {
 function getDeletedShiftSwapIds() {
     try {
         const raw = localStorage.getItem('CMS_DELETED_SHIFTSWAP_IDS');
-        const set = raw ? new Set(JSON.parse(raw)) : new Set();
-        set.add('SWAP-2569-001');
-        set.add('SWAP-2569-002');
-        set.add('SWAP-2569-003');
-        set.add('SWAP-2569-004');
-        return set;
+        return raw ? new Set(JSON.parse(raw)) : new Set();
     } catch(e) {
-        return new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
+        return new Set();
     }
 }
 
@@ -6851,9 +6846,11 @@ function loadData() {
         }
 
         if (Array.isArray(AppState.shiftSwaps)) {
-            const testSwapIds = new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
-            const testDocNos = new Set(['อว 0608.04/ว.001', 'อว 0608.04/ว.003', 'อว 0608.04/ว.004', 'อว 0608.04/ว.0155']);
-            AppState.shiftSwaps = AppState.shiftSwaps.filter(sw => !testSwapIds.has(sw.id) && !testDocNos.has(sw.docNo));
+            if (localStorage.getItem('CMS_INITIAL_TEST_SWAPS_PURGED_V1') !== 'true') {
+                const oldTestIds = new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
+                AppState.shiftSwaps = AppState.shiftSwaps.filter(sw => !oldTestIds.has(sw.id) && sw.docNo !== 'อว 0608.04/ว.0155');
+                localStorage.setItem('CMS_INITIAL_TEST_SWAPS_PURGED_V1', 'true');
+            }
             AppState.shiftSwaps.forEach(sw => {
                 if (sw.approval) {
                     if (sw.approval.deanNotes === 'อนุญาตตามเสนอ') sw.approval.deanNotes = '';
@@ -10252,16 +10249,19 @@ function saveShiftSwap(event) {
         return;
     }
 
+    const subject = 'ขออนุมัติเปลี่ยนเวรยาม';
     if (!Array.isArray(AppState.shiftSwaps)) {
         AppState.shiftSwaps = [];
     }
 
+    let targetSwap = null;
     if (swapId) {
         // Edit Existing
         const item = AppState.shiftSwaps.find(s => s.id === swapId);
         if (item) {
             item.docDate = docDate;
             item.docNo = docNo;
+            item.subject = subject;
             item.applicantPrefix = applicantPrefix;
             item.applicantName = applicantName;
             item.applicantPosition = applicantPosition;
@@ -10278,13 +10278,13 @@ function saveShiftSwap(event) {
             item.compensatePeriod = compensatePeriod;
             item.notes = notes;
             item.updatedAt = new Date().toISOString();
+            item._localCreatedAt = Date.now();
+            targetSwap = item;
         }
-        item.updatedAt = new Date().toISOString();
-        item._localCreatedAt = Date.now();
         showToast(`แก้ไขแบบฟอร์มคำขอ ${docNo} เรียบร้อยแล้ว`, 'success');
     } else {
         // New Shift Swap
-        const newId = `SWAP-${new Date().getFullYear() + 543}-${String((AppState.shiftSwaps.length + 1)).padStart(3, '0')}`;
+        const newId = `SWAP-${new Date().getFullYear() + 543}-${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
         const newSwap = {
             id: newId,
             docNo: docNo,
@@ -10311,6 +10311,7 @@ function saveShiftSwap(event) {
             _localCreatedAt: Date.now()
         };
         AppState.shiftSwaps.unshift(newSwap);
+        targetSwap = newSwap;
         playNotificationSound();
         showToast(`บันทึกคำขอเปลี่ยนเวรยาม ${docNo} สำเร็จแล้ว`, 'success', 5000);
     }
@@ -10320,7 +10321,6 @@ function saveShiftSwap(event) {
     updateAdminShiftSwapBadge();
     renderShiftSwaps();
 
-    const targetSwap = swapId ? item : (AppState.shiftSwaps[0] || null);
     if (targetSwap) {
         broadcastDataChange('SHIFT_SWAP_UPDATE', {
             swap: targetSwap,
@@ -12586,15 +12586,11 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
     const deletedSwapIds = getDeletedShiftSwapIds();
     const prevPendingCount = (AppState.shiftSwaps || []).filter(s => s.status === 'pending').length;
 
-    const testSwapIds = new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
-    const testDocNos = new Set(['อว 0608.04/ว.001', 'อว 0608.04/ว.003', 'อว 0608.04/ว.004', 'อว 0608.04/ว.0155']);
-
     const cloudMap = new Map();
     rawShiftSwaps.forEach(item => {
         if (!item || !item.id) return;
         const cleanId = String(item.id).trim();
-        const dNo = String(item.docNo || '').trim();
-        if (deletedSwapIds.has(cleanId) || testSwapIds.has(cleanId) || testDocNos.has(dNo)) return;
+        if (deletedSwapIds.has(cleanId)) return;
 
         let approval = item.approval;
         if (typeof approval === 'string' && approval) {
@@ -12628,9 +12624,8 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
         });
     });
 
-    // รักษาคำขอที่เพิ่งสร้างในเครื่องนี้ไม่เกิน 60 วินาทีที่ยังรอ Cloud บันทึก (ไม่รวมข้อมูลทดสอบ)
+    // รักษาคำขอที่เพิ่งสร้างในเครื่องนี้ไม่เกิน 60 วินาทีที่ยังรอ Cloud บันทึก
     (AppState.shiftSwaps || []).forEach(localSwap => {
-        if (testSwapIds.has(localSwap.id) || testDocNos.has(localSwap.docNo)) return;
         if (localSwap._localCreatedAt && (Date.now() - localSwap._localCreatedAt < 60000) && !deletedSwapIds.has(localSwap.id) && !cloudMap.has(localSwap.id)) {
             cloudMap.set(localSwap.id, localSwap);
         }
