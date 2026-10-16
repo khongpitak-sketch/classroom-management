@@ -10511,17 +10511,17 @@ function renderPrintShiftSwapContent(swap, isBlank) {
         <div class="shift-swap-official-form bg-white text-black" style="font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.25; width: 100%; box-sizing: border-box; color: #000;">
             
             <!-- Header Section: Centered 3 lines (No Garuda, No Arabic box as per user's handwritten mark) -->
-            <div class="text-center" style="margin-bottom: 6pt;">
-                <div style="font-size: 18pt; font-weight: bold; line-height: 1.2; margin-bottom: 2pt;">
+            <div style="text-align: center; width: 100%; margin: 0 auto 6pt auto;">
+                <div style="font-size: 18pt; font-weight: bold; text-align: center; line-height: 1.25; margin-bottom: 2pt;">
                     หนังสือขออนุญาตเปลี่ยนเวรยาม
                 </div>
-                <div style="font-size: 16pt; font-weight: bold; line-height: 1.2; margin-bottom: 4pt;">
+                <div style="font-size: 16pt; font-weight: bold; text-align: center; line-height: 1.25; margin-bottom: 4pt;">
                     คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
                 </div>
-                <div style="font-size: 16pt; line-height: 1.2;">
-                    วันที่ <span class="border-b border-dotted border-black px-2 font-bold">${docDateInfo.day}</span>
-                    เดือน <span class="border-b border-dotted border-black px-3 font-bold">${docDateInfo.month}</span>
-                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${docDateInfo.year}</span>
+                <div style="font-size: 16pt; text-align: center; line-height: 1.25;">
+                    วันที่ <span class="border-b border-dotted border-black px-2 font-bold" style="border-bottom: 1px dotted #000; padding: 0 6pt; font-weight: bold;">${docDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-3 font-bold" style="border-bottom: 1px dotted #000; padding: 0 8pt; font-weight: bold;">${docDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold" style="border-bottom: 1px dotted #000; padding: 0 6pt; font-weight: bold;">${docDateInfo.year}</span>
                 </div>
             </div>
 
@@ -10698,6 +10698,27 @@ function printShiftSwapDocument() {
         .shift-swap-official-form * {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+        }
+        .text-center {
+            text-align: center !important;
+        }
+        .border-b {
+            border-bottom-width: 1px !important;
+        }
+        .border-dotted {
+            border-bottom-style: dotted !important;
+        }
+        .border-black {
+            border-bottom-color: #000000 !important;
+        }
+        .font-bold {
+            font-weight: bold !important;
+        }
+        .font-medium {
+            font-weight: 500 !important;
+        }
+        .underline {
+            text-decoration: underline !important;
         }
     </style>
 </head>
