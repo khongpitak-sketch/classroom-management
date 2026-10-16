@@ -1104,8 +1104,8 @@ body {
                             </span>
                             <span class="text-xs text-slate-400">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
                         </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">ระบบยื่นคำขอ ติดตามสถานะการอนุมัติ และพิมพ์เอกสารราชการขอเปลี่ยนเวรยาม (A4)</p>
+                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ (แบบฟอร์มราชการทางการ A4)</p>
                     </div>
                 </div>
 
@@ -2915,8 +2915,8 @@ body {
                         <i data-lucide="calendar-sync" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h3 id="modal-shift-swap-title" class="text-lg font-black text-slate-800">แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม</h3>
-                        <p class="text-xs text-slate-500 font-medium">งานอาคารสถานที่ คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</p>
+                        <h3 id="modal-shift-swap-title" class="text-lg font-black text-slate-800">หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์</h3>
+                        <p class="text-xs text-slate-500 font-medium">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeModal('modal-shift-swap')" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition">
@@ -3210,8 +3210,8 @@ body {
                         <i data-lucide="printer" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-black text-slate-800">พิมพ์เอกสารราชการ: แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม (A4)</h3>
-                        <p class="text-[11px] text-slate-500">ตรงตามแบบฟอร์มทางการของคณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ 100%</p>
+                        <h3 class="text-base font-black text-slate-800">พิมพ์เอกสารราชการ: หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์ (A4)</h3>
+                        <p class="text-[11px] text-slate-500">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์ (ตรงตามแบบฟอร์มทางการ 100%)</p>
                     </div>
                 </div>
 
@@ -10098,7 +10098,7 @@ function openShiftSwapModal(id) {
             showToast('ไม่พบรายการคำขอนี้', 'warning');
             return;
         }
-        if (titleEl) titleEl.textContent = 'แก้ไขแบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม';
+        if (titleEl) titleEl.textContent = 'แก้ไขหนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์';
         document.getElementById('shift-swap-id').value = item.id;
         document.getElementById('swap-doc-date').value = item.docDate || '';
         document.getElementById('swap-doc-no').value = item.docNo || '';
@@ -10124,7 +10124,7 @@ function openShiftSwapModal(id) {
 
         document.getElementById('swap-notes').value = item.notes || '';
     } else {
-        if (titleEl) titleEl.textContent = 'แบบฟอร์มการขออนุญาตเปลี่ยนเวรยาม';
+        if (titleEl) titleEl.textContent = 'หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์';
         document.getElementById('shift-swap-id').value = '';
         const todayStr = new Date().toISOString().slice(0, 10);
         document.getElementById('swap-doc-date').value = todayStr;
@@ -10464,24 +10464,39 @@ function renderPrintShiftSwapContent(swap, isBlank) {
         <!-- Printable Official Form Page 1/1 -->
         <div class="relative bg-white text-black p-4 sm:p-6" style="min-height: 1050px; font-size: 15px; line-height: 1.8;">
             
-            <!-- Box: เขียนตัวเลขอารบิคเท่านั้น (Top Right) -->
-            <div class="absolute right-4 top-4 border-2 border-black px-3 py-1 font-bold text-center text-xs tracking-wider" style="letter-spacing: 0.5px;">
-                เขียนตัวเลขอารบิคเท่านั้น
-            </div>
+            <!-- Header Section: Garuda (Left), Title (Center), Arabic Box (Right) -->
+            <div class="relative flex items-start justify-between min-h-[95px] mb-3">
+                <!-- Garuda Emblem (Top Left) -->
+                <div class="w-24 shrink-0 pt-1">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Garuda_Emblem_of_Thailand.svg/240px-Garuda_Emblem_of_Thailand.svg.png" 
+                         alt="ตราครุฑ" 
+                         class="h-20 sm:h-24 w-auto object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display:none;" class="w-16 h-16 text-center font-bold text-[10px] border border-slate-300 rounded p-1">
+                        [ตราครุฑ]
+                    </div>
+                </div>
 
-            <!-- Garuda Emblem (Centered Top) -->
-            <div class="text-center pt-2 pb-4">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Garuda_Emblem_of_Thailand.svg/240px-Garuda_Emblem_of_Thailand.svg.png" 
-                     alt="ตราครุฑ" 
-                     class="mx-auto h-24 w-auto object-contain"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <div style="display:none;" class="mx-auto w-20 h-20 text-center font-bold text-xs border border-slate-300 rounded p-1">
-                    [ตราครุฑ]
+                <!-- Center Title (ตรงกลาง): บรรทัดที่ 1 & บรรทัดที่ 2 -->
+                <div class="flex-1 text-center pt-1 px-1">
+                    <div class="font-bold text-lg sm:text-xl text-black leading-snug tracking-tight">
+                        หนังสือขออนุญาตเปลี่ยนเวรรักษาการณ์
+                    </div>
+                    <div class="font-bold text-sm sm:text-base text-black mt-1">
+                        คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์
+                    </div>
+                </div>
+
+                <!-- Box: เขียนตัวเลขอารบิคเท่านั้น (Top Right) -->
+                <div class="w-32 shrink-0 text-right">
+                    <div class="inline-block border-2 border-black px-2.5 py-1 font-bold text-center text-xs tracking-wider">
+                        เขียนตัวเลขอารบิคเท่านั้น
+                    </div>
                 </div>
             </div>
 
             <!-- Official Header Fields -->
-            <div class="space-y-1 mb-4">
+            <div class="space-y-1 mb-3">
                 <div class="flex items-baseline">
                     <span class="font-bold shrink-0 w-28">ส่วนราชการ</span>
                     <span class="border-b border-dotted border-black flex-1 font-medium pl-1">งานอาคารสถานที่ คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
@@ -10506,97 +10521,100 @@ function renderPrintShiftSwapContent(swap, isBlank) {
                 </div>
             </div>
 
-            <!-- Body Paragraph 1 -->
-            <div class="text-justify indent-12 space-y-2 mt-4 leading-relaxed">
+            <!-- Body Paragraphs matching real official form -->
+            <div class="text-justify indent-12 space-y-2 mt-3 leading-relaxed">
                 <div>
-                    ข้าพเจ้า ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
+                    ด้วยข้าพเจ้า ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
                     <span class="border-b border-dotted border-black px-2 font-bold">${applicantFull}</span>
-                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${applicantPosition}</span>
-                    สังกัด <span class="border-b border-dotted border-black px-1 font-medium">คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์</span>
-                    มีความจำเป็นต้องขอเปลี่ยนวันอยู่เวร คณะวิทยาการจัดการ ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.day}</span>
+                    ไม่สามารถจะมาอยู่เวร ( [ <span class="font-bold">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${shiftNight}</span> ] กลางคืน )
+                    ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.day}</span>
                     เดือน <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.month}</span>
                     พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${shiftDateInfo.year}</span>
-                    ช่วงเวลา ( [ <span class="font-bold">${shiftMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${shiftAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${shiftNight}</span> ] กลางคืน )
-                    เนื่องจาก <span class="border-b border-dotted border-black px-2">${reasonText}</span>
-                    โดยให้ ( [ <span class="font-bold">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${subMiss}</span> ] นางสาว )
-                    <span class="border-b border-dotted border-black px-2 font-bold">${substituteFull}</span>
-                    ตำแหน่ง <span class="border-b border-dotted border-black px-2">${substitutePosition}</span> มาอยู่เวรแทน
+                    ตามกำหนดได้เนื่องจาก <span class="border-b border-dotted border-black px-2">${reasonText}</span>
                 </div>
 
-                <!-- Body Paragraph 2 -->
                 <div class="indent-12">
-                    และข้าพเจ้าจะมาอยู่เวรแทนในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
+                    ข้าพเจ้าได้เปลี่ยนเวรกับ ( [ <span class="font-bold">${subMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${subMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${subMiss}</span> ] นางสาว )
+                    <span class="border-b border-dotted border-black px-2 font-bold">${substituteFull}</span>
+                    ซึ่งอยู่เวรใน ( [ <span class="font-bold">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${compNight}</span> ] กลางคืน )
+                    ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
                     เดือน <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.month}</span>
                     พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.year}</span>
-                    ช่วงเวลา ( [ <span class="font-bold">${compMorn}</span> ] ช่วงเช้า&nbsp;&nbsp;[ <span class="font-bold">${compAft}</span> ] ช่วงบ่าย&nbsp;&nbsp;[ <span class="font-bold">${compNight}</span> ] กลางคืน )
+                    มาอยู่แทนข้าพเจ้า
                 </div>
 
-                <!-- Body Paragraph 3 -->
-                <div class="indent-12 pt-1">
-                    จึงเรียนมาเพื่อโปรดพิจารณา
+                <div class="indent-12">
+                    และข้าพเจ้าจะมาอยู่แทน ( [ <span class="font-bold">${prefMr}</span> ] นาย&nbsp;&nbsp;[ <span class="font-bold">${prefMrs}</span> ] นาง&nbsp;&nbsp;[ <span class="font-bold">${prefMiss}</span> ] นางสาว )
+                    <span class="border-b border-dotted border-black px-2 font-bold">${applicantFull}</span>
+                    ในวันที่ <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.day}</span>
+                    เดือน <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.month}</span>
+                    พ.ศ. <span class="border-b border-dotted border-black px-2 font-bold">${compDateInfo.year}</span>
+                </div>
+
+                <div class="indent-12 pt-1 font-medium">
+                    จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต
                 </div>
             </div>
 
             <!-- Signatures Section -->
-            <div class="grid grid-cols-2 gap-4 mt-8 pt-4">
-                <div class="text-center space-y-1">
-                    <div>(ลงชื่อ)........................................................................ ผู้ขอเปลี่ยนเวร</div>
-                    <div>( <span class="px-2 font-medium">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '....................................................................'}</span> )</div>
+            <div class="mt-6 flex flex-col items-end pr-4 sm:pr-8 space-y-3">
+                <div class="w-72 text-center font-medium">
+                    ขอแสดงความนับถือ
                 </div>
-                <div class="text-center space-y-1">
-                    <div>(ลงชื่อ)........................................................................ ผู้รับเปลี่ยนเวร</div>
-                    <div>( <span class="px-2 font-medium">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '....................................................................'}</span> )</div>
+                <div class="w-72 text-center space-y-0.5">
+                    <div>ลงชื่อ ................................................................</div>
+                    <div>( <span class="px-1 font-medium">${!isBlank && data.applicantName ? (data.applicantPrefix || '') + data.applicantName : '..........................................................'}</span> ) ผู้ขอเปลี่ยน</div>
+                </div>
+                <div class="w-72 text-center space-y-0.5 pt-1">
+                    <div>ลงชื่อ ................................................................</div>
+                    <div>( <span class="px-1 font-medium">${!isBlank && data.substituteName ? (data.substitutePrefix || '') + data.substituteName : '..........................................................'}</span> ) ผู้รับเปลี่ยน</div>
                 </div>
             </div>
 
-            <!-- Bottom 3 Official Decision Sections -->
-            <div class="mt-8 pt-4 border-t border-black space-y-4 text-xs sm:text-sm">
-                <div class="grid grid-cols-2 gap-6">
-                    
-                    <!-- Box 1: ความคิดเห็นของหัวหน้าสำนักงานคณบดี -->
-                    <div class="border border-black p-3.5 space-y-2">
-                        <div class="font-bold text-center underline mb-1">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
-                        <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOk}</span> ] เห็นควรอนุญาต</label>
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${headOther}</span> ] อื่นๆ</label>
+            <!-- Bottom 2 Decision Sections with Dotted Border & Building Box on left -->
+            <div class="mt-6 pt-3 border-t border-dotted border-black space-y-4 text-xs sm:text-sm">
+                <!-- Row 1: ความคิดเห็นของหัวหน้าสำนักงานคณบดี -->
+                <div class="flex items-start justify-between">
+                    <div class="font-bold pt-1 w-64 shrink-0">ความคิดเห็นของหัวหน้าสำนักงานคณบดี</div>
+                    <div class="flex-1 pl-4 space-y-2">
+                        <div class="flex flex-col gap-1.5 pl-6">
+                            <label class="flex items-center gap-2">[ <span class="font-bold">${headOk}</span> ] อนุญาต / มอบหมายงานอาคารสถานที่</label>
+                            <label class="flex items-center gap-2">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
+                            <label class="flex items-center gap-2">[ <span class="font-bold">${headOther}</span> ] อื่นๆ <span class="border-b border-dotted border-black px-2 flex-1">${headNotes}</span></label>
                         </div>
-                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${headNotes}</div>
-                        <div class="text-center pt-3 space-y-0.5">
+                        <div class="text-center pt-2 space-y-0.5">
                             <div>(ลงชื่อ)........................................................................</div>
                             <div class="font-bold">(นางสาววิภาดา ทองปิ่น)</div>
-                            <div class="text-[12px]">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี คณะวิทยาการจัดการ</div>
-                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
+                            <div class="text-[12px]">รักษาการในตำแหน่งหัวหน้าสำนักงานคณบดี</div>
+                            <div class="text-[12px]">คณะวิทยาการจัดการ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: ความเห็นของผู้บังคับบัญชา & Box งานอาคารสถานที่ on bottom left -->
+                <div class="pt-3 border-t border-dotted border-black flex items-start justify-between">
+                    <div class="w-60 shrink-0">
+                        <div class="font-bold mb-3">ความเห็นของผู้บังคับบัญชา</div>
+                        
+                        <!-- Box งานอาคารสถานที่ (Bottom Left as in photo) -->
+                        <div class="border border-black p-3 text-center space-y-1 rounded-sm w-56">
+                            <div class="font-bold underline text-xs">งานอาคารสถานที่</div>
+                            <div class="pt-4 text-xs">(ลงชื่อ)....................................................</div>
+                            <div class="font-bold text-xs">(นายเอกสิทธิ์ คงพิทักษ์)</div>
+                            <div class="text-[11px]">หัวหน้างานอาคารสถานที่</div>
                         </div>
                     </div>
 
-                    <!-- Box 2: คำสั่ง / ความเห็นของคณบดี -->
-                    <div class="border border-black p-3.5 space-y-2">
-                        <div class="font-bold text-center underline mb-1">คำสั่ง / ความเห็นของคณบดี</div>
-                        <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanOk}</span> ] อนุญาต</label>
-                            <label class="flex items-center gap-1.5">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
+                    <div class="flex-1 pl-4 space-y-2">
+                        <div class="flex flex-col gap-1.5 pl-6">
+                            <label class="flex items-center gap-2">[ <span class="font-bold">${deanOk}</span> ] อนุญาต / มอบหมายงานอาคารสถานที่</label>
+                            <label class="flex items-center gap-2">[ <span class="font-bold">${deanNo}</span> ] ไม่อนุญาต</label>
+                            <label class="flex items-center gap-2">[ <span class="font-bold">${headOther}</span> ] อื่นๆ <span class="border-b border-dotted border-black px-2 flex-1">${deanNotes}</span></label>
                         </div>
-                        <div class="text-[13px] border-b border-dotted border-black min-h-[22px]">${deanNotes}</div>
                         <div class="text-center pt-3 space-y-0.5">
                             <div>(ลงชื่อ)........................................................................</div>
                             <div class="font-bold">(อาจารย์ ดร.สุมาลี กรดกางกั้น)</div>
                             <div class="text-[12px]">คณบดีคณะวิทยาการจัดการ</div>
-                            <div class="text-[12px] pt-1">วันที่ ........ / .................... / ................</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Box 3: บันทึกงานอาคารสถานที่ -->
-                <div class="border border-black p-3 space-y-2">
-                    <div class="font-bold underline">บันทึกงานอาคารสถานที่:</div>
-                    <div class="text-[13px] border-b border-dotted border-black min-h-[24px]">${buildingNotes}</div>
-                    <div class="flex items-center justify-between pt-2">
-                        <div></div>
-                        <div class="text-center space-y-0.5 pr-8">
-                            <div>(ลงชื่อ)........................................................................</div>
-                            <div class="font-bold">(นายเอกสิทธิ์ คงพิทักษ์)</div>
-                            <div class="text-[12px]">หัวหน้างานอาคารสถานที่</div>
-                            <div class="text-[12px] pt-0.5">วันที่ ........ / .................... / ................</div>
                         </div>
                     </div>
                 </div>
