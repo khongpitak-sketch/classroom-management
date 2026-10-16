@@ -3220,7 +3220,7 @@ body {
                         <span>3. บันทึกงานอาคารสถานที่</span>
                         <span class="text-slate-500 font-normal text-[11px]">(นายเอกสิทธิ์ คงพิทักษ์)</span>
                     </div>
-                    <input type="text" id="approval-building-notes" name="buildingNotes" value="ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว" class="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-500">
+                    <input type="text" id="approval-building-notes" name="buildingNotes" value="" placeholder="บันทึกงานอาคารสถานที่..." class="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-500">
                 </div>
 
                 <div class="pt-3 border-t border-slate-100 flex gap-2 justify-end">
@@ -6324,8 +6324,8 @@ const DEFAULT_SHIFT_SWAPS = [
             headDecision: "เห็นควรอนุญาต",
             headNotes: "",
             deanDecision: "อนุญาต",
-            deanNotes: "อนุญาตตามเสนอ",
-            buildingNotes: "ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว",
+            deanNotes: "",
+            buildingNotes: "",
             approvedAt: "2026-10-16T11:20:00.000Z"
         }
     },
@@ -6828,6 +6828,15 @@ function loadData() {
             AppState.bookings = savedBookings ? JSON.parse(savedBookings) : DEFAULT_BOOKINGS;
             AppState.maintenance = savedMaintenance ? JSON.parse(savedMaintenance) : DEFAULT_MAINTENANCE;
             AppState.shiftSwaps = savedShiftSwaps ? JSON.parse(savedShiftSwaps) : DEFAULT_SHIFT_SWAPS;
+        }
+
+        if (Array.isArray(AppState.shiftSwaps)) {
+            AppState.shiftSwaps.forEach(sw => {
+                if (sw.approval) {
+                    if (sw.approval.deanNotes === 'อนุญาตตามเสนอ') sw.approval.deanNotes = '';
+                    if (sw.approval.buildingNotes && sw.approval.buildingNotes.includes('ตรวจสอบตารางเวรเรียบร้อยแล้ว')) sw.approval.buildingNotes = '';
+                }
+            });
         }
 
         // ตรวจสอบให้แน่ใจว่าห้อง FMS404 วันจันทร์เป็นห้องว่างทั้งเช้าและบ่าย (ไม่มีคาบเรียนค้าง)
@@ -10367,8 +10376,8 @@ function openShiftSwapApprovalModal(id) {
         deanRadios.forEach(r => {
             if (r.value === (app.deanDecision || 'อนุญาต')) r.checked = true;
         });
-        document.getElementById('approval-dean-notes').value = app.deanNotes || 'อนุญาตตามเสนอ';
-        document.getElementById('approval-building-notes').value = app.buildingNotes || 'ตรวจสอบตารางเวรเรียบร้อยแล้ว บันทึกข้อมูลการสลับเวรลงสมุดควบคุมการปฏิบัติราชการแล้ว';
+        document.getElementById('approval-dean-notes').value = (app.deanNotes === 'อนุญาตตามเสนอ') ? '' : (app.deanNotes || '');
+        document.getElementById('approval-building-notes').value = (app.buildingNotes && app.buildingNotes.includes('ตรวจสอบตารางเวร')) ? '' : (app.buildingNotes || '');
     }
 
     openModal('modal-shift-swap-approval');
@@ -10497,8 +10506,8 @@ function renderPrintShiftSwapContent(swap, isBlank) {
 
     const deanOk = (!isBlank && (app.deanDecision === 'อนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
     const deanNo = (!isBlank && (app.deanDecision === 'ไม่อนุมัติ' || data.status === 'rejected')) ? '&#10003;' : '&nbsp;&nbsp;';
-    const deanNotes = (!isBlank && app.deanNotes) ? app.deanNotes : '&nbsp;';
-    const buildingNotes = (!isBlank && app.buildingNotes) ? app.buildingNotes : '&nbsp;';
+    const deanNotes = (!isBlank && app.deanNotes && app.deanNotes !== 'อนุญาตตามเสนอ') ? app.deanNotes : '&nbsp;';
+    const buildingNotes = (!isBlank && app.buildingNotes && !app.buildingNotes.includes('ตรวจสอบตารางเวร')) ? app.buildingNotes : '&nbsp;';
 
     const applicantFull = (!isBlank && data.applicantName) ? `${data.applicantPrefix || ''}${data.applicantName}` : '........................................................................';
     const applicantPosition = (!isBlank && data.applicantPosition) ? data.applicantPosition : '........................................................';
