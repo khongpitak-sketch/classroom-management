@@ -6297,62 +6297,7 @@ const DEFAULT_MAINTENANCE = [
     }
 ];
 
-const DEFAULT_SHIFT_SWAPS = [
-    {
-        id: "SWAP-2569-001",
-        docNo: "อว 0608.04/ว.001",
-        docDate: "2026-10-16",
-        applicantPrefix: "นาย",
-        applicantName: "เอกสิทธิ์ คงพิทักษ์",
-        applicantPosition: "เทคนิค",
-        applicantPhone: "081-456-7890",
-        applicantDept: "คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์",
-        shiftDate: "2026-10-18",
-        shiftPeriod: "ช่วงบ่าย",
-        reason: "ติดธุระ",
-        substitutePrefix: "นาย",
-        substituteName: "อิริส อารี",
-        substitutePosition: "วิชาการ",
-        substitutePhone: "089-123-4567",
-        compensateDate: "2026-10-23",
-        compensatePeriod: "ช่วงเช้า",
-        notes: "มาอยู่เวรแทนข้าพเจ้าในวันดังกล่าว",
-        status: "approved",
-        createdAt: "2026-10-16T08:30:00.000Z",
-        approval: {
-            status: "approved",
-            headDecision: "เห็นควรอนุญาต",
-            headNotes: "",
-            deanDecision: "อนุญาต",
-            deanNotes: "",
-            buildingNotes: "",
-            approvedAt: "2026-10-16T11:20:00.000Z"
-        }
-    },
-    {
-        id: "SWAP-2569-002",
-        docNo: "อว 0608.04/ว.0155",
-        docDate: "2026-10-16",
-        applicantPrefix: "นางสาว",
-        applicantName: "วิไลพร มณีรัตน์",
-        applicantPosition: "พนักงานธุรการ",
-        applicantPhone: "086-789-0123",
-        applicantDept: "คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์",
-        shiftDate: "2026-10-20",
-        shiftPeriod: "กลางคืน",
-        reason: "มีนัดหมายพบแพทย์เฉพาะทางตามใบนัดของโรงพยาบาล",
-        substitutePrefix: "นาย",
-        substituteName: "ธนากร สุขเกษม",
-        substitutePosition: "พนักงานบริการ",
-        substitutePhone: "082-345-6789",
-        compensateDate: "2026-10-27",
-        compensatePeriod: "กลางคืน",
-        notes: "ขอความอนุเคราะห์พิจารณาอนุมัติ",
-        status: "pending",
-        createdAt: "2026-10-16T09:15:00.000Z",
-        approval: null
-    }
-];
+const DEFAULT_SHIFT_SWAPS = [];
 
 // ----------------------------------------------------
 // REAL-TIME INTER-TAB & MULTI-DEVICE SYNC ENGINE
@@ -6489,9 +6434,14 @@ function addDeletedBookingId(id) {
 function getDeletedShiftSwapIds() {
     try {
         const raw = localStorage.getItem('CMS_DELETED_SHIFTSWAP_IDS');
-        return raw ? new Set(JSON.parse(raw)) : new Set();
+        const set = raw ? new Set(JSON.parse(raw)) : new Set();
+        set.add('SWAP-2569-001');
+        set.add('SWAP-2569-002');
+        set.add('SWAP-2569-003');
+        set.add('SWAP-2569-004');
+        return set;
     } catch(e) {
-        return new Set();
+        return new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
     }
 }
 
@@ -6901,12 +6851,16 @@ function loadData() {
         }
 
         if (Array.isArray(AppState.shiftSwaps)) {
+            const testSwapIds = new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
+            const testDocNos = new Set(['อว 0608.04/ว.001', 'อว 0608.04/ว.003', 'อว 0608.04/ว.004', 'อว 0608.04/ว.0155']);
+            AppState.shiftSwaps = AppState.shiftSwaps.filter(sw => !testSwapIds.has(sw.id) && !testDocNos.has(sw.docNo));
             AppState.shiftSwaps.forEach(sw => {
                 if (sw.approval) {
                     if (sw.approval.deanNotes === 'อนุญาตตามเสนอ') sw.approval.deanNotes = '';
                     if (sw.approval.buildingNotes && sw.approval.buildingNotes.includes('ตรวจสอบตารางเวรเรียบร้อยแล้ว')) sw.approval.buildingNotes = '';
                 }
             });
+            saveData();
         }
 
         // ตรวจสอบให้แน่ใจว่าห้อง FMS404 วันจันทร์เป็นห้องว่างทั้งเช้าและบ่าย (ไม่มีคาบเรียนค้าง)
@@ -10143,7 +10097,7 @@ function renderShiftSwaps() {
             </span>`;
         }
 
-        const adminButtons = AppState.isAdmin ? `
+        const actionButtons = AppState.isAdmin ? `
             <button type="button" onclick="openShiftSwapApprovalModal('${swap.id}')" title="พิจารณาอนุมัติคำขอ" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition border border-emerald-200">
                 <i data-lucide="check-check" class="w-4 h-4"></i>
             </button>
@@ -10153,7 +10107,14 @@ function renderShiftSwaps() {
             <button type="button" onclick="deleteShiftSwap('${swap.id}')" title="ลบคำขอ" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition border border-rose-200">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
-        ` : '';
+        ` : (swap.status === 'pending' ? `
+            <button type="button" onclick="openShiftSwapModal('${swap.id}')" title="แก้ไขคำขอ" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition border border-blue-200">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+            </button>
+            <button type="button" onclick="deleteShiftSwap('${swap.id}')" title="ยกเลิก/ลบคำขอ" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition border border-rose-200">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        ` : '');
 
         return `
             <tr class="hover:bg-slate-50/80 transition group">
@@ -10200,7 +10161,7 @@ function renderShiftSwaps() {
                             <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-600"></i>
                             <span>พิมพ์ (A4)</span>
                         </button>
-                        ${adminButtons}
+                        ${actionButtons}
                     </div>
                 </td>
             </tr>
@@ -10375,14 +10336,19 @@ function saveShiftSwap(event) {
 }
 
 function deleteShiftSwap(id) {
-    if (!AppState.isAdmin) {
-        showToast('สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', 'warning');
-        return;
-    }
     const item = (AppState.shiftSwaps || []).find(s => s.id === id);
     if (!item) return;
 
-    if (confirm(`คุณต้องการลบคำขอเปลี่ยนเวรยาม "${item.docNo || item.id}" ของ ${item.applicantName} ใช่หรือไม่?`)) {
+    if (!AppState.isAdmin && item.status !== 'pending') {
+        showToast('ไม่สามารถยกเลิกคำขอที่ได้รับการพิจารณาแล้วได้ กรุณาติดต่อผู้ดูแลระบบ', 'warning');
+        return;
+    }
+
+    const confirmMsg = AppState.isAdmin
+        ? `คุณต้องการลบคำขอเปลี่ยนเวรยาม "${item.docNo || item.id}" ของ ${item.applicantName} ใช่หรือไม่?`
+        : `คุณต้องการยกเลิกคำขอเปลี่ยนเวรยาม "${item.docNo || item.id}" ใช่หรือไม่?`;
+
+    if (confirm(confirmMsg)) {
         addDeletedShiftSwapId(id);
         AppState.shiftSwaps = AppState.shiftSwaps.filter(s => s.id !== id);
         saveData();
@@ -12620,11 +12586,15 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
     const deletedSwapIds = getDeletedShiftSwapIds();
     const prevPendingCount = (AppState.shiftSwaps || []).filter(s => s.status === 'pending').length;
 
+    const testSwapIds = new Set(['SWAP-2569-001', 'SWAP-2569-002', 'SWAP-2569-003', 'SWAP-2569-004']);
+    const testDocNos = new Set(['อว 0608.04/ว.001', 'อว 0608.04/ว.003', 'อว 0608.04/ว.004', 'อว 0608.04/ว.0155']);
+
     const cloudMap = new Map();
     rawShiftSwaps.forEach(item => {
         if (!item || !item.id) return;
         const cleanId = String(item.id).trim();
-        if (deletedSwapIds.has(cleanId)) return;
+        const dNo = String(item.docNo || '').trim();
+        if (deletedSwapIds.has(cleanId) || testSwapIds.has(cleanId) || testDocNos.has(dNo)) return;
 
         let approval = item.approval;
         if (typeof approval === 'string' && approval) {
@@ -12658,8 +12628,9 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
         });
     });
 
-    // รักษาคำขอที่เพิ่งสร้างในเครื่องนี้ไม่เกิน 60 วินาทีที่ยังรอ Cloud บันทึก
+    // รักษาคำขอที่เพิ่งสร้างในเครื่องนี้ไม่เกิน 60 วินาทีที่ยังรอ Cloud บันทึก (ไม่รวมข้อมูลทดสอบ)
     (AppState.shiftSwaps || []).forEach(localSwap => {
+        if (testSwapIds.has(localSwap.id) || testDocNos.has(localSwap.docNo)) return;
         if (localSwap._localCreatedAt && (Date.now() - localSwap._localCreatedAt < 60000) && !deletedSwapIds.has(localSwap.id) && !cloudMap.has(localSwap.id)) {
             cloudMap.set(localSwap.id, localSwap);
         }
