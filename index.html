@@ -10495,12 +10495,16 @@ function saveShiftSwapApproval(event) {
     const item = (AppState.shiftSwaps || []).find(s => s.id === swapId);
     if (!item) return;
 
-    const newStatus = form.approvalStatus.value;
-    const headDecision = form.headDecision.value;
-    const headNotes = form.headNotes.value.trim();
-    const deanDecision = form.deanDecision.value;
-    const deanNotes = form.deanNotes.value.trim();
-    const buildingNotes = form.buildingNotes.value.trim();
+    const statusRadio = form.querySelector('input[name="approvalStatus"]:checked');
+    const headRadio = form.querySelector('input[name="headDecision"]:checked');
+    const deanRadio = form.querySelector('input[name="deanDecision"]:checked');
+
+    const newStatus = statusRadio ? statusRadio.value : 'approved';
+    const headDecision = headRadio ? headRadio.value : 'เห็นควรอนุญาต';
+    const headNotes = (document.getElementById('approval-head-notes')?.value || '').trim();
+    const deanDecision = deanRadio ? deanRadio.value : 'อนุญาต';
+    const deanNotes = (document.getElementById('approval-dean-notes')?.value || '').trim();
+    const buildingNotes = (document.getElementById('approval-building-notes')?.value || '').trim();
 
     item.status = newStatus;
     item.approval = {
@@ -10512,6 +10516,8 @@ function saveShiftSwapApproval(event) {
         buildingNotes: buildingNotes,
         approvedAt: new Date().toISOString()
     };
+    item.updatedAt = new Date().toISOString();
+    item._localApprovedAt = Date.now();
 
     saveData();
     closeModal('modal-shift-swap-approval');
@@ -12529,8 +12535,15 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
                 };
             }
             if (swapData && swapData.id) {
-                if (rawStatus === 'approved' || rawStatus === 'completed') swapData.status = 'approved';
-                else if (rawStatus === 'rejected') swapData.status = 'rejected';
+                const existingLocal = (AppState.shiftSwaps || []).find(s => s.id === swapData.id);
+                if (rawStatus === 'approved' || rawStatus === 'completed') {
+                    swapData.status = 'approved';
+                } else if (rawStatus === 'rejected') {
+                    swapData.status = 'rejected';
+                } else if (existingLocal && existingLocal.status && existingLocal.status !== 'pending') {
+                    swapData.status = existingLocal.status;
+                    if (existingLocal.approval) swapData.approval = existingLocal.approval;
+                }
                 extractedSwaps.push(swapData);
             }
         });
@@ -12850,6 +12863,13 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
             try { approval = JSON.parse(approval); } catch(e) {}
         }
 
+        let statusToUse = String(item.status || 'pending').toLowerCase().trim();
+        const existingLocal = (AppState.shiftSwaps || []).find(s => s.id === cleanId);
+        if (existingLocal && existingLocal.status && existingLocal.status !== 'pending' && statusToUse === 'pending') {
+            statusToUse = existingLocal.status;
+            if (existingLocal.approval) approval = existingLocal.approval;
+        }
+
         cloudMap.set(cleanId, {
             id: cleanId,
             docNo: String(item.docNo || ''),
@@ -12870,17 +12890,25 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
             compensateDate: item.compensateDate ? parseGasDate(item.compensateDate) : '',
             compensatePeriod: String(item.compensatePeriod || '16:30 - 08:30 น. (วันรุ่งขึ้น)'),
             notes: String(item.notes || ''),
-            status: String(item.status || 'pending').toLowerCase().trim(),
+            status: statusToUse,
             createdAt: String(item.createdAt || ''),
             updatedAt: String(item.updatedAt || ''),
             approval: approval || null
         });
     });
 
-    // รักษาคำขอที่เพิ่งสร้างในเครื่องนี้ไม่เกิน 60 วินาทีที่ยังรอ Cloud บันทึก
+    // รักษาคำขอที่เพิ่งสร้างหรือเพิ่งได้รับการพิจารณาในเครื่องนี้
     (AppState.shiftSwaps || []).forEach(localSwap => {
-        if (localSwap._localCreatedAt && (Date.now() - localSwap._localCreatedAt < 60000) && !deletedSwapIds.has(localSwap.id) && !cloudMap.has(localSwap.id)) {
-            cloudMap.set(localSwap.id, localSwap);
+        if (!deletedSwapIds.has(localSwap.id)) {
+            if (localSwap._localCreatedAt && (Date.now() - localSwap._localCreatedAt < 60000) && !cloudMap.has(localSwap.id)) {
+                cloudMap.set(localSwap.id, localSwap);
+            } else if (localSwap.status && localSwap.status !== 'pending' && cloudMap.has(localSwap.id)) {
+                const cloudItem = cloudMap.get(localSwap.id);
+                if (cloudItem.status === 'pending') {
+                    cloudItem.status = localSwap.status;
+                    if (localSwap.approval) cloudItem.approval = localSwap.approval;
+                }
+            }
         }
     });
 

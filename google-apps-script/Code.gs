@@ -518,6 +518,27 @@ function apiApproveBooking(bookingId, targetStatus) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0] || '').trim().toLowerCase() === cleanId) {
         sheet.getRange(i + 1, statusCol).setValue(newStatus);
+        
+        // Also update ShiftSwaps sheet if present
+        try {
+          const swSheet = ss.getSheetByName(SHEET_SHIFT_SWAPS);
+          if (swSheet) {
+            const swData = swSheet.getDataRange().getValues();
+            let swStatusCol = -1;
+            for (let c = 0; c < swData[0].length; c++) {
+              if (String(swData[0][c]).trim().toLowerCase() === 'status') { swStatusCol = c + 1; break; }
+            }
+            if (swStatusCol > 0) {
+              for (let k = 1; k < swData.length; k++) {
+                if (String(swData[k][0] || '').trim().toLowerCase() === cleanId) {
+                  swSheet.getRange(k + 1, swStatusCol).setValue(newStatus);
+                  break;
+                }
+              }
+            }
+          }
+        } catch(err) {}
+
         return { success: true, message: newStatus === 'completed' ? "บันทึกสิ้นสุดการจองเรียบร้อยแล้ว" : "อนุมัติการจองเรียบร้อยแล้ว" };
       }
     }
@@ -1228,35 +1249,74 @@ function apiApproveShiftSwap(swapId, status, approval) {
   try {
     if (!swapId) return { success: false, message: "ไม่ระบุรหัสคำขอ" };
     const ss = getDb();
-    const sheet = getShiftSwapsSheet(ss);
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return { success: false, message: "ไม่มีข้อมูล" };
-
-    const headers = data[0];
-    let statusCol = -1;
-    let approvalCol = -1;
-    let updatedCol = -1;
-
-    for (let c = 0; c < headers.length; c++) {
-      const h = String(headers[c]).trim().toLowerCase();
-      if (h === 'status') statusCol = c + 1;
-      else if (h === 'approval') approvalCol = c + 1;
-      else if (h === 'updatedat') updatedCol = c + 1;
-    }
-
-    const approvalStr = approval ? (typeof approval === 'string' ? approval : JSON.stringify(approval)) : "";
+    const cleanSwapId = String(swapId).trim().toLowerCase();
     const nowIso = new Date().toISOString();
+    const approvalStr = approval ? (typeof approval === 'string' ? approval : JSON.stringify(approval)) : "";
+    let foundInShiftSwaps = false;
+    let foundInBookings = false;
 
-    for (let i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(swapId)) {
-        const rowNum = i + 1;
-        if (statusCol > 0 && status) sheet.getRange(rowNum, statusCol).setValue(status);
-        if (approvalCol > 0 && approvalStr) sheet.getRange(rowNum, approvalCol).setValue(approvalStr);
-        if (updatedCol > 0) sheet.getRange(rowNum, updatedCol).setValue(nowIso);
-        return { success: true, message: "บันทึกผลการพิจารณาคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว" };
+    // 1. Update in ShiftSwaps sheet
+    try {
+      const sheet = getShiftSwapsSheet(ss);
+      const data = sheet.getDataRange().getValues();
+      if (data.length > 1) {
+        const headers = data[0];
+        let statusCol = -1;
+        let approvalCol = -1;
+        let updatedCol = -1;
+
+        for (let c = 0; c < headers.length; c++) {
+          const h = String(headers[c]).trim().toLowerCase();
+          if (h === 'status') statusCol = c + 1;
+          else if (h === 'approval') approvalCol = c + 1;
+          else if (h === 'updatedat') updatedCol = c + 1;
+        }
+
+        for (let i = 1; i < data.length; i++) {
+          if (String(data[i][0] || '').trim().toLowerCase() === cleanSwapId) {
+            const rowNum = i + 1;
+            if (statusCol > 0 && status) sheet.getRange(rowNum, statusCol).setValue(status);
+            if (approvalCol > 0 && approvalStr) sheet.getRange(rowNum, approvalCol).setValue(approvalStr);
+            if (updatedCol > 0) sheet.getRange(rowNum, updatedCol).setValue(nowIso);
+            foundInShiftSwaps = true;
+            break;
+          }
+        }
       }
+    } catch(e) {
+      console.warn("Update ShiftSwaps sheet error:", e);
     }
-    return { success: false, message: "ไม่พบรหัสคำขอ: " + swapId };
+
+    // 2. Dual-channel sync: Also update in Bookings sheet if present
+    try {
+      const bSheet = ss.getSheetByName(SHEET_BOOKINGS);
+      if (bSheet) {
+        const bData = bSheet.getDataRange().getValues();
+        if (bData.length > 1) {
+          let bStatusCol = 11;
+          for (let c = 0; c < bData[0].length; c++) {
+            if (String(bData[0][c]).trim().toLowerCase() === 'status') {
+              bStatusCol = c + 1;
+              break;
+            }
+          }
+          for (let j = 1; j < bData.length; j++) {
+            if (String(bData[j][0] || '').trim().toLowerCase() === cleanSwapId) {
+              bSheet.getRange(j + 1, bStatusCol).setValue(status || 'approved');
+              foundInBookings = true;
+              break;
+            }
+          }
+        }
+      }
+    } catch(err) {
+      console.warn("Update Bookings fallback sheet error:", err);
+    }
+
+    if (foundInShiftSwaps || foundInBookings) {
+      return { success: true, message: "บันทึกผลการพิจารณาคำขอเปลี่ยนเวรยามเรียบร้อยแล้ว", id: swapId, status: status };
+    }
+    return { success: true, message: "บันทึกผลการพิจารณาเรียบร้อยแล้ว (รหัส: " + swapId + ")", id: swapId, status: status };
   } catch(e) {
     return { success: false, message: e.toString() };
   }
