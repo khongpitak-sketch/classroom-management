@@ -3096,23 +3096,40 @@ body {
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-blue-100">
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">ข้าพเจ้าจะมาอยู่เวรแทนชดเชยในวันที่ <span class="text-rose-500">*</span></label>
-                            <input type="date" id="swap-compensate-date" name="compensateDate" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block font-semibold text-slate-700">ข้าพเจ้าจะมาอยู่เวรแทนชดเชยในวันที่</label>
+                                <button type="button" onclick="setCompensateDateDash()" class="text-[11px] text-blue-700 bg-blue-100/70 hover:bg-blue-200 px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer" title="คลิกเพื่อระบุเป็น - (ไม่มีการอยู่เวรชดเชย)">
+                                    <i data-lucide="minus" class="w-3 h-3"></i>
+                                    <span>ใส่เครื่องหมาย - (ไม่มีชดเชย)</span>
+                                </button>
+                            </div>
+                            <div class="relative flex items-center">
+                                <input type="text" id="swap-compensate-date" name="compensateDate" placeholder="เลือกจากปฏิทิน หรือพิมพ์ -" class="w-full p-2.5 pr-10 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 text-xs">
+                                <input type="date" id="swap-compensate-date-picker" class="absolute right-2 opacity-0 pointer-events-none w-0 h-0" onchange="onCompensateDatePicked(this.value)">
+                                <button type="button" onclick="openCompensateDatePicker()" title="เปิดปฏิทินเลือกวันที่" class="absolute right-2 p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">คลิกไอคอนปฏิทินเพื่อเลือกวัน หรือพิมพ์ <b>-</b> หากไม่มีการอยู่เวรชดเชย</p>
                         </div>
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">ช่วงเวลา / ผลัดเวรชดเชย <span class="text-rose-500">*</span></label>
-                            <div class="grid grid-cols-3 gap-2 mt-1">
-                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                            <label class="block font-semibold text-slate-700 mb-1">ช่วงเวลา / ผลัดเวรชดเชย</label>
+                            <div class="grid grid-cols-4 gap-1.5 mt-1">
+                                <label class="flex items-center gap-1 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
                                     <input type="radio" name="compensatePeriod" value="ช่วงเช้า" checked class="text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">ช่วงเช้า</span>
+                                    <span class="font-medium text-slate-700 text-[11px]">ช่วงเช้า</span>
                                 </label>
-                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                                <label class="flex items-center gap-1 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
                                     <input type="radio" name="compensatePeriod" value="ช่วงบ่าย" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">ช่วงบ่าย</span>
+                                    <span class="font-medium text-slate-700 text-[11px]">ช่วงบ่าย</span>
                                 </label>
-                                <label class="flex items-center gap-1.5 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                                <label class="flex items-center gap-1 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
                                     <input type="radio" name="compensatePeriod" value="กลางคืน" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">กลางคืน</span>
+                                    <span class="font-medium text-slate-700 text-[11px]">กลางคืน</span>
+                                </label>
+                                <label class="flex items-center gap-1 p-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50">
+                                    <input type="radio" name="compensatePeriod" value="-" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="font-medium text-slate-700 text-[11px]">- (ไม่มี)</span>
                                 </label>
                             </div>
                         </div>
@@ -7089,16 +7106,17 @@ function renderCurrentTab() {
  * @returns {string} เช่น "9 ก.ย. 2569" หรือ "วันพุธที่ 9 ก.ย. 2569"
  */
 function formatThaiDate(dateInput, includeDayName = false) {
-    if (!dateInput) return '-';
+    if (!dateInput || String(dateInput).trim() === '-' || dateInput === 'undefined' || dateInput === 'null') return '-';
     try {
-        let dateStr = String(dateInput).slice(0, 10);
+        let dateStr = String(dateInput).trim().slice(0, 10);
+        if (dateStr === '-' || dateStr === 'ไม่มี') return '-';
         let year, month, day;
-        if (dateStr.includes('-')) {
+        if (dateStr.includes('-') && dateStr.length >= 8) {
             const parts = dateStr.split('-');
             year = parseInt(parts[0]);
             month = parseInt(parts[1]) - 1;
             day = parseInt(parts[2]);
-        } else if (dateStr.includes('/')) {
+        } else if (dateStr.includes('/') && dateStr.length >= 8) {
             const parts = dateStr.split('/');
             day = parseInt(parts[0]);
             month = parseInt(parts[1]) - 1;
@@ -9995,18 +10013,33 @@ function handleShiftSwapSearch(query) {
 }
 
 function formatThaiFullOfficialDate(dateInput) {
-    if (!dateInput) return { day: '.....', month: '........................', year: '...........', full: '............................................' };
+    if (!dateInput || String(dateInput).trim() === '-' || dateInput === 'undefined' || dateInput === 'null') {
+        return { day: '-', month: '-', year: '-', full: '-' };
+    }
     try {
-        let dateStr = String(dateInput).slice(0, 10);
+        let dateStr = String(dateInput).trim().slice(0, 10);
+        if (dateStr === '-' || dateStr === 'ไม่มี') {
+            return { day: '-', month: '-', year: '-', full: '-' };
+        }
         let year, month, day;
-        if (dateStr.includes('-')) {
+        if (dateStr.includes('-') && dateStr.length >= 8) {
             const parts = dateStr.split('-');
             year = parseInt(parts[0]);
             month = parseInt(parts[1]) - 1;
             day = parseInt(parts[2]);
+        } else if (dateStr.includes('/') && dateStr.length >= 8) {
+            const parts = dateStr.split('/');
+            day = parseInt(parts[0]);
+            month = parseInt(parts[1]) - 1;
+            year = parseInt(parts[2]);
         } else {
-            return { day: '.....', month: '........................', year: '...........', full: dateStr };
+            return { day: '-', month: '-', year: '-', full: dateStr };
         }
+
+        if (isNaN(year) || isNaN(month) || isNaN(day)) {
+            return { day: '-', month: '-', year: '-', full: dateStr };
+        }
+
         const thaiMonthsFull = [
             'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
             'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
@@ -10020,7 +10053,7 @@ function formatThaiFullOfficialDate(dateInput) {
             full: `${day} ${monthName} ${thaiYear}`
         };
     } catch(e) {
-        return { day: '.....', month: '........................', year: '...........', full: '-' };
+        return { day: '-', month: '-', year: '-', full: '-' };
     }
 }
 
@@ -10153,7 +10186,7 @@ function renderShiftSwaps() {
                 <td class="p-3">
                     <div class="font-medium text-blue-800 bg-blue-50 px-2 py-1 rounded-md border border-blue-200/60 inline-flex items-center gap-1 text-[11px]">
                         <i data-lucide="clock" class="w-3 h-3 text-blue-600"></i>
-                        <span>${formatThaiDate(swap.compensateDate)} (${swap.compensatePeriod})</span>
+                        <span>${(!swap.compensateDate || swap.compensateDate === '-') ? '-' : `${formatThaiDate(swap.compensateDate)} (${swap.compensatePeriod || '-'})`}</span>
                     </div>
                 </td>
                 <td class="p-3 max-w-[200px]">
@@ -10216,7 +10249,11 @@ function openShiftSwapModal(id) {
         document.getElementById('swap-substitute-name').value = item.substituteName || '';
         document.getElementById('swap-substitute-position').value = item.substitutePosition || '';
         document.getElementById('swap-substitute-phone').value = item.substitutePhone || '';
-        document.getElementById('swap-compensate-date').value = item.compensateDate || '';
+        document.getElementById('swap-compensate-date').value = item.compensateDate || '-';
+        const picker = document.getElementById('swap-compensate-date-picker');
+        if (picker) {
+            picker.value = (item.compensateDate && item.compensateDate !== '-') ? item.compensateDate : '';
+        }
 
         const compRadios = form.querySelectorAll('input[name="compensatePeriod"]');
         compRadios.forEach(r => { if (r.value === item.compensatePeriod) r.checked = true; });
@@ -10230,10 +10267,47 @@ function openShiftSwapModal(id) {
         const autoNo = `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
         document.getElementById('swap-doc-no').value = autoNo;
         document.getElementById('swap-applicant-dept').value = 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์';
+        document.getElementById('swap-compensate-date').value = '';
+        const picker = document.getElementById('swap-compensate-date-picker');
+        if (picker) picker.value = '';
     }
 
     openModal('modal-shift-swap');
     lucide.createIcons();
+}
+
+function openCompensateDatePicker() {
+    const picker = document.getElementById('swap-compensate-date-picker');
+    if (!picker) return;
+    try {
+        if (typeof picker.showPicker === 'function') {
+            picker.showPicker();
+        } else {
+            picker.click();
+        }
+    } catch(e) {
+        picker.click();
+    }
+}
+
+function onCompensateDatePicked(val) {
+    if (val) {
+        const input = document.getElementById('swap-compensate-date');
+        if (input) input.value = val;
+    }
+}
+
+function setCompensateDateDash() {
+    const input = document.getElementById('swap-compensate-date');
+    if (input) {
+        input.value = '-';
+        input.focus();
+    }
+    const form = document.getElementById('form-shift-swap');
+    if (form) {
+        const dashRadio = form.querySelector('input[name="compensatePeriod"][value="-"]');
+        if (dashRadio) dashRadio.checked = true;
+    }
 }
 
 function saveShiftSwap(event) {
@@ -10265,10 +10339,13 @@ function saveShiftSwap(event) {
         const substituteName = (document.getElementById('swap-substitute-name')?.value || '').trim();
         const substitutePosition = (document.getElementById('swap-substitute-position')?.value || '').trim();
         const substitutePhone = (document.getElementById('swap-substitute-phone')?.value || '').trim();
-        const compensateDate = (document.getElementById('swap-compensate-date')?.value || '').trim();
+        let compensateDate = (document.getElementById('swap-compensate-date')?.value || '').trim();
+        if (!compensateDate) {
+            compensateDate = '-';
+        }
         
         const compPeriodEl = form ? form.querySelector('input[name="compensatePeriod"]:checked') : null;
-        const compensatePeriod = compPeriodEl ? compPeriodEl.value : 'ช่วงเช้า';
+        const compensatePeriod = compPeriodEl ? compPeriodEl.value : (compensateDate === '-' ? '-' : 'ช่วงเช้า');
         
         const notes = (document.getElementById('swap-notes')?.value || '').trim();
 
@@ -10294,12 +10371,6 @@ function saveShiftSwap(event) {
         if (!substituteName) {
             showToast('กรุณากรอกชื่อ - สกุล ผู้รับเปลี่ยนเวร (มาแทน)', 'warning');
             const el = document.getElementById('swap-substitute-name');
-            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-            return;
-        }
-        if (!compensateDate) {
-            showToast('กรุณาเลือกวันที่มาอยู่เวรแทนชดเชย', 'warning');
-            const el = document.getElementById('swap-compensate-date');
             if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             return;
         }
@@ -10448,7 +10519,7 @@ function openShiftSwapApprovalModal(id) {
                 <div>
                     <span class="text-slate-500 block text-[11px]">ผู้รับเปลี่ยนเวร (มาแทน):</span>
                     <b class="text-slate-800">${item.substitutePrefix || ''}${item.substituteName}</b> (${item.substitutePosition || '-'})
-                    <div class="text-blue-800 font-semibold mt-0.5">ชดเชย: ${formatThaiDate(item.compensateDate)} (${item.compensatePeriod})</div>
+                    <div class="text-blue-800 font-semibold mt-0.5">ชดเชย: ${(!item.compensateDate || item.compensateDate === '-') ? '-' : `${formatThaiDate(item.compensateDate)} (${item.compensatePeriod || '-'})`}</div>
                 </div>
             </div>
             <div class="pt-2 border-t border-slate-200 text-slate-700">
@@ -10590,9 +10661,9 @@ function renderPrintShiftSwapContent(swap, isBlank) {
         approval: null
     };
 
-    const docDateInfo = formatThaiFullOfficialDate(data.docDate);
-    const shiftDateInfo = formatThaiFullOfficialDate(data.shiftDate);
-    const compDateInfo = formatThaiFullOfficialDate(data.compensateDate);
+    const docDateInfo = isBlank ? { day: '.....', month: '........................', year: '...........', full: '............................................' } : formatThaiFullOfficialDate(data.docDate);
+    const shiftDateInfo = isBlank ? { day: '.....', month: '........................', year: '...........', full: '............................................' } : formatThaiFullOfficialDate(data.shiftDate);
+    const compDateInfo = isBlank ? { day: '.....', month: '........................', year: '...........', full: '............................................' } : formatThaiFullOfficialDate(data.compensateDate);
 
     const appPrefix = data.applicantPrefix || (data.applicantName && data.applicantName.startsWith('นางสาว') ? 'นางสาว' : (data.applicantName && data.applicantName.startsWith('นาง') ? 'นาง' : (data.applicantName && data.applicantName.startsWith('นาย') ? 'นาย' : '')));
     const subPrefix = data.substitutePrefix || (data.substituteName && data.substituteName.startsWith('นางสาว') ? 'นางสาว' : (data.substituteName && data.substituteName.startsWith('นาง') ? 'นาง' : (data.substituteName && data.substituteName.startsWith('นาย') ? 'นาย' : '')));
@@ -10627,9 +10698,10 @@ function renderPrintShiftSwapContent(swap, isBlank) {
     const subMiss = (!isBlank && subPrefix === 'นางสาว') ? '&#10003;' : '&nbsp;&nbsp;';
 
     // Compensate period checkboxes
-    const compMorn = (!isBlank && data.compensatePeriod === 'ช่วงเช้า') ? '&#10003;' : '&nbsp;&nbsp;';
-    const compAft = (!isBlank && data.compensatePeriod === 'ช่วงบ่าย') ? '&#10003;' : '&nbsp;&nbsp;';
-    const compNight = (!isBlank && data.compensatePeriod === 'กลางคืน') ? '&#10003;' : '&nbsp;&nbsp;';
+    const isCompensateDash = (!data.compensateDate || data.compensateDate === '-' || data.compensatePeriod === '-');
+    const compMorn = (!isBlank && !isCompensateDash && data.compensatePeriod === 'ช่วงเช้า') ? '&#10003;' : '&nbsp;&nbsp;';
+    const compAft = (!isBlank && !isCompensateDash && data.compensatePeriod === 'ช่วงบ่าย') ? '&#10003;' : '&nbsp;&nbsp;';
+    const compNight = (!isBlank && !isCompensateDash && data.compensatePeriod === 'กลางคืน') ? '&#10003;' : '&nbsp;&nbsp;';
 
     // Approval checks
     const app = data.approval || {};
