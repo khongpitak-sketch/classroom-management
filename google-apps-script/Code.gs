@@ -400,11 +400,44 @@ function apiAddBooking(booking) {
       booking.createdAt = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm");
     }
 
+    const cleanBookingId = String(booking.id).trim().toLowerCase();
     const bName = booking.bookerName || booking.reservedBy || booking.reservedby || "";
     const bSubject = booking.subject || booking.purpose || "";
     const bPurpose = booking.purpose || booking.subject || "";
-    const bStatus = booking.status || "pending";
+    let bStatus = booking.status || "pending";
     const bPhone = booking.phone ? String(booking.phone) : "";
+
+    const data = sheet.getDataRange().getValues();
+    let existingRowIdx = -1;
+    let existingStatus = '';
+    let statusCol = -1;
+
+    if (data.length > 1) {
+      const headers = data[0];
+      for (let c = 0; c < headers.length; c++) {
+        if (String(headers[c]).trim().toLowerCase() === 'status') {
+          statusCol = c;
+          break;
+        }
+      }
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0] || '').trim().toLowerCase() === cleanBookingId) {
+          existingRowIdx = i + 1;
+          if (statusCol >= 0) {
+            existingStatus = String(data[i][statusCol] || '').trim().toLowerCase();
+          }
+          break;
+        }
+      }
+    }
+
+    // Protection: If this booking/swap was already approved or completed in sheet, do not downgrade to pending!
+    if (existingRowIdx > 0 && (existingStatus === 'approved' || existingStatus === 'completed' || existingStatus === 'rejected')) {
+      if (!booking.status || booking.status === 'pending') {
+        bStatus = existingStatus;
+        booking.status = existingStatus;
+      }
+    }
 
     const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
     if (headers && headers.length > 1) {
@@ -426,9 +459,14 @@ function apiAddBooking(booking) {
         else if (h === 'createdat') row.push(booking.createdAt);
         else row.push(booking[headers[j]] || "");
       }
-      sheet.appendRow(row);
+
+      if (existingRowIdx > 0) {
+        sheet.getRange(existingRowIdx, 1, 1, row.length).setValues([row]);
+      } else {
+        sheet.appendRow(row);
+      }
     } else {
-      sheet.appendRow([
+      const row = [
         booking.id,
         booking.roomId || booking.roomid || "",
         booking.roomName || booking.roomname || "",
@@ -441,7 +479,12 @@ function apiAddBooking(booking) {
         bPurpose,
         bStatus,
         booking.createdAt
-      ]);
+      ];
+      if (existingRowIdx > 0) {
+        sheet.getRange(existingRowIdx, 1, 1, row.length).setValues([row]);
+      } else {
+        sheet.appendRow(row);
+      }
     }
 
     return { success: true, booking: booking, message: "บันทึกการจองห้องสำเร็จ" };
@@ -1203,16 +1246,42 @@ function apiSaveShiftSwap(swap) {
     const sheet = getShiftSwapsSheet(ss);
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
+    const cleanSwapId = String(swap.id).trim().toLowerCase();
 
-    const approvalStr = swap.approval ? (typeof swap.approval === 'string' ? swap.approval : JSON.stringify(swap.approval)) : "";
+    let approvalStr = swap.approval ? (typeof swap.approval === 'string' ? swap.approval : JSON.stringify(swap.approval)) : "";
     const updatedAt = new Date().toISOString();
     if (!swap.createdAt) swap.createdAt = updatedAt;
 
     let rowIndex = -1;
+    let statusCol = -1;
+    let approvalCol = -1;
+
+    for (let c = 0; c < headers.length; c++) {
+      const h = String(headers[c]).trim().toLowerCase();
+      if (h === 'status') statusCol = c;
+      if (h === 'approval') approvalCol = c;
+    }
+
     for (let i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(swap.id)) {
+      if (String(data[i][0] || '').trim().toLowerCase() === cleanSwapId) {
         rowIndex = i + 1;
         break;
+      }
+    }
+
+    // Protection: If already approved or rejected in the sheet, do NOT let a client sync overwrite it back to pending!
+    if (rowIndex > 0) {
+      if (statusCol >= 0) {
+        const existingStatus = String(data[rowIndex - 1][statusCol] || '').trim().toLowerCase();
+        if ((existingStatus === 'approved' || existingStatus === 'rejected') && (!swap.status || swap.status === 'pending')) {
+          swap.status = existingStatus;
+          if (!approvalStr && approvalCol >= 0) {
+            const existingApproval = data[rowIndex - 1][approvalCol];
+            if (existingApproval) {
+              approvalStr = (typeof existingApproval === 'string') ? existingApproval : JSON.stringify(existingApproval);
+            }
+          }
+        }
       }
     }
 
@@ -1255,7 +1324,7 @@ function apiApproveShiftSwap(swapId, status, approval) {
     let foundInShiftSwaps = false;
     let foundInBookings = false;
 
-    // 1. Update in ShiftSwaps sheet
+    // 1. Update in ShiftSwaps sheet (update all matching rows to cover duplicates)
     try {
       const sheet = getShiftSwapsSheet(ss);
       const data = sheet.getDataRange().getValues();
@@ -1279,7 +1348,6 @@ function apiApproveShiftSwap(swapId, status, approval) {
             if (approvalCol > 0 && approvalStr) sheet.getRange(rowNum, approvalCol).setValue(approvalStr);
             if (updatedCol > 0) sheet.getRange(rowNum, updatedCol).setValue(nowIso);
             foundInShiftSwaps = true;
-            break;
           }
         }
       }
@@ -1287,7 +1355,7 @@ function apiApproveShiftSwap(swapId, status, approval) {
       console.warn("Update ShiftSwaps sheet error:", e);
     }
 
-    // 2. Dual-channel sync: Also update in Bookings sheet if present
+    // 2. Dual-channel sync: Also update in Bookings sheet if present (update all matching rows)
     try {
       const bSheet = ss.getSheetByName(SHEET_BOOKINGS);
       if (bSheet) {
@@ -1304,7 +1372,6 @@ function apiApproveShiftSwap(swapId, status, approval) {
             if (String(bData[j][0] || '').trim().toLowerCase() === cleanSwapId) {
               bSheet.getRange(j + 1, bStatusCol).setValue(status || 'approved');
               foundInBookings = true;
-              break;
             }
           }
         }

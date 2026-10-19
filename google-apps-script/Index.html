@@ -11026,12 +11026,6 @@ function sendActionToGoogleBackend(action, payload) {
             swUrl.searchParams.set('action', 'addBooking');
             swUrl.searchParams.set('booking', JSON.stringify(swapBooking));
             fetch(swUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
-        } else if (action === 'approveShiftSwap' && payload.id) {
-            const appUrl = new URL(AppState.googleScriptUrl);
-            appUrl.searchParams.set('action', 'approveBooking');
-            appUrl.searchParams.set('id', payload.id);
-            appUrl.searchParams.set('status', payload.status || 'approved');
-            fetch(appUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
         } else if (action === 'deleteShiftSwap' && payload.id) {
             const delUrl = new URL(AppState.googleScriptUrl);
             delUrl.searchParams.set('action', 'cancelBooking');
@@ -11212,10 +11206,16 @@ function autoSyncLocalPendingShiftSwaps() {
     if (!AppState.googleScriptUrl || !Array.isArray(AppState.shiftSwaps) || !navigator.onLine) return;
     const now = Date.now();
     AppState.shiftSwaps.forEach(sw => {
-        if (sw && sw.status === 'pending' && sw.id) {
-            if (!sw._lastSyncedAt || (now - sw._lastSyncedAt > 30000)) {
-                sw._lastSyncedAt = now;
-                sendActionToGoogleBackend('saveShiftSwap', { swap: sw });
+        // Only auto-sync items that were newly created locally in this session and haven't been acknowledged/synced to cloud yet
+        if (sw && sw.id && sw.status === 'pending' && sw._localCreatedAt && !sw._syncedToCloud) {
+            if (now - sw._localCreatedAt < 60000) {
+                if (!sw._lastSyncedAt || (now - sw._lastSyncedAt > 15000)) {
+                    sw._lastSyncedAt = now;
+                    sendActionToGoogleBackend('saveShiftSwap', { swap: sw });
+                }
+            } else {
+                // After 60 seconds, mark as synced to prevent infinite background broadcasts that overwrite admin approvals
+                sw._syncedToCloud = true;
             }
         }
     });
@@ -11285,7 +11285,7 @@ async function fetchDataFromGoogleSheets(silent = false) {
                     : [];
                 mapAndApplyCloudBookings(cleanCloudBk, json.data.maintenance);
             }
-            if (json.data.shiftSwaps) {
+            if (json.data.shiftSwaps && Array.isArray(json.data.shiftSwaps) && json.data.shiftSwaps.length > 0) {
                 mapAndApplyCloudShiftSwaps(json.data.shiftSwaps);
             }
 
@@ -12544,7 +12544,15 @@ function mapAndApplyCloudBookings(rawBookings, rawMaintenance = null) {
                     swapData.status = existingLocal.status;
                     if (existingLocal.approval) swapData.approval = existingLocal.approval;
                 }
-                extractedSwaps.push(swapData);
+                const existingExtracted = extractedSwaps.find(e => e.id === swapData.id);
+                if (existingExtracted) {
+                    if (existingExtracted.status !== 'approved' && swapData.status === 'approved') {
+                        existingExtracted.status = 'approved';
+                        if (swapData.approval) existingExtracted.approval = swapData.approval;
+                    }
+                } else {
+                    extractedSwaps.push(swapData);
+                }
             }
         });
 
@@ -12865,9 +12873,20 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
 
         let statusToUse = String(item.status || 'pending').toLowerCase().trim();
         const existingLocal = (AppState.shiftSwaps || []).find(s => s.id === cleanId);
-        if (existingLocal && existingLocal.status && existingLocal.status !== 'pending' && statusToUse === 'pending') {
-            statusToUse = existingLocal.status;
-            if (existingLocal.approval) approval = existingLocal.approval;
+        if (existingLocal) {
+            existingLocal._syncedToCloud = true;
+            if (existingLocal.status && existingLocal.status !== 'pending' && statusToUse === 'pending') {
+                statusToUse = existingLocal.status;
+                if (existingLocal.approval) approval = existingLocal.approval;
+            }
+        }
+
+        if (cloudMap.has(cleanId)) {
+            const prevEntry = cloudMap.get(cleanId);
+            if (prevEntry.status === 'approved' && statusToUse === 'pending') {
+                statusToUse = 'approved';
+                if (prevEntry.approval) approval = prevEntry.approval;
+            }
         }
 
         cloudMap.set(cleanId, {
@@ -12893,7 +12912,8 @@ function mapAndApplyCloudShiftSwaps(rawShiftSwaps) {
             status: statusToUse,
             createdAt: String(item.createdAt || ''),
             updatedAt: String(item.updatedAt || ''),
-            approval: approval || null
+            approval: approval || null,
+            _syncedToCloud: true
         });
     });
 
