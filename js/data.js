@@ -1,5 +1,5 @@
 // Google Apps Script Web App URL for central synchronization
-const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzy29RVzo0yhOiB3NaKofRF3iGowVKss0AiTjiOrwUR30Z2_66vx7Vt_IpUElHFpcy8SQ/exec";
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3uHg9nILdOmuHqTpWgRHk7JoW27_1R5A7hl8HSxzIBRE1hspfhNbLxA/exec";
 
 /**
  * Classroom Management System - Real University Timetable (v3)

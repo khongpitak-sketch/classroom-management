@@ -371,7 +371,7 @@ function isGoogleAppsScriptEnvironment() {
 }
 
 // Load Settings from LocalStorage
-const CURRENT_GAS_URL_VERSION = 'v20261020_01';
+const CURRENT_GAS_URL_VERSION = 'v20261020_02_prod';
 
 function loadSettings() {
     try {
@@ -380,7 +380,7 @@ function loadSettings() {
         
         // Auto-migrate if URL is missing, obsolete, or pointing to old deployment
         const isObsoleteUrl = !savedUrl || 
-            savedUrl.includes('AKfycbxWOwznvFSG') || 
+            savedUrl.includes('AKfycbzy29RVzo') || 
             !savedUrl.includes('script.google.com/macros/s/') || 
             savedUrlVer !== CURRENT_GAS_URL_VERSION;
 

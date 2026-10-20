@@ -3306,7 +3306,7 @@ body {
     <!-- Application Scripts -->
     <script>
 // Google Apps Script Web App URL for central synchronization
-const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzy29RVzo0yhOiB3NaKofRF3iGowVKss0AiTjiOrwUR30Z2_66vx7Vt_IpUElHFpcy8SQ/exec";
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3uHg9nILdOmuHqTpWgRHk7JoW27_1R5A7hl8HSxzIBRE1hspfhNbLxA/exec";
 
 /**
  * Classroom Management System - Real University Timetable (v3)
@@ -6801,7 +6801,7 @@ function isGoogleAppsScriptEnvironment() {
 }
 
 // Load Settings from LocalStorage
-const CURRENT_GAS_URL_VERSION = 'v20261020_01';
+const CURRENT_GAS_URL_VERSION = 'v20261020_02_prod';
 
 function loadSettings() {
     try {
@@ -6810,7 +6810,7 @@ function loadSettings() {
         
         // Auto-migrate if URL is missing, obsolete, or pointing to old deployment
         const isObsoleteUrl = !savedUrl || 
-            savedUrl.includes('AKfycbxWOwznvFSG') || 
+            savedUrl.includes('AKfycbzy29RVzo') || 
             !savedUrl.includes('script.google.com/macros/s/') || 
             savedUrlVer !== CURRENT_GAS_URL_VERSION;
 
