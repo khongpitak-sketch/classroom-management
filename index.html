@@ -6801,16 +6801,31 @@ function isGoogleAppsScriptEnvironment() {
 }
 
 // Load Settings from LocalStorage
+const CURRENT_GAS_URL_VERSION = 'v20261020_01';
+
 function loadSettings() {
     try {
-        const savedUrl = localStorage.getItem('CMS_GAS_URL');
-        // ต้องเป็น URL ของ Google Apps Script Web App เท่านั้น (ไม่ใช่ลิงก์ GitHub Pages หรือ Vercel)
-        if (savedUrl && savedUrl.includes('script.google.com/macros/s/')) {
+        const savedUrl = (localStorage.getItem('CMS_GAS_URL') || '').trim();
+        const savedUrlVer = localStorage.getItem('CMS_GAS_URL_VERSION');
+        
+        // Auto-migrate if URL is missing, obsolete, or pointing to old deployment
+        const isObsoleteUrl = !savedUrl || 
+            savedUrl.includes('AKfycbxWOwznvFSG') || 
+            !savedUrl.includes('script.google.com/macros/s/') || 
+            savedUrlVer !== CURRENT_GAS_URL_VERSION;
+
+        if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL && isObsoleteUrl) {
+            AppState.googleScriptUrl = DEFAULT_GAS_URL;
+            localStorage.setItem('CMS_GAS_URL', DEFAULT_GAS_URL);
+            localStorage.setItem('CMS_GAS_URL_VERSION', CURRENT_GAS_URL_VERSION);
+        } else if (savedUrl && savedUrl.includes('script.google.com/macros/s/')) {
             AppState.googleScriptUrl = savedUrl;
         } else if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
             AppState.googleScriptUrl = DEFAULT_GAS_URL;
             localStorage.setItem('CMS_GAS_URL', DEFAULT_GAS_URL);
+            localStorage.setItem('CMS_GAS_URL_VERSION', CURRENT_GAS_URL_VERSION);
         }
+
         if (AppState.googleScriptUrl) {
             AppState.isGoogleConnected = true;
             localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'true');
@@ -10610,6 +10625,9 @@ function saveShiftSwapApproval(event) {
         status: newStatus,
         approval: item.approval
     });
+    sendActionToGoogleBackend('saveShiftSwap', {
+        swap: item
+    });
 }
 
 function openPrintShiftSwapModal(id) {
@@ -11103,6 +11121,12 @@ function sendActionToGoogleBackend(action, payload) {
             delUrl.searchParams.set('action', 'cancelBooking');
             delUrl.searchParams.set('id', payload.id);
             fetch(delUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        } else if (action === 'approveShiftSwap' && payload.id) {
+            const appUrl = new URL(AppState.googleScriptUrl);
+            appUrl.searchParams.set('action', 'approveBooking');
+            appUrl.searchParams.set('id', payload.id);
+            appUrl.searchParams.set('status', payload.status || 'approved');
+            fetch(appUrl.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
         }
         if (payload.room) urlObj.searchParams.set('room', JSON.stringify(payload.room));
         if (payload.item) urlObj.searchParams.set('item', JSON.stringify(payload.item));
@@ -11237,8 +11261,8 @@ function initAdaptiveSync() {
 function scheduleAdaptiveSync(delayMs = null) {
     if (syncTimer) clearTimeout(syncTimer);
     if (!delayMs) {
-        // 8 seconds when tab is actively visible, 40 seconds when tab is hidden in background
-        delayMs = (document.visibilityState === 'visible') ? 8000 : 40000;
+        // 6 seconds when tab is actively visible, 30 seconds when tab is hidden in background
+        delayMs = (document.visibilityState === 'visible') ? 6000 : 30000;
     }
     syncTimer = setTimeout(() => {
         triggerAdaptiveSync(true, false);

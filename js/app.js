@@ -371,16 +371,31 @@ function isGoogleAppsScriptEnvironment() {
 }
 
 // Load Settings from LocalStorage
+const CURRENT_GAS_URL_VERSION = 'v20261020_01';
+
 function loadSettings() {
     try {
-        const savedUrl = localStorage.getItem('CMS_GAS_URL');
-        // ต้องเป็น URL ของ Google Apps Script Web App เท่านั้น (ไม่ใช่ลิงก์ GitHub Pages หรือ Vercel)
-        if (savedUrl && savedUrl.includes('script.google.com/macros/s/')) {
+        const savedUrl = (localStorage.getItem('CMS_GAS_URL') || '').trim();
+        const savedUrlVer = localStorage.getItem('CMS_GAS_URL_VERSION');
+        
+        // Auto-migrate if URL is missing, obsolete, or pointing to old deployment
+        const isObsoleteUrl = !savedUrl || 
+            savedUrl.includes('AKfycbxWOwznvFSG') || 
+            !savedUrl.includes('script.google.com/macros/s/') || 
+            savedUrlVer !== CURRENT_GAS_URL_VERSION;
+
+        if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL && isObsoleteUrl) {
+            AppState.googleScriptUrl = DEFAULT_GAS_URL;
+            localStorage.setItem('CMS_GAS_URL', DEFAULT_GAS_URL);
+            localStorage.setItem('CMS_GAS_URL_VERSION', CURRENT_GAS_URL_VERSION);
+        } else if (savedUrl && savedUrl.includes('script.google.com/macros/s/')) {
             AppState.googleScriptUrl = savedUrl;
         } else if (typeof DEFAULT_GAS_URL !== 'undefined' && DEFAULT_GAS_URL) {
             AppState.googleScriptUrl = DEFAULT_GAS_URL;
             localStorage.setItem('CMS_GAS_URL', DEFAULT_GAS_URL);
+            localStorage.setItem('CMS_GAS_URL_VERSION', CURRENT_GAS_URL_VERSION);
         }
+
         if (AppState.googleScriptUrl) {
             AppState.isGoogleConnected = true;
             localStorage.setItem('CMS_IS_GOOGLE_CONNECTED', 'true');
