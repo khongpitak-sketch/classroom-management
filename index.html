@@ -6784,7 +6784,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateClock();
     setInterval(updateClock, 1000);
-    renderCurrentTab();
+
+    // Deep Linking / URL Routing on Initial Load
+    initRouting();
 
     // Setup adaptive background synchronization with concurrency lock and tab visibility detection
     initAdaptiveSync();
@@ -7032,14 +7034,34 @@ function resetData() {
     }
 }
 
-// Navigation & Tab Switching
-function switchTab(tabId) {
+// Navigation & Tab Switching (with URL Deep Linking Support)
+function switchTab(tabId, updateUrl = true) {
+    const validTabs = ['dashboard', 'rooms', 'timetable', 'bookings', 'maintenance', 'shift-swap', 'reports', 'settings'];
+    if (!validTabs.includes(tabId)) {
+        tabId = 'dashboard';
+    }
+
     if ((tabId === 'settings' || tabId === 'reports') && !AppState.isAdmin) {
-        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึงระบบรายงานผู้บริหาร', 'warning');
-        switchTab('dashboard');
+        showToast('🔒 สิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น ไม่อนุญาตให้ผู้ใช้ทั่วไปเข้าถึงระบบนี้', 'warning');
+        switchTab('dashboard', true);
         return;
     }
     AppState.currentTab = tabId;
+
+    // Update URL Hash for Deep Linking & Easy Sharing
+    if (updateUrl && typeof window !== 'undefined' && window.location) {
+        try {
+            const targetHash = tabId === 'dashboard' ? '' : `#${tabId}`;
+            if (window.location.hash !== targetHash) {
+                if (history && history.replaceState) {
+                    const newUrl = window.location.pathname + window.location.search + targetHash;
+                    history.replaceState(null, '', newUrl);
+                } else {
+                    window.location.hash = targetHash;
+                }
+            }
+        } catch(e) {}
+    }
     
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.dataset.tab === tabId) {
@@ -7078,6 +7100,38 @@ function switchTab(tabId) {
 
     renderCurrentTab();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Deep Linking / URL Routing Resolver
+function getTabFromUrl() {
+    try {
+        // 1. Check Query Parameter (?tab=...)
+        const params = new URLSearchParams(window.location.search);
+        const queryTab = params.get('tab');
+        if (queryTab) return queryTab.toLowerCase().trim();
+
+        // 2. Check Hash (#...)
+        const hash = window.location.hash ? window.location.hash.substring(1).toLowerCase().trim() : '';
+        if (hash) return hash;
+    } catch(e) {}
+    return 'dashboard';
+}
+
+function initRouting() {
+    const initialTab = getTabFromUrl();
+    if (initialTab && initialTab !== 'dashboard') {
+        switchTab(initialTab, false);
+    } else {
+        renderCurrentTab();
+    }
+
+    // Listen to hash changes (Browser Back / Forward buttons)
+    window.addEventListener('hashchange', () => {
+        const currentHashTab = getTabFromUrl();
+        if (currentHashTab !== AppState.currentTab) {
+            switchTab(currentHashTab, false);
+        }
+    });
 }
 
 function renderCurrentTab() {
