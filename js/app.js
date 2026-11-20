@@ -859,10 +859,30 @@ function renderTodayActivity() {
         return;
     }
 
-    activityContainer.innerHTML = activeRooms.map(room => `
-        <div class="flex items-start gap-4 p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl transition border border-slate-100">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xs ${room.type === 'computer_lab' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white'} shadow-md shrink-0">
-                ${room.name.replace('ห้องเรียน ', '').replace('ห้องปฏิบัติการ', 'LAB ')}
+    activityContainer.innerHTML = activeRooms.map(room => {
+        const code = room.code || (room.name.match(/^[A-Z0-9\-]+/i) ? room.name.match(/^[A-Z0-9\-]+/i)[0] : room.id);
+        let typeName = '';
+        if (room.name.includes('ห้องทฤษฎี')) {
+            typeName = 'ห้องทฤษฎี';
+        } else if (room.name.includes('คอมพิวเตอร์') || room.type === 'computer_lab') {
+            const m = room.name.match(/\d+$/);
+            typeName = m ? `Lab คอม ${m[0]}` : 'Lab คอม';
+        } else if (room.name.includes('พฤกษาพรรณ')) {
+            typeName = 'พฤกษาพรรณ';
+        } else if (room.name.includes('นวัตกรรม')) {
+            typeName = 'นวัตกรรม';
+        } else if (room.name.includes('ห้องเรียน')) {
+            typeName = 'ห้องเรียน';
+        } else {
+            typeName = room.name.replace(code, '').replace(/^[\s\-–—]+/, '').trim() || 'ห้องเรียน';
+        }
+        const bgClass = room.type === 'computer_lab' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white';
+
+        return `
+        <div class="flex items-start gap-3 sm:gap-4 p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl transition border border-slate-100">
+            <div onclick="viewRoomTimetable('${room.id}')" title="${room.name}" class="w-20 min-h-[3.5rem] py-1.5 px-2 rounded-xl flex flex-col items-center justify-center text-center ${bgClass} shadow-md shrink-0 cursor-pointer hover:opacity-95 transition">
+                <span class="text-xs font-black tracking-tight leading-tight">${code}</span>
+                <span class="text-[10px] font-medium opacity-95 mt-0.5 leading-snug whitespace-nowrap text-center">${typeName}</span>
             </div>
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
@@ -884,7 +904,8 @@ function renderTodayActivity() {
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // ----------------------------------------------------
