@@ -709,6 +709,119 @@ function formatThaiDate(dateInput, includeDayName = false) {
     }
 }
 
+// Helper functions for Thai Day/Month/Year (วว/ดด/ปปปป) Date Input fields
+function formatToThaiDateInput(isoStr) {
+    if (!isoStr || isoStr === '-' || isoStr === 'undefined' || isoStr === 'null') return '';
+    const parts = String(isoStr).trim().split('-');
+    if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const thaiY = y > 2400 ? y : y + 543;
+            return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${thaiY}`;
+        }
+    }
+    return String(isoStr).trim();
+}
+
+function parseThaiDateInputToIso(valStr) {
+    if (!valStr || valStr === '-' || valStr === 'undefined' || valStr === 'null') return '';
+    const s = String(valStr).trim();
+    const sep = s.includes('/') ? '/' : (s.includes('-') ? '-' : null);
+    if (sep) {
+        const parts = s.split(sep);
+        if (parts.length === 3) {
+            let y, m, d;
+            if (parts[0].length === 4) {
+                // YYYY-MM-DD
+                y = parseInt(parts[0], 10);
+                m = parseInt(parts[1], 10);
+                d = parseInt(parts[2], 10);
+            } else {
+                // DD/MM/YYYY
+                d = parseInt(parts[0], 10);
+                m = parseInt(parts[1], 10);
+                y = parseInt(parts[2], 10);
+            }
+            if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+                if (y > 2400) y -= 543;
+                return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            }
+        }
+    }
+    return '';
+}
+
+function setThaiDateInputValue(pickerId, displayId, isoValue) {
+    const picker = document.getElementById(pickerId);
+    const display = document.getElementById(displayId);
+    const iso = (isoValue || '').trim();
+    if (picker) picker.value = (iso && iso !== '-') ? iso : '';
+    if (display) {
+        if (!iso || iso === '-') {
+            display.value = (iso === '-') ? '-' : '';
+        } else {
+            display.value = formatToThaiDateInput(iso);
+        }
+    }
+}
+
+function syncThaiDateFromPicker(pickerEl, displayInputId) {
+    const display = document.getElementById(displayInputId);
+    if (!pickerEl || !display) return;
+    if (pickerEl.value) {
+        display.value = formatToThaiDateInput(pickerEl.value);
+    }
+}
+
+function syncIsoFromThaiDateInput(displayEl, targetPickerId) {
+    const picker = document.getElementById(targetPickerId);
+    if (!displayEl || !picker) return;
+    const raw = displayEl.value.trim();
+    if (!raw) {
+        picker.value = '';
+        return;
+    }
+    const iso = parseThaiDateInputToIso(raw);
+    if (iso) {
+        picker.value = iso;
+    }
+}
+
+function formatThaiDateInputOnBlur(displayEl, targetPickerId) {
+    const picker = document.getElementById(targetPickerId);
+    if (!displayEl) return;
+    const raw = displayEl.value.trim();
+    if (!raw || raw === '-') return;
+    const iso = parseThaiDateInputToIso(raw);
+    if (iso) {
+        if (picker) picker.value = iso;
+        displayEl.value = formatToThaiDateInput(iso);
+    }
+}
+
+function openDatePickerFor(targetDateInputId) {
+    const picker = document.getElementById(targetDateInputId);
+    if (!picker) return;
+    try {
+        if (typeof picker.showPicker === 'function') {
+            picker.showPicker();
+        } else {
+            picker.focus();
+            picker.click();
+        }
+    } catch(e) {
+        try {
+            picker.focus();
+            picker.click();
+        } catch(err) {
+            console.warn('Cannot open date picker:', err);
+        }
+    }
+}
+
+
 // Automated lifecycle check for bookings (auto-transition to 'completed' once booking time has passed)
 function updateBookingLifecycle() {
     if (!Array.isArray(AppState.bookings) || AppState.bookings.length === 0) return;
@@ -2058,7 +2171,16 @@ async function handleBookingSubmit(event) {
     const form = event.target;
 
     const roomId = form.roomId.value;
-    const dateStr = form.date.value;
+    let dateStr = form.date ? form.date.value : '';
+    if (!dateStr) {
+        dateStr = parseThaiDateInputToIso(document.getElementById('booking-date-display')?.value);
+    }
+    if (!dateStr) {
+        showToast('กรุณาระบุวันที่ใช้งาน (วัน/เดือน/ปี เช่น 24/11/2569)', 'warning');
+        const el = document.getElementById('booking-date-display') || document.getElementById('booking-date-input');
+        if (el) el.focus();
+        return;
+    }
     const startTime = form.startTime.value;
     const endTime = form.endTime.value;
     const subject = form.subject.value.trim();
@@ -3476,9 +3598,9 @@ function openBookingModalForRoom(roomId) {
 
 function openBookingModalWithPrefill(roomId, dayName, startTime, endTime) {
     openBookingModalForRoom(roomId);
-    const dateInput = document.getElementById('booking-date-input');
-    if (dateInput && dayName) {
-        dateInput.value = getNextDateForDayName(dayName);
+    if (dayName) {
+        const nextDate = getNextDateForDayName(dayName);
+        setThaiDateInputValue('booking-date-input', 'booking-date-display', nextDate);
     }
     const startSelect = document.getElementById('booking-start-time');
     const endSelect = document.getElementById('booking-end-time');

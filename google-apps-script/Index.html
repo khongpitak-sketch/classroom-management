@@ -2193,7 +2193,13 @@ body {
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">วันที่ใช้งาน <span class="text-rose-500">*</span></label>
-                        <input type="date" name="date" id="booking-date-input" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="relative flex items-center">
+                            <input type="text" id="booking-date-display" placeholder="วว/ดด/ปปปป (เช่น 24/11/2569)" class="w-full p-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm" oninput="syncIsoFromThaiDateInput(this, 'booking-date-input')" onblur="formatThaiDateInputOnBlur(this, 'booking-date-input')">
+                            <input type="date" name="date" id="booking-date-input" style="position: absolute; right: 8px; width: 28px; height: 28px; opacity: 0; pointer-events: none; z-index: -1;" tabindex="-1" onchange="syncThaiDateFromPicker(this, 'booking-date-display')">
+                            <button type="button" onclick="openDatePickerFor('booking-date-input')" title="เปิดปฏิทินเลือกวันที่" class="absolute right-2 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">เวลาเริ่ม <span class="text-rose-500">*</span></label>
@@ -2974,7 +2980,13 @@ body {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">วันที่ยื่นเรื่อง <span class="text-rose-500">*</span></label>
-                        <input type="date" id="swap-doc-date" name="docDate" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                        <div class="relative flex items-center">
+                            <input type="text" id="swap-doc-date-display" placeholder="วว/ดด/ปปปป (เช่น 24/11/2569)" class="w-full p-2.5 pr-10 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm" oninput="syncIsoFromThaiDateInput(this, 'swap-doc-date')" onblur="formatThaiDateInputOnBlur(this, 'swap-doc-date')">
+                            <input type="date" id="swap-doc-date" name="docDate" style="position: absolute; right: 8px; width: 28px; height: 28px; opacity: 0; pointer-events: none; z-index: -1;" tabindex="-1" onchange="syncThaiDateFromPicker(this, 'swap-doc-date-display')">
+                            <button type="button" onclick="openDatePickerFor('swap-doc-date')" title="เปิดปฏิทินเลือกวันที่" class="absolute right-2 p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">เลขที่เอกสาร (หนังสือภายใน)</label>
@@ -3031,7 +3043,13 @@ body {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">วันที่อยู่เวรเดิม <span class="text-rose-500">*</span></label>
-                            <input type="date" id="swap-shift-date" name="shiftDate" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500">
+                            <div class="relative flex items-center">
+                                <input type="text" id="swap-shift-date-display" placeholder="วว/ดด/ปปปป (เช่น 24/11/2569)" class="w-full p-2.5 pr-10 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm" oninput="syncIsoFromThaiDateInput(this, 'swap-shift-date')" onblur="formatThaiDateInputOnBlur(this, 'swap-shift-date')">
+                                <input type="date" id="swap-shift-date" name="shiftDate" style="position: absolute; right: 8px; width: 28px; height: 28px; opacity: 0; pointer-events: none; z-index: -1;" tabindex="-1" onchange="syncThaiDateFromPicker(this, 'swap-shift-date-display')">
+                                <button type="button" onclick="openDatePickerFor('swap-shift-date')" title="เปิดปฏิทินเลือกวันที่" class="absolute right-2 p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">ช่วงเวลา / ผลัดเวร <span class="text-rose-500">*</span></label>
@@ -3101,7 +3119,7 @@ body {
                                 </button>
                             </div>
                             <div class="relative flex items-center">
-                                <input type="text" id="swap-compensate-date" name="compensateDate" placeholder="เลือกจากปฏิทิน หรือพิมพ์ -" class="w-full p-2.5 pr-10 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 text-xs">
+                                <input type="text" id="swap-compensate-date" name="compensateDate" placeholder="วว/ดด/ปปปป หรือพิมพ์ -" class="w-full p-2.5 pr-10 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 text-xs" onblur="formatThaiDateInputOnBlur(this, 'swap-compensate-date-picker')">
                                 <input type="date" id="swap-compensate-date-picker" class="absolute right-2 opacity-0 pointer-events-none w-0 h-0" onchange="onCompensateDatePicked(this.value)">
                                 <button type="button" onclick="openCompensateDatePicker()" title="เปิดปฏิทินเลือกวันที่" class="absolute right-2 p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer">
                                     <i data-lucide="calendar" class="w-4 h-4"></i>
@@ -6472,6 +6490,119 @@ function formatThaiDate(dateInput, includeDayName = false) {
     }
 }
 
+// Helper functions for Thai Day/Month/Year (วว/ดด/ปปปป) Date Input fields
+function formatToThaiDateInput(isoStr) {
+    if (!isoStr || isoStr === '-' || isoStr === 'undefined' || isoStr === 'null') return '';
+    const parts = String(isoStr).trim().split('-');
+    if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const thaiY = y > 2400 ? y : y + 543;
+            return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${thaiY}`;
+        }
+    }
+    return String(isoStr).trim();
+}
+
+function parseThaiDateInputToIso(valStr) {
+    if (!valStr || valStr === '-' || valStr === 'undefined' || valStr === 'null') return '';
+    const s = String(valStr).trim();
+    const sep = s.includes('/') ? '/' : (s.includes('-') ? '-' : null);
+    if (sep) {
+        const parts = s.split(sep);
+        if (parts.length === 3) {
+            let y, m, d;
+            if (parts[0].length === 4) {
+                // YYYY-MM-DD
+                y = parseInt(parts[0], 10);
+                m = parseInt(parts[1], 10);
+                d = parseInt(parts[2], 10);
+            } else {
+                // DD/MM/YYYY
+                d = parseInt(parts[0], 10);
+                m = parseInt(parts[1], 10);
+                y = parseInt(parts[2], 10);
+            }
+            if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+                if (y > 2400) y -= 543;
+                return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            }
+        }
+    }
+    return '';
+}
+
+function setThaiDateInputValue(pickerId, displayId, isoValue) {
+    const picker = document.getElementById(pickerId);
+    const display = document.getElementById(displayId);
+    const iso = (isoValue || '').trim();
+    if (picker) picker.value = (iso && iso !== '-') ? iso : '';
+    if (display) {
+        if (!iso || iso === '-') {
+            display.value = (iso === '-') ? '-' : '';
+        } else {
+            display.value = formatToThaiDateInput(iso);
+        }
+    }
+}
+
+function syncThaiDateFromPicker(pickerEl, displayInputId) {
+    const display = document.getElementById(displayInputId);
+    if (!pickerEl || !display) return;
+    if (pickerEl.value) {
+        display.value = formatToThaiDateInput(pickerEl.value);
+    }
+}
+
+function syncIsoFromThaiDateInput(displayEl, targetPickerId) {
+    const picker = document.getElementById(targetPickerId);
+    if (!displayEl || !picker) return;
+    const raw = displayEl.value.trim();
+    if (!raw) {
+        picker.value = '';
+        return;
+    }
+    const iso = parseThaiDateInputToIso(raw);
+    if (iso) {
+        picker.value = iso;
+    }
+}
+
+function formatThaiDateInputOnBlur(displayEl, targetPickerId) {
+    const picker = document.getElementById(targetPickerId);
+    if (!displayEl) return;
+    const raw = displayEl.value.trim();
+    if (!raw || raw === '-') return;
+    const iso = parseThaiDateInputToIso(raw);
+    if (iso) {
+        if (picker) picker.value = iso;
+        displayEl.value = formatToThaiDateInput(iso);
+    }
+}
+
+function openDatePickerFor(targetDateInputId) {
+    const picker = document.getElementById(targetDateInputId);
+    if (!picker) return;
+    try {
+        if (typeof picker.showPicker === 'function') {
+            picker.showPicker();
+        } else {
+            picker.focus();
+            picker.click();
+        }
+    } catch(e) {
+        try {
+            picker.focus();
+            picker.click();
+        } catch(err) {
+            console.warn('Cannot open date picker:', err);
+        }
+    }
+}
+
+
 // Automated lifecycle check for bookings (auto-transition to 'completed' once booking time has passed)
 function updateBookingLifecycle() {
     if (!Array.isArray(AppState.bookings) || AppState.bookings.length === 0) return;
@@ -8517,7 +8648,16 @@ async function handleBookingSubmit(event) {
     const form = event.target;
 
     const roomId = form.roomId.value;
-    const dateStr = form.date.value;
+    let dateStr = form.date ? form.date.value : '';
+    if (!dateStr) {
+        dateStr = parseThaiDateInputToIso(document.getElementById('booking-date-display')?.value);
+    }
+    if (!dateStr) {
+        showToast('กรุณาระบุวันที่ใช้งาน (วัน/เดือน/ปี เช่น 24/11/2569)', 'warning');
+        const el = document.getElementById('booking-date-display') || document.getElementById('booking-date-input');
+        if (el) el.focus();
+        return;
+    }
     const startTime = form.startTime.value;
     const endTime = form.endTime.value;
     const subject = form.subject.value.trim();
@@ -9626,14 +9766,14 @@ function openShiftSwapModal(id) {
         }
         if (titleEl) titleEl.textContent = 'แก้ไขหนังสือขออนุญาตเปลี่ยนเวรยาม';
         document.getElementById('shift-swap-id').value = item.id;
-        document.getElementById('swap-doc-date').value = item.docDate || '';
+        setThaiDateInputValue('swap-doc-date', 'swap-doc-date-display', item.docDate);
         document.getElementById('swap-doc-no').value = item.docNo || '';
         document.getElementById('swap-applicant-prefix').value = item.applicantPrefix || 'นาย';
         document.getElementById('swap-applicant-name').value = item.applicantName || '';
         document.getElementById('swap-applicant-position').value = item.applicantPosition || '';
         document.getElementById('swap-applicant-phone').value = item.applicantPhone || '';
         document.getElementById('swap-applicant-dept').value = item.applicantDept || 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์';
-        document.getElementById('swap-shift-date').value = item.shiftDate || '';
+        setThaiDateInputValue('swap-shift-date', 'swap-shift-date-display', item.shiftDate);
         
         const shiftRadios = form.querySelectorAll('input[name="shiftPeriod"]');
         shiftRadios.forEach(r => { if (r.value === item.shiftPeriod) r.checked = true; });
@@ -9643,11 +9783,7 @@ function openShiftSwapModal(id) {
         document.getElementById('swap-substitute-name').value = item.substituteName || '';
         document.getElementById('swap-substitute-position').value = item.substitutePosition || '';
         document.getElementById('swap-substitute-phone').value = item.substitutePhone || '';
-        document.getElementById('swap-compensate-date').value = item.compensateDate || '-';
-        const picker = document.getElementById('swap-compensate-date-picker');
-        if (picker) {
-            picker.value = (item.compensateDate && item.compensateDate !== '-') ? item.compensateDate : '';
-        }
+        setThaiDateInputValue('swap-compensate-date-picker', 'swap-compensate-date', item.compensateDate || '-');
 
         const compRadios = form.querySelectorAll('input[name="compensatePeriod"]');
         compRadios.forEach(r => { if (r.value === item.compensatePeriod) r.checked = true; });
@@ -9657,13 +9793,12 @@ function openShiftSwapModal(id) {
         if (titleEl) titleEl.textContent = 'หนังสือขออนุญาตเปลี่ยนเวรยาม';
         document.getElementById('shift-swap-id').value = '';
         const todayStr = new Date().toISOString().slice(0, 10);
-        document.getElementById('swap-doc-date').value = todayStr;
+        setThaiDateInputValue('swap-doc-date', 'swap-doc-date-display', todayStr);
         const autoNo = `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
         document.getElementById('swap-doc-no').value = autoNo;
         document.getElementById('swap-applicant-dept').value = 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์';
-        document.getElementById('swap-compensate-date').value = '';
-        const picker = document.getElementById('swap-compensate-date-picker');
-        if (picker) picker.value = '';
+        setThaiDateInputValue('swap-shift-date', 'swap-shift-date-display', '');
+        setThaiDateInputValue('swap-compensate-date-picker', 'swap-compensate-date', '');
     }
 
     openModal('modal-shift-swap');
@@ -9687,7 +9822,7 @@ function openCompensateDatePicker() {
 function onCompensateDatePicked(val) {
     if (val) {
         const input = document.getElementById('swap-compensate-date');
-        if (input) input.value = val;
+        if (input) input.value = formatToThaiDateInput(val);
     }
 }
 
@@ -9715,7 +9850,10 @@ function saveShiftSwap(event) {
         const swapIdEl = document.getElementById('shift-swap-id');
         const swapId = swapIdEl ? swapIdEl.value.trim() : '';
 
-        const docDate = (document.getElementById('swap-doc-date')?.value || new Date().toISOString().slice(0, 10)).trim();
+        let docDate = (document.getElementById('swap-doc-date')?.value || '').trim();
+        if (!docDate) {
+            docDate = parseThaiDateInputToIso(document.getElementById('swap-doc-date-display')?.value) || new Date().toISOString().slice(0, 10);
+        }
         const docNo = (document.getElementById('swap-doc-no')?.value || '').trim() || `อว 0608.04/ว.${String((AppState.shiftSwaps || []).length + 1).padStart(3, '0')}`;
         const subject = 'ขออนุมัติเปลี่ยนเวรยาม';
         const applicantPrefix = document.getElementById('swap-applicant-prefix')?.value || 'นาย';
@@ -9723,7 +9861,10 @@ function saveShiftSwap(event) {
         const applicantPosition = (document.getElementById('swap-applicant-position')?.value || '').trim();
         const applicantPhone = (document.getElementById('swap-applicant-phone')?.value || '').trim();
         const applicantDept = (document.getElementById('swap-applicant-dept')?.value || 'คณะวิทยาการจัดการ มหาวิทยาลัยนราธิวาสราชนครินทร์').trim();
-        const shiftDate = (document.getElementById('swap-shift-date')?.value || '').trim();
+        let shiftDate = (document.getElementById('swap-shift-date')?.value || '').trim();
+        if (!shiftDate) {
+            shiftDate = parseThaiDateInputToIso(document.getElementById('swap-shift-date-display')?.value);
+        }
         
         const shiftPeriodEl = form ? form.querySelector('input[name="shiftPeriod"]:checked') : null;
         const shiftPeriod = shiftPeriodEl ? shiftPeriodEl.value : 'ช่วงเช้า';
@@ -9736,6 +9877,9 @@ function saveShiftSwap(event) {
         let compensateDate = (document.getElementById('swap-compensate-date')?.value || '').trim();
         if (!compensateDate) {
             compensateDate = '-';
+        } else if (compensateDate !== '-') {
+            const isoComp = parseThaiDateInputToIso(compensateDate);
+            if (isoComp) compensateDate = isoComp;
         }
         
         const compPeriodEl = form ? form.querySelector('input[name="compensatePeriod"]:checked') : null;
@@ -9751,8 +9895,8 @@ function saveShiftSwap(event) {
             return;
         }
         if (!shiftDate) {
-            showToast('กรุณาเลือกวันที่อยู่เวรเดิม', 'warning');
-            const el = document.getElementById('swap-shift-date');
+            showToast('กรุณาระบุวันที่อยู่เวรเดิม (วัน/เดือน/ปี เช่น 24/11/2569)', 'warning');
+            const el = document.getElementById('swap-shift-date-display') || document.getElementById('swap-shift-date');
             if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             return;
         }
@@ -10997,13 +11141,8 @@ function openBookingModalForRoom(roomId) {
     }
 
     const dateInput = document.getElementById('booking-date-input');
-    if (dateInput) {
-        if (AppState.selectedRoomDate) {
-            dateInput.value = AppState.selectedRoomDate;
-        } else if (!dateInput.value) {
-            dateInput.value = new Date().toISOString().slice(0, 10);
-        }
-    }
+    const targetDate = AppState.selectedRoomDate || (dateInput && dateInput.value) || new Date().toISOString().slice(0, 10);
+    setThaiDateInputValue('booking-date-input', 'booking-date-display', targetDate);
 
     // Control admin-only auto-approve toggle box
     const adminToggleBox = document.getElementById('booking-admin-toggle-box');
@@ -11020,9 +11159,9 @@ function openBookingModalForRoom(roomId) {
 
 function openBookingModalWithPrefill(roomId, dayName, startTime, endTime) {
     openBookingModalForRoom(roomId);
-    const dateInput = document.getElementById('booking-date-input');
-    if (dateInput && dayName) {
-        dateInput.value = getNextDateForDayName(dayName);
+    if (dayName) {
+        const nextDate = getNextDateForDayName(dayName);
+        setThaiDateInputValue('booking-date-input', 'booking-date-display', nextDate);
     }
     const startSelect = document.getElementById('booking-start-time');
     const endSelect = document.getElementById('booking-end-time');
