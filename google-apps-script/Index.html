@@ -990,7 +990,7 @@ body {
                             <tr class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50/80">
                                 <th class="p-3 cursor-pointer select-none hover:bg-slate-100 hover:text-blue-600 transition" onclick="toggleBookingSort('id')" title="คลิกเพื่อเรียงลำดับ น้อยไปหามาก / มากไปหาน้อย">
                                     <div class="flex items-center gap-1.5">
-                                        <span>รหัสการจอง</span>
+                                        <span>รหัสการจอง / วันที่จอง</span>
                                         <span id="booking-sort-icon-id" class="text-slate-400 text-[11px] opacity-60">⇅</span>
                                     </div>
                                 </th>
@@ -7194,7 +7194,10 @@ function renderRoomBookingsList(room, roomBookings) {
                         ${sorted.map(b => `
                             <tr class="hover:bg-slate-50/75 transition">
                                 <td class="p-3">
-                                    <span class="text-[10px] font-bold text-slate-400 block">${b.id}</span>
+                                    <div class="flex items-center gap-1.5 mb-0.5">
+                                        <span class="text-[10px] font-bold text-slate-500 font-mono">${b.id}</span>
+                                        ${b.createdAt ? `<span class="text-[10px] text-slate-400">(${formatThaiDate(b.createdAt.slice(0, 10))})</span>` : ''}
+                                    </div>
                                     <span class="font-bold text-slate-800 text-xs">${b.subject}</span>
                                     ${b.purpose ? `<span class="text-[11px] text-slate-500 block">${b.purpose}</span>` : ''}
                                 </td>
@@ -8307,9 +8310,46 @@ function renderBookings() {
         const isMeeting = strRoomId.startsWith('CONF') || (roomObj && roomObj.type === 'meeting_room');
         const isLab = strRoomId.startsWith('LAB') || (roomObj && roomObj.type === 'computer_lab');
         const dotColor = isLab ? 'bg-indigo-500' : isMeeting ? 'bg-pink-500' : 'bg-blue-500';
+        // Parse booking submission date & time
+        let bookedDateLabel = '';
+        let bookedTimeLabel = '';
+        if (bk.createdAt) {
+            try {
+                const dt = new Date(bk.createdAt);
+                if (!isNaN(dt.getTime())) {
+                    const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                    const day = dt.getDate();
+                    const month = thaiMonths[dt.getMonth()];
+                    const yr = (dt.getFullYear() > 2400 ? dt.getFullYear() : dt.getFullYear() + 543) % 100;
+                    const hh = String(dt.getHours()).padStart(2, '0');
+                    const mm = String(dt.getMinutes()).padStart(2, '0');
+                    bookedDateLabel = `${day} ${month} ${yr}`;
+                    bookedTimeLabel = `${hh}:${mm} น.`;
+                }
+            } catch(e) {}
+        }
+        if (!bookedDateLabel && bk.date) {
+            bookedDateLabel = formatThaiDate(bk.date);
+            bookedTimeLabel = bk.startTime ? `${bk.startTime} น.` : '';
+        }
+
         return `
         <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs transition">
-            <td class="p-3 font-semibold text-slate-500">${bk.id}</td>
+            <td class="p-3">
+                <div class="font-bold text-slate-800 text-xs font-mono tracking-tight">${bk.id}</div>
+                ${bookedDateLabel ? `
+                    <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-1 font-medium whitespace-nowrap" title="วันที่ทำรายการจอง">
+                        <i data-lucide="calendar" class="w-3 h-3 text-slate-400 shrink-0"></i>
+                        <span>${bookedDateLabel}</span>
+                    </div>
+                ` : ''}
+                ${bookedTimeLabel ? `
+                    <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 whitespace-nowrap" title="เวลาที่ทำรายการจอง">
+                        <i data-lucide="clock" class="w-3 h-3 text-slate-400 shrink-0"></i>
+                        <span>${bookedTimeLabel}</span>
+                    </div>
+                ` : ''}
+            </td>
             <td class="p-3 font-bold text-slate-800">
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
@@ -8517,8 +8557,16 @@ async function handleBookingSubmit(event) {
     const fullDept = department + (phone ? ` (โทร. ${phone})` : '');
     const cleanSubject = (subject || purpose || 'ขอใช้ห้องเรียน/ห้องปฏิบัติการ').trim();
     const cleanPurpose = (purpose || subject || '').trim();
+    const nowBooking = new Date();
+    const thaiYearBooking = nowBooking.getFullYear() + 543;
+    const padBooking = (n) => String(n).padStart(2, '0');
+    const dateCodeBooking = `${thaiYearBooking}${padBooking(nowBooking.getMonth() + 1)}${padBooking(nowBooking.getDate())}`;
+    const timeCodeBooking = `${padBooking(nowBooking.getHours())}${padBooking(nowBooking.getMinutes())}`;
+    const randCodeBooking = Math.floor(10 + Math.random() * 90);
+    const newBookingId = `BK-${dateCodeBooking}-${timeCodeBooking}${randCodeBooking}`;
+
     const newBooking = {
-        id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+        id: newBookingId,
         roomId: roomId,
         roomName: room ? room.name : roomId,
         date: dateStr,

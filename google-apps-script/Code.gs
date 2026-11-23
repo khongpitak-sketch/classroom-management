@@ -394,7 +394,11 @@ function apiAddBooking(booking) {
     if (!sheet) return { success: false, message: "Sheet not found" };
 
     if (!booking.id) {
-      booking.id = "BK-" + Math.floor(1000 + Math.random() * 9000);
+      const now = new Date();
+      const thaiYear = now.getFullYear() + 543;
+      const dStr = Utilities.formatDate(now, "GMT+7", "MMdd-HHmm");
+      const rand = Math.floor(10 + Math.random() * 90);
+      booking.id = "BK-" + thaiYear + dStr + rand;
     }
     if (!booking.createdAt) {
       booking.createdAt = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm");
