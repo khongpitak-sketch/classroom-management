@@ -7,7 +7,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 2 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v33_timetable_sem2_2569";
+const DATA_VERSION = "v36_mil_both_15_and_40_seats_2569";
 const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
@@ -397,13 +397,13 @@ const DEFAULT_ROOMS = [
     },
     {
         "id": "MIL-1",
-        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)",
-        "code": "MIL",
+        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)",
+        "code": "MIL-1",
         "type": "meeting_room",
-        "categoryName": "ห้องปฏิบัติการนวัตกรรม & ประชุม",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 2",
-        "capacity": 40,
+        "capacity": 15,
         "status": "available",
         "currentClass": null,
         "facilities": [
@@ -412,7 +412,26 @@ const DEFAULT_ROOMS = [
             "เก้าอี้ Ergonomic",
             "เครื่องปรับอากาศ x2"
         ],
-        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) สำหรับระดับบัณฑิตศึกษาและวิชาการจัดการขั้นสูง",
+        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 15 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600"
+    },
+    {
+        "id": "MIL-2",
+        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (40 ที่นั่ง)",
+        "code": "MIL-2",
+        "type": "meeting_room",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 2",
+        "capacity": 40,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart Board",
+            "ระบบ Video Conference",
+            "เครื่องปรับอากาศ x2"
+        ],
+        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 40 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600"
     },
     {
