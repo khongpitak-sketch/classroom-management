@@ -419,6 +419,28 @@ function saveSettings() {
 // Load Data from LocalStorage or Seed Data (with Version Checking)
 function loadData() {
     try {
+        // อัปเดตห้อง MIL-1 ใน localStorage ให้เป็น 15 ที่นั่งทันทีทุกครั้งที่เปิดหน้าเว็บ
+        try {
+            const rawR = localStorage.getItem('CMS_ROOMS');
+            if (rawR) {
+                let parsedR = JSON.parse(rawR);
+                if (Array.isArray(parsedR)) {
+                    let updated = false;
+                    parsedR.forEach(r => {
+                        if (r.id === 'MIL-1' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ'))) {
+                            r.capacity = 15;
+                            r.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)';
+                            r.description = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 15 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ';
+                            updated = true;
+                        }
+                    });
+                    parsedR = parsedR.filter(r => r.id !== 'MIL-2');
+                    if (updated) {
+                        localStorage.setItem('CMS_ROOMS', JSON.stringify(parsedR));
+                    }
+                }
+            }
+        } catch(e) {}
         const savedVersion = localStorage.getItem('CMS_VERSION');
         const savedRooms = localStorage.getItem('CMS_ROOMS');
         const savedTimetable = localStorage.getItem('CMS_TIMETABLE');
@@ -3666,16 +3688,11 @@ function populateRoomOptions(selectElem, includeAll = false) {
         html += `<option value="AVAILABLE_TODAY">🟢 รายการห้องว่างทั้งหมดวันนี้</option>`;
     }
 
-    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (แยกหมวดหมู่ให้เด่นชัด มีทั้ง 15 ที่นั่ง และ 40 ที่นั่ง)
+    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)
     const innovationLabs = AppState.rooms.filter(r => r.id === 'MIL-1' || r.id === 'MIL-2' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ')));
-    // เรียงให้ 15 ที่นั่งขึ้นก่อน
-    innovationLabs.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
     if (innovationLabs.length > 0) {
-        html += `<optgroup label="💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${innovationLabs.length} ห้อง)">`;
-        html += innovationLabs.map(r => {
-            const displayName = r.name.includes('ที่นั่ง') ? r.name : `${r.name} (${r.capacity} ที่นั่ง)`;
-            return `<option value="${r.id}">💡 ${displayName}</option>`;
-        }).join('');
+        html += `<optgroup label="💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (1 ห้อง)">`;
+        html += innovationLabs.map(r => `<option value="${r.id}">💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
