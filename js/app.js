@@ -455,19 +455,24 @@ function loadData() {
             AppState.timetable = AppState.timetable.filter(s => !(s.roomId === 'R-404' && (s.dayIndex === 1 || s.day === 'จันทร์')));
         }
 
-        // รวมห้องจาก DEFAULT_ROOMS ให้ครบถ้วนเสมอ (รองรับ MIL-1 และห้องประชุมทุกห้อง)
+        // รวมห้องจาก DEFAULT_ROOMS ให้ครบถ้วนเสมอ (รองรับ MIL-1 15 ที่นั่ง และ MIL-2 40 ที่นั่ง)
         if (Array.isArray(AppState.rooms)) {
             DEFAULT_ROOMS.forEach(defRoom => {
-                if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                if (!AppState.rooms.some(r => r.id === defRoom.id)) {
                     AppState.rooms.push(defRoom);
                 }
             });
-            // ตรวจสอบห้องปฏิบัติการนวัตกรรมการจัดการ (MIL-1) ให้มีข้อมูลสมบูรณ์
-            const mil = AppState.rooms.find(r => r.id === 'MIL-1' || r.code === 'MIL');
-            if (mil) {
-                if (!mil.name || !mil.name.includes('นวัตกรรมการจัดการ')) {
-                    mil.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)';
-                }
+            // ปรับห้องปฏิบัติการนวัตกรรมการจัดการ MIL-1 ให้เป็น 15 ที่นั่งตามจริง
+            const mil1 = AppState.rooms.find(r => r.id === 'MIL-1');
+            if (mil1) {
+                mil1.capacity = 15;
+                mil1.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)';
+                mil1.description = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 15 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ';
+            }
+            // เพิ่มห้อง MIL-2 (40 ที่นั่ง) หากยังไม่มี
+            if (!AppState.rooms.some(r => r.id === 'MIL-2')) {
+                const defMil2 = DEFAULT_ROOMS.find(r => r.id === 'MIL-2');
+                if (defMil2) AppState.rooms.push(defMil2);
             }
             localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
         }
@@ -3661,11 +3666,16 @@ function populateRoomOptions(selectElem, includeAll = false) {
         html += `<option value="AVAILABLE_TODAY">🟢 รายการห้องว่างทั้งหมดวันนี้</option>`;
     }
 
-    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (แยกหมวดหมู่ให้เด่นชัด เพื่อให้ผู้ใช้สมาร์ทโฟนเห็นชัดเจนทันที ไม่ถูกกลืนหรือตัดตก)
-    const innovationLabs = AppState.rooms.filter(r => r.id === 'MIL-1' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ')));
+    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (แยกหมวดหมู่ให้เด่นชัด มีทั้ง 15 ที่นั่ง และ 40 ที่นั่ง)
+    const innovationLabs = AppState.rooms.filter(r => r.id === 'MIL-1' || r.id === 'MIL-2' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ')));
+    // เรียงให้ 15 ที่นั่งขึ้นก่อน
+    innovationLabs.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
     if (innovationLabs.length > 0) {
         html += `<optgroup label="💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${innovationLabs.length} ห้อง)">`;
-        html += innovationLabs.map(r => `<option value="${r.id}">💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${r.capacity || 40} ที่นั่ง)</option>`).join('');
+        html += innovationLabs.map(r => {
+            const displayName = r.name.includes('ที่นั่ง') ? r.name : `${r.name} (${r.capacity} ที่นั่ง)`;
+            return `<option value="${r.id}">💡 ${displayName}</option>`;
+        }).join('');
         html += `</optgroup>`;
     }
 

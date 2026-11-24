@@ -3722,13 +3722,13 @@ const DEFAULT_ROOMS = [
     },
     {
         "id": "MIL-1",
-        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)",
-        "code": "MIL",
+        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)",
+        "code": "MIL-1",
         "type": "meeting_room",
-        "categoryName": "ห้องปฏิบัติการนวัตกรรม & ประชุม",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
         "building": "อาคารคณะวิทยาการจัดการ",
         "floor": "ชั้น 2",
-        "capacity": 40,
+        "capacity": 15,
         "status": "available",
         "currentClass": null,
         "facilities": [
@@ -3737,7 +3737,26 @@ const DEFAULT_ROOMS = [
             "เก้าอี้ Ergonomic",
             "เครื่องปรับอากาศ x2"
         ],
-        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) สำหรับระดับบัณฑิตศึกษาและวิชาการจัดการขั้นสูง",
+        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 15 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ",
+        "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600"
+    },
+    {
+        "id": "MIL-2",
+        "name": "ห้องปฏิบัติการนวัตกรรมการจัดการ (40 ที่นั่ง)",
+        "code": "MIL-2",
+        "type": "meeting_room",
+        "categoryName": "ห้องปฏิบัติการนวัตกรรม",
+        "building": "อาคารคณะวิทยาการจัดการ",
+        "floor": "ชั้น 2",
+        "capacity": 40,
+        "status": "available",
+        "currentClass": null,
+        "facilities": [
+            "Smart Board",
+            "ระบบ Video Conference",
+            "เครื่องปรับอากาศ x2"
+        ],
+        "description": "ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 40 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ",
         "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600"
     },
     {
@@ -6203,19 +6222,24 @@ function loadData() {
             }
         }
 
-        // รวมห้องจาก DEFAULT_ROOMS ให้ครบถ้วนเสมอ (รองรับ MIL-1 และห้องประชุมทุกห้อง)
+        // รวมห้องจาก DEFAULT_ROOMS ให้ครบถ้วนเสมอ (รองรับ MIL-1 15 ที่นั่ง และ MIL-2 40 ที่นั่ง)
         if (Array.isArray(AppState.rooms)) {
             DEFAULT_ROOMS.forEach(defRoom => {
-                if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                if (!AppState.rooms.some(r => r.id === defRoom.id)) {
                     AppState.rooms.push(defRoom);
                 }
             });
-            // ตรวจสอบห้องปฏิบัติการนวัตกรรมการจัดการ (MIL-1) ให้มีข้อมูลสมบูรณ์
-            const mil = AppState.rooms.find(r => r.id === 'MIL-1' || r.code === 'MIL');
-            if (mil) {
-                if (!mil.name || !mil.name.includes('นวัตกรรมการจัดการ')) {
-                    mil.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)';
-                }
+            // ปรับห้องปฏิบัติการนวัตกรรมการจัดการ MIL-1 ให้เป็น 15 ที่นั่งตามจริง
+            const mil1 = AppState.rooms.find(r => r.id === 'MIL-1');
+            if (mil1) {
+                mil1.capacity = 15;
+                mil1.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)';
+                mil1.description = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab) ความจุ 15 ที่นั่ง ชั้น 2 อาคารคณะวิทยาการจัดการ';
+            }
+            // เพิ่มห้อง MIL-2 (40 ที่นั่ง) หากยังไม่มี
+            if (!AppState.rooms.some(r => r.id === 'MIL-2')) {
+                const defMil2 = DEFAULT_ROOMS.find(r => r.id === 'MIL-2');
+                if (defMil2) AppState.rooms.push(defMil2);
             }
             localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
         }
@@ -6960,9 +6984,9 @@ function renderRooms() {
     let filtered = AppState.rooms.filter(room => {
         if (AppState.selectedRoomType !== 'all') {
             if (AppState.selectedRoomType === 'computer_lab') {
-                if (room.type !== 'computer_lab' && room.id !== 'MIL-1' && room.code !== 'MIL') return false;
+                if (room.type !== 'computer_lab' && room.id !== 'MIL-1' && room.id !== 'MIL-2' && room.code !== 'MIL') return false;
             } else if (AppState.selectedRoomType === 'meeting_room') {
-                if (room.type !== 'meeting_room' || room.id === 'MIL-1' || room.code === 'MIL') return false;
+                if (room.type !== 'meeting_room' || room.id === 'MIL-1' || room.id === 'MIL-2' || room.code === 'MIL') return false;
             } else if (room.type !== AppState.selectedRoomType) {
                 return false;
             }
@@ -7056,8 +7080,8 @@ function renderRooms() {
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent"></div>
                         
                         <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : (room.id === 'MIL-1' || room.code === 'MIL') ? 'bg-amber-600 text-white' : room.type === 'meeting_room' ? 'bg-pink-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
-                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : (room.id === 'MIL-1' || room.code === 'MIL') ? '💡 ห้องปฏิบัติการนวัตกรรม' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม / สัมมนา' : '📖 ห้องเรียน'}
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : (room.id === 'MIL-1' || room.id === 'MIL-2' || room.code === 'MIL') ? 'bg-amber-600 text-white' : room.type === 'meeting_room' ? 'bg-pink-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
+                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : (room.id === 'MIL-1' || room.id === 'MIL-2' || room.code === 'MIL') ? '💡 ห้องปฏิบัติการนวัตกรรม' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม / สัมมนา' : '📖 ห้องเรียน'}
                             </span>
                         </div>
                         <div class="absolute top-3 right-3">
@@ -10714,10 +10738,15 @@ function syncFromGoogleAppsScript() {
             if (response && response.rooms && response.rooms.length > 0) {
                 AppState.rooms = response.rooms;
                 DEFAULT_ROOMS.forEach(defRoom => {
-                    if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                    if (!AppState.rooms.some(r => r.id === defRoom.id)) {
                         AppState.rooms.push(defRoom);
                     }
                 });
+                const mil1 = AppState.rooms.find(r => r.id === 'MIL-1');
+                if (mil1) {
+                    mil1.capacity = 15;
+                    mil1.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)';
+                }
                 localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
                 if (response.timetable && Array.isArray(response.timetable) && response.timetable.length > 0) {
                     AppState.timetable = response.timetable;
@@ -10879,10 +10908,15 @@ async function fetchDataFromGoogleSheets(silent = false) {
             if (json.data.rooms && Array.isArray(json.data.rooms) && json.data.rooms.length >= 10) {
                 AppState.rooms = json.data.rooms;
                 DEFAULT_ROOMS.forEach(defRoom => {
-                    if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                    if (!AppState.rooms.some(r => r.id === defRoom.id)) {
                         AppState.rooms.push(defRoom);
                     }
                 });
+                const mil1 = AppState.rooms.find(r => r.id === 'MIL-1');
+                if (mil1) {
+                    mil1.capacity = 15;
+                    mil1.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (15 ที่นั่ง)';
+                }
                 localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
             }
             if (json.data.timetable && Array.isArray(json.data.timetable) && json.data.timetable.length > 0) {
@@ -11209,11 +11243,16 @@ function populateRoomOptions(selectElem, includeAll = false) {
         html += `<option value="AVAILABLE_TODAY">🟢 รายการห้องว่างทั้งหมดวันนี้</option>`;
     }
 
-    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (แยกหมวดหมู่ให้เด่นชัด เพื่อให้ผู้ใช้สมาร์ทโฟนเห็นชัดเจนทันที ไม่ถูกกลืนหรือตัดตก)
-    const innovationLabs = AppState.rooms.filter(r => r.id === 'MIL-1' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ')));
+    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (แยกหมวดหมู่ให้เด่นชัด มีทั้ง 15 ที่นั่ง และ 40 ที่นั่ง)
+    const innovationLabs = AppState.rooms.filter(r => r.id === 'MIL-1' || r.id === 'MIL-2' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ')));
+    // เรียงให้ 15 ที่นั่งขึ้นก่อน
+    innovationLabs.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
     if (innovationLabs.length > 0) {
         html += `<optgroup label="💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${innovationLabs.length} ห้อง)">`;
-        html += innovationLabs.map(r => `<option value="${r.id}">💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${r.capacity || 40} ที่นั่ง)</option>`).join('');
+        html += innovationLabs.map(r => {
+            const displayName = r.name.includes('ที่นั่ง') ? r.name : `${r.name} (${r.capacity} ที่นั่ง)`;
+            return `<option value="${r.id}">💡 ${displayName}</option>`;
+        }).join('');
         html += `</optgroup>`;
     }
 
