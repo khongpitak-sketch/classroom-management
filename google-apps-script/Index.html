@@ -762,7 +762,7 @@ body {
                             <i data-lucide="door-open" class="w-5 h-5 text-blue-600"></i>
                             รายการห้องเรียนทั้งหมด
                         </h3>
-                        <p id="filtered-room-count" class="text-xs text-slate-500 mt-0.5">แสดงห้องเรียนชั้น 3, 4 และห้องปฏิบัติการคอม 1 - 4</p>
+                        <p id="filtered-room-count" class="text-xs text-slate-500 mt-0.5">แสดงห้องเรียนชั้น 3, 4, ห้องปฏิบัติการคอมพิวเตอร์ 1 - 4, ห้องปฏิบัติการนวัตกรรม และห้องประชุม</p>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -775,7 +775,7 @@ body {
                                 📖 ห้องเรียน
                             </button>
                             <button data-type="computer_lab" class="filter-type-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
-                                💻 แล็บคอม
+                                💻 แล็บคอม & นวัตกรรม
                             </button>
                             <button data-type="meeting_room" class="filter-type-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-slate-600 hover:bg-slate-50">
                                 🏛️ ห้องประชุม
@@ -820,8 +820,11 @@ body {
                     <div>
                         <select id="room-building-filter" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="all">🏢 ทุกชั้น / ทุกโซน</option>
-                            <option value="ชั้น 3">ชั้น 3: ห้อง 302, 303, 305, 306, 307, 308 & แล็บคอม 1-2</option>
-                            <option value="ชั้น 4">ชั้น 4: ห้อง 401, 402, 403, 404, 405, 406 & แล็บคอม 3-4</option>
+                            <option value="ชั้น 1">ชั้น 1: ห้องประชุมพฤกษาพรรณชมพู, Co-working Space 1 & 2</option>
+                            <option value="ชั้น 2">ชั้น 2: ห้องปฏิบัติการนวัตกรรมการจัดการ, แล็บคอม 1, ห้องประชุมวิภา</option>
+                            <option value="ชั้น 3">ชั้น 3: ห้องเรียน 302 - 308 (6 ห้อง)</option>
+                            <option value="ชั้น 4">ชั้น 4: ห้องเรียน 401 - 406 (6 ห้อง)</option>
+                            <option value="ชั้น 5">ชั้น 5: แล็บคอม 2, 3, 4 & ห้องประชุมอินทนิลโสภา</option>
                         </select>
                     </div>
                 </div>
@@ -6200,16 +6203,21 @@ function loadData() {
             }
         }
 
-        // ล้างข้อมูล mock / รายการจำลองเก่าที่อาจค้างอยู่ใน LocalStorage
+        // รวมห้องจาก DEFAULT_ROOMS ให้ครบถ้วนเสมอ (รองรับ MIL-1 และห้องประชุมทุกห้อง)
         if (Array.isArray(AppState.rooms)) {
-            if (!AppState.rooms.some(r => r.id === 'CONF-4')) {
-                const r4 = DEFAULT_ROOMS.find(r => r.id === 'CONF-4');
-                if (r4) AppState.rooms.push(r4);
+            DEFAULT_ROOMS.forEach(defRoom => {
+                if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                    AppState.rooms.push(defRoom);
+                }
+            });
+            // ตรวจสอบห้องปฏิบัติการนวัตกรรมการจัดการ (MIL-1) ให้มีข้อมูลสมบูรณ์
+            const mil = AppState.rooms.find(r => r.id === 'MIL-1' || r.code === 'MIL');
+            if (mil) {
+                if (!mil.name || !mil.name.includes('นวัตกรรมการจัดการ')) {
+                    mil.name = 'ห้องปฏิบัติการนวัตกรรมการจัดการ (Management Innovation Lab)';
+                }
             }
-            if (!AppState.rooms.some(r => r.id === 'CONF-5')) {
-                const r5 = DEFAULT_ROOMS.find(r => r.id === 'CONF-5');
-                if (r5) AppState.rooms.push(r5);
-            }
+            localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
         }
 
         if (Array.isArray(AppState.bookings)) {
@@ -6950,8 +6958,14 @@ function renderRooms() {
     }
 
     let filtered = AppState.rooms.filter(room => {
-        if (AppState.selectedRoomType !== 'all' && room.type !== AppState.selectedRoomType) {
-            return false;
+        if (AppState.selectedRoomType !== 'all') {
+            if (AppState.selectedRoomType === 'computer_lab') {
+                if (room.type !== 'computer_lab' && room.id !== 'MIL-1' && room.code !== 'MIL') return false;
+            } else if (AppState.selectedRoomType === 'meeting_room') {
+                if (room.type !== 'meeting_room' || room.id === 'MIL-1' || room.code === 'MIL') return false;
+            } else if (room.type !== AppState.selectedRoomType) {
+                return false;
+            }
         }
 
         // Status Filter
@@ -7042,8 +7056,8 @@ function renderRooms() {
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent"></div>
                         
                         <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : room.type === 'meeting_room' ? 'bg-pink-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
-                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม / สัมมนา' : '📖 ห้องเรียน'}
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${isLab ? 'bg-indigo-600 text-white' : (room.id === 'MIL-1' || room.code === 'MIL') ? 'bg-amber-600 text-white' : room.type === 'meeting_room' ? 'bg-pink-600 text-white' : 'bg-slate-700/80 text-white backdrop-blur'}">
+                                ${isLab ? '💻 ห้องแล็บคอมพิวเตอร์' : (room.id === 'MIL-1' || room.code === 'MIL') ? '💡 ห้องปฏิบัติการนวัตกรรม' : room.type === 'meeting_room' ? '🏛️ ห้องประชุม / สัมมนา' : '📖 ห้องเรียน'}
                             </span>
                         </div>
                         <div class="absolute top-3 right-3">
@@ -10699,14 +10713,12 @@ function syncFromGoogleAppsScript() {
         .withSuccessHandler(response => {
             if (response && response.rooms && response.rooms.length > 0) {
                 AppState.rooms = response.rooms;
-                if (!AppState.rooms.some(r => r.id === 'CONF-4')) {
-                    const r4 = DEFAULT_ROOMS.find(r => r.id === 'CONF-4');
-                    if (r4) AppState.rooms.push(r4);
-                }
-                if (!AppState.rooms.some(r => r.id === 'CONF-5')) {
-                    const r5 = DEFAULT_ROOMS.find(r => r.id === 'CONF-5');
-                    if (r5) AppState.rooms.push(r5);
-                }
+                DEFAULT_ROOMS.forEach(defRoom => {
+                    if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                        AppState.rooms.push(defRoom);
+                    }
+                });
+                localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
                 if (response.timetable && Array.isArray(response.timetable) && response.timetable.length > 0) {
                     AppState.timetable = response.timetable;
                     const hasFriAfternoon = AppState.timetable.some(s => s.roomId === 'LAB-1' && (s.dayIndex === 5 || s.day === 'ศุกร์') && s.startTime === '13:20');
@@ -10866,14 +10878,12 @@ async function fetchDataFromGoogleSheets(silent = false) {
         if (json && json.success && json.data) {
             if (json.data.rooms && Array.isArray(json.data.rooms) && json.data.rooms.length >= 10) {
                 AppState.rooms = json.data.rooms;
-                if (!AppState.rooms.some(r => r.id === 'CONF-4')) {
-                    const r4 = DEFAULT_ROOMS.find(r => r.id === 'CONF-4');
-                    if (r4) AppState.rooms.push(r4);
-                }
-                if (!AppState.rooms.some(r => r.id === 'CONF-5')) {
-                    const r5 = DEFAULT_ROOMS.find(r => r.id === 'CONF-5');
-                    if (r5) AppState.rooms.push(r5);
-                }
+                DEFAULT_ROOMS.forEach(defRoom => {
+                    if (!AppState.rooms.some(r => r.id === defRoom.id || r.code === defRoom.code)) {
+                        AppState.rooms.push(defRoom);
+                    }
+                });
+                localStorage.setItem('CMS_ROOMS', JSON.stringify(AppState.rooms));
             }
             if (json.data.timetable && Array.isArray(json.data.timetable) && json.data.timetable.length > 0) {
                 AppState.timetable = json.data.timetable;
@@ -11199,41 +11209,51 @@ function populateRoomOptions(selectElem, includeAll = false) {
         html += `<option value="AVAILABLE_TODAY">🟢 รายการห้องว่างทั้งหมดวันนี้</option>`;
     }
 
-    const labs = AppState.rooms.filter(r => r.type === 'computer_lab');
-    const floor3 = AppState.rooms.filter(r => r.floor && r.floor.includes('3') && r.type !== 'computer_lab');
-    const floor4 = AppState.rooms.filter(r => r.floor && r.floor.includes('4') && r.type !== 'computer_lab');
-    const others = AppState.rooms.filter(r => !labs.includes(r) && !floor3.includes(r) && !floor4.includes(r));
-
-    if (labs.length > 0) {
-        html += `<optgroup label="ห้องปฏิบัติการคอมพิวเตอร์ (${labs.length} ห้อง)">`;
-        html += labs.map(r => `<option value="${r.id}">💻 ${r.name} (${r.pcCount} PCs)</option>`).join('');
+    // 1. ห้องปฏิบัติการนวัตกรรมการจัดการ (แยกหมวดหมู่ให้เด่นชัด เพื่อให้ผู้ใช้สมาร์ทโฟนเห็นชัดเจนทันที ไม่ถูกกลืนหรือตัดตก)
+    const innovationLabs = AppState.rooms.filter(r => r.id === 'MIL-1' || r.code === 'MIL' || (r.name && r.name.includes('นวัตกรรมการจัดการ')));
+    if (innovationLabs.length > 0) {
+        html += `<optgroup label="💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${innovationLabs.length} ห้อง)">`;
+        html += innovationLabs.map(r => `<option value="${r.id}">💡 ห้องปฏิบัติการนวัตกรรมการจัดการ (${r.capacity || 40} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
+    // 2. ห้องปฏิบัติการคอมพิวเตอร์
+    const labs = AppState.rooms.filter(r => r.type === 'computer_lab' && !innovationLabs.includes(r));
+    if (labs.length > 0) {
+        html += `<optgroup label="💻 ห้องปฏิบัติการคอมพิวเตอร์ (${labs.length} ห้อง)">`;
+        html += labs.map(r => `<option value="${r.id}">💻 ${r.name} (${r.pcCount || 40} PCs)</option>`).join('');
+        html += `</optgroup>`;
+    }
+
+    // 3. ห้องเรียนชั้น 3
+    const floor3 = AppState.rooms.filter(r => r.floor && r.floor.includes('3') && r.type !== 'computer_lab' && !innovationLabs.includes(r));
     if (floor3.length > 0) {
-        html += `<optgroup label="ห้องเรียนชั้น 3 (${floor3.length} ห้อง)">`;
+        html += `<optgroup label="📖 ห้องเรียนชั้น 3 (${floor3.length} ห้อง)">`;
         html += floor3.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
+    // 4. ห้องเรียนชั้น 4
+    const floor4 = AppState.rooms.filter(r => r.floor && r.floor.includes('4') && r.type !== 'computer_lab' && !innovationLabs.includes(r));
     if (floor4.length > 0) {
-        html += `<optgroup label="ห้องเรียนชั้น 4 (${floor4.length} ห้อง)">`;
+        html += `<optgroup label="📖 ห้องเรียนชั้น 4 (${floor4.length} ห้อง)">`;
         html += floor4.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
-    const meetings = AppState.rooms.filter(r => r.type === 'meeting_room');
-    const remaining = AppState.rooms.filter(r => !labs.includes(r) && !floor3.includes(r) && !floor4.includes(r) && !meetings.includes(r));
-
+    // 5. ห้องประชุม / สัมมนา (ไม่รวมห้องปฏิบัติการนวัตกรรม)
+    const meetings = AppState.rooms.filter(r => r.type === 'meeting_room' && !innovationLabs.includes(r));
     if (meetings.length > 0) {
-        html += `<optgroup label="ห้องประชุม (${meetings.length} ห้อง)">`;
+        html += `<optgroup label="🏛️ ห้องประชุม / สัมมนา (${meetings.length} ห้อง)">`;
         html += meetings.map(r => `<option value="${r.id}">🏛️ ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
+    // 6. ห้องอื่นๆ ที่เหลือ
+    const remaining = AppState.rooms.filter(r => !innovationLabs.includes(r) && !labs.includes(r) && !floor3.includes(r) && !floor4.includes(r) && !meetings.includes(r));
     if (remaining.length > 0) {
-        html += `<optgroup label="ห้องเรียนอื่นๆ (${remaining.length} ห้อง)">`;
-        html += remaining.map(r => `<option value="${r.id}">📖 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
+        html += `<optgroup label="ห้องอื่นๆ (${remaining.length} ห้อง)">`;
+        html += remaining.map(r => `<option value="${r.id}">🏢 ${r.name} (${r.capacity} ที่นั่ง)</option>`).join('');
         html += `</optgroup>`;
     }
 
