@@ -3335,7 +3335,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 2 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v34_mil_15_seats_2569";
+const DATA_VERSION = "v35_fix_vacant_realtime_2569";
 const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
@@ -6921,17 +6921,30 @@ function getRoomVacancyForSelectedDate(room, targetDayIndex) {
         vacancyType = 'fullday';
         vacancyText = '✨ ว่างตลอดทั้งวัน';
     } else if (isMorningFree && !isAfternoonFree) {
-        vacancyStatus = 'available';
-        vacancyType = 'morning';
-        vacancyText = '🌤️ ว่างช่วงเช้า (08:20-12:20)';
+        const isToday = (AppState.selectedRoomDate === new Date().toISOString().slice(0, 10));
+        const nowHM = `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+        if (isToday && nowHM >= '12:20') {
+            vacancyStatus = 'occupied';
+            vacancyType = 'busy';
+            vacancyText = '❌ กำลังใช้งานช่วงบ่าย (เช้าผ่านไปแล้ว)';
+        } else {
+            vacancyStatus = 'available';
+            vacancyType = 'morning';
+            vacancyText = '🌤️ ว่างช่วงเช้า (08:20-12:20)';
+        }
     } else if (!isMorningFree && isAfternoonFree) {
         vacancyStatus = 'available';
         vacancyType = 'afternoon';
         vacancyText = '⛅ ว่างช่วงบ่าย (13:20-17:20)';
+    } else if (!isMorningFree && !isAfternoonFree) {
+        // มีเรียนทั้งเช้าและบ่าย ถือว่าเต็มวัน ไม่ถือเป็นห้องว่าง
+        vacancyStatus = 'occupied';
+        vacancyType = 'busy';
+        vacancyText = '❌ มีเรียนเต็มวัน';
     } else if (isEveningFree) {
-        vacancyStatus = 'available';
+        vacancyStatus = 'occupied';
         vacancyType = 'evening';
-        vacancyText = '🌙 ว่างช่วงเย็น (17:20+)';
+        vacancyText = '🌙 ว่างเฉพาะช่วงค่ำ (17:20+)';
     } else {
         vacancyStatus = 'occupied';
         vacancyType = 'busy';
@@ -7836,6 +7849,11 @@ function setVacantTypeFilter(type) {
 }
 
 function renderAvailableRoomsScheduleView() {
+    // ซิงก์สถานะแบบเรียลไทม์กับตารางเรียนและเวลาปัจจุบันก่อนประมวลผลเสมอ
+    if (typeof syncRoomStatusWithTimetable === 'function') {
+        syncRoomStatusWithTimetable();
+    }
+
     const days = [
         { name: 'จันทร์', index: 1 },
         { name: 'อังคาร', index: 2 },
@@ -7909,6 +7927,9 @@ function renderAvailableRoomsScheduleView() {
             vacancyCategory = 'morning';
         } else if (!isMorningFree && isAfternoonFree) {
             vacancyCategory = 'afternoon';
+        } else if (!isMorningFree && !isAfternoonFree) {
+            // ติดเรียนทั้งเช้าและบ่าย ถือเป็น busy (ไม่ว่าง)
+            vacancyCategory = 'busy';
         } else if (isEveningFree) {
             vacancyCategory = 'evening';
         } else {
@@ -7934,30 +7955,47 @@ function renderAvailableRoomsScheduleView() {
         };
     });
 
+    const currentHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // Helper: ตรวจสอบว่าห้องว่างจริงในปัจจุบันหรือไม่ (ถ้าดูวันนี้ ห้องต้องไม่ติดเรียนหรือติดจองอยู่ขณะนี้)
+    function isRoomActuallyAvailable(a) {
+        if (a.isMaintenance || a.vacancyCategory === 'maintenance' || a.vacancyCategory === 'busy') return false;
+        if (isViewingToday) {
+            // ถ้าห้องกำลังเรียน (occupied) หรือกำลังจองใช้งาน (reserved) ถือว่าไม่ว่างขณะนี้
+            if (a.room.status === 'occupied' || a.room.status === 'reserved') return false;
+            // ถ้าเลยเวลา 12:20 ไปแล้ว ห้องที่ว่างเฉพาะช่วงเช้า ถือว่าช่วงว่างหมดไปแล้ว
+            if (currentHourMin >= '12:20' && a.vacancyCategory === 'morning') return false;
+            // ต้องว่างทั้งวัน หรือว่างช่วงบ่ายที่ยังเหลือ
+            return a.isNowAvailable || a.vacancyCategory === 'fullday' || a.isAfternoonFree;
+        }
+        return ['fullday', 'morning', 'afternoon'].includes(a.vacancyCategory);
+    }
+
     // Counts for summary pills
     const totalRooms = AppState.rooms.length;
-    const fulldayCount = roomAnalyses.filter(a => a.vacancyCategory === 'fullday').length;
-    const morningCount = roomAnalyses.filter(a => a.vacancyCategory === 'morning').length;
-    const afternoonCount = roomAnalyses.filter(a => a.vacancyCategory === 'afternoon').length;
-    const nowCount = roomAnalyses.filter(a => a.isNowAvailable).length;
-    const totalAnyVacant = roomAnalyses.filter(a => ['fullday', 'morning', 'afternoon', 'evening'].includes(a.vacancyCategory)).length;
+    const fulldayCount = roomAnalyses.filter(a => a.vacancyCategory === 'fullday' && (!isViewingToday || a.room.status === 'available')).length;
+    const morningCount = roomAnalyses.filter(a => (a.vacancyCategory === 'morning' || a.vacancyCategory === 'fullday') && a.isMorningFree && (!isViewingToday || currentHourMin < '12:20')).length;
+    const afternoonCount = roomAnalyses.filter(a => (a.vacancyCategory === 'afternoon' || a.vacancyCategory === 'fullday') && a.isAfternoonFree && (!isViewingToday || a.room.status === 'available')).length;
+    const nowCount = roomAnalyses.filter(a => a.isNowAvailable && a.room.status === 'available').length;
+    const totalAnyVacant = roomAnalyses.filter(a => isRoomActuallyAvailable(a)).length;
 
     // Filter by Period
     const periodFilter = AppState.vacantPeriodFilter || 'all';
     let filtered = roomAnalyses.filter(a => {
-        if (a.vacancyCategory === 'maintenance') return false;
+        if (a.isMaintenance || a.vacancyCategory === 'maintenance' || a.vacancyCategory === 'busy') return false;
+        
         if (periodFilter === 'all') {
-            return ['fullday', 'morning', 'afternoon', 'evening'].includes(a.vacancyCategory);
+            return isRoomActuallyAvailable(a);
         } else if (periodFilter === 'fullday') {
-            return a.vacancyCategory === 'fullday';
+            return a.vacancyCategory === 'fullday' && (!isViewingToday || a.room.status === 'available');
         } else if (periodFilter === 'morning') {
-            return a.vacancyCategory === 'fullday' || a.vacancyCategory === 'morning';
+            return (a.vacancyCategory === 'fullday' || a.vacancyCategory === 'morning') && a.isMorningFree && (!isViewingToday || currentHourMin < '12:20');
         } else if (periodFilter === 'afternoon') {
-            return a.vacancyCategory === 'fullday' || a.vacancyCategory === 'afternoon';
+            return (a.vacancyCategory === 'fullday' || a.vacancyCategory === 'afternoon') && a.isAfternoonFree && (!isViewingToday || a.room.status === 'available');
         } else if (periodFilter === 'now') {
-            return a.isNowAvailable;
+            return a.isNowAvailable && a.room.status === 'available';
         }
-        return true;
+        return isRoomActuallyAvailable(a);
     });
 
     // Filter by Room Type
