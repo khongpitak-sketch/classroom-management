@@ -3335,7 +3335,7 @@ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWOwznvFSG-Tf3
  * ภาคการศึกษา 2 / ปีการศึกษา 2569
  */
 
-const DATA_VERSION = "v36_mil_both_15_and_40_seats_2569";
+const DATA_VERSION = "v37_shift_swap_blank_approval_boxes_2569";
 const APP_VERSION = "2.10.0";
 
 const DEFAULT_ROOMS = [
@@ -10363,14 +10363,9 @@ function renderPrintShiftSwapContent(swap, isBlank) {
     const compAft = (!isBlank && !isCompensateDash && data.compensatePeriod === 'ช่วงบ่าย') ? '&#10003;' : '&nbsp;&nbsp;';
     const compNight = (!isBlank && !isCompensateDash && data.compensatePeriod === 'กลางคืน') ? '&#10003;' : '&nbsp;&nbsp;';
 
-    // Approval checks
+    // Approval checks: ปล่อยช่องเครื่องหมายว่างไว้เป็นช่องสำหรับให้หัวหน้าและคณบดีทำเครื่องหมายและเขียนเองด้วยปากกา
     const app = data.approval || {};
-    const headOk = (!isBlank && (app.headDecision === 'เห็นควรอนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
-    const headOther = (!isBlank && app.headDecision === 'อื่นๆ') ? '&#10003;' : '&nbsp;&nbsp;';
     const headNotes = (!isBlank && app.headNotes) ? app.headNotes : '&nbsp;';
-
-    const deanOk = (!isBlank && (app.deanDecision === 'อนุญาต' || data.status === 'approved')) ? '&#10003;' : '&nbsp;&nbsp;';
-    const deanNo = (!isBlank && (app.deanDecision === 'ไม่อนุมัติ' || data.status === 'rejected')) ? '&#10003;' : '&nbsp;&nbsp;';
     const deanNotes = (!isBlank && app.deanNotes && app.deanNotes !== 'อนุญาตตามเสนอ') ? app.deanNotes : '&nbsp;';
     const buildingNotes = (!isBlank && app.buildingNotes && !app.buildingNotes.includes('ตรวจสอบตารางเวร')) ? app.buildingNotes : '&nbsp;';
 
@@ -10464,8 +10459,8 @@ function renderPrintShiftSwapContent(swap, isBlank) {
                                 ความคิดเห็นของหัวหน้าสำนักงานคณบดี
                             </div>
                             <div style="display: flex; align-items: center; gap: 16pt; margin-bottom: 2pt;">
-                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="font-weight: bold;">${headOk}</span> ] เห็นควรอนุญาต</label>
-                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="font-weight: bold;">${headOther}</span> ] อื่นๆ</label>
+                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="display: inline-block; min-width: 16pt; text-align: center;">&nbsp;</span> ] เห็นควรอนุญาต</label>
+                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="display: inline-block; min-width: 16pt; text-align: center;">&nbsp;</span> ] อื่นๆ</label>
                             </div>
                             <div style="min-height: 16pt; font-size: 15pt; margin-bottom: 2pt;">${headNotes}</div>
                             <div style="border-bottom: 1px dotted #000; width: 100%; margin-bottom: 6pt;"></div>
@@ -10486,8 +10481,8 @@ function renderPrintShiftSwapContent(swap, isBlank) {
                                 คำสั่ง / ความเห็นของคณบดี
                             </div>
                             <div style="display: flex; align-items: center; gap: 16pt; margin-bottom: 2pt;">
-                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="font-weight: bold;">${deanOk}</span> ] อนุญาต</label>
-                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="font-weight: bold;">${deanNo}</span> ] ไม่อนุญาต</label>
+                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="display: inline-block; min-width: 16pt; text-align: center;">&nbsp;</span> ] อนุญาต</label>
+                                <label style="display: flex; align-items: center; gap: 4pt;">[ <span style="display: inline-block; min-width: 16pt; text-align: center;">&nbsp;</span> ] ไม่อนุญาต</label>
                             </div>
                             <div style="min-height: 16pt; font-size: 15pt; margin-bottom: 2pt;">${deanNotes}</div>
                             <div style="border-bottom: 1px dotted #000; width: 100%; margin-bottom: 6pt;"></div>
